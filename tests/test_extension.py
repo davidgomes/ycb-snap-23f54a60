@@ -8,32 +8,36 @@
     :license: BSD, see LICENSE for details.
 """
 
+from types import SimpleNamespace
+
 import pytest
 
 from sphinx.errors import VersionRequirementError
 from sphinx.extension import Extension, verify_needs_extensions
 
 
-def test_needs_extensions(app):
+def test_needs_extensions():
+    app = SimpleNamespace(extensions={})
+    config = SimpleNamespace(needs_extensions={})
+
     # empty needs_extensions
-    assert app.config.needs_extensions == {}
-    verify_needs_extensions(app, app.config)
+    verify_needs_extensions(app, config)
 
     # needs_extensions fulfilled
-    app.config.needs_extensions = {'test.extension': '3.9'}
+    config.needs_extensions = {'test.extension': '3.9'}
     app.extensions['test.extension'] = Extension('test.extension', 'test.extension',
                                                  version='3.10')
-    verify_needs_extensions(app, app.config)
+    verify_needs_extensions(app, config)
 
     # 0.10 must satisfy a 0.6.0 minimum (not a string comparison)
-    app.config.needs_extensions = {'test.extension': '0.6.0'}
+    config.needs_extensions = {'test.extension': '0.6.0'}
     app.extensions['test.extension'] = Extension('test.extension', 'test.extension',
                                                  version='0.10.0')
-    verify_needs_extensions(app, app.config)
+    verify_needs_extensions(app, config)
 
     # needs_extensions not fulfilled
-    app.config.needs_extensions = {'test.extension': '3.11'}
+    config.needs_extensions = {'test.extension': '3.11'}
     app.extensions['test.extension'] = Extension('test.extension', 'test.extension',
                                                  version='3.10')
     with pytest.raises(VersionRequirementError):
-        verify_needs_extensions(app, app.config)
+        verify_needs_extensions(app, config)
