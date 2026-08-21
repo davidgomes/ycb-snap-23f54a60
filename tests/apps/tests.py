@@ -237,6 +237,12 @@ class AppsTests(SimpleTestCase):
             new_apps.get_model("apps", "TotallyNormal")
         self.assertEqual(new_apps.get_model("apps", "SoAlternative"), SoAlternative)
 
+    def test_clear_cache_clears_get_swappable_settings_name(self):
+        apps.get_swappable_settings_name("auth.User")
+        self.assertEqual(apps.get_swappable_settings_name.cache_info().currsize, 1)
+        apps.clear_cache()
+        self.assertEqual(apps.get_swappable_settings_name.cache_info().currsize, 0)
+
     def test_models_not_loaded(self):
         """
         apps.get_models() raises an exception if apps.models_ready isn't True.
