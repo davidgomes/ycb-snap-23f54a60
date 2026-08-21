@@ -13,7 +13,7 @@ class CachedDnsName:
 
     def get_fqdn(self):
         if not hasattr(self, '_fqdn'):
-            self._fqdn = socket.getfqdn()
+            self._fqdn = socket.getfqdn().encode('idna').decode('ascii')
         return self._fqdn
 
 
