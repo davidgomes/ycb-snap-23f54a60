@@ -1274,6 +1274,38 @@ def test_pdb_teardown_skipped(
     assert tracked == []
 
 
+def test_pdb_teardown_skipped_class(
+    pytester: Pytester, monkeypatch: MonkeyPatch
+) -> None:
+    """With --pdb, setUp and tearDown should not be called for class-level skips."""
+    tracked: List[str] = []
+    monkeypatch.setattr(
+        pytest, "test_pdb_teardown_skipped_class", tracked, raising=False
+    )
+
+    pytester.makepyfile(
+        """
+        import unittest
+        import pytest
+
+        @unittest.skip("skipped for reasons")
+        class MyTestCase(unittest.TestCase):
+
+            def setUp(self):
+                pytest.test_pdb_teardown_skipped_class.append("setUp:" + self.id())
+
+            def tearDown(self):
+                pytest.test_pdb_teardown_skipped_class.append("tearDown:" + self.id())
+
+            def test_1(self):
+                pass
+    """
+    )
+    result = pytester.runpytest_inprocess("--pdb")
+    result.stdout.fnmatch_lines("* 1 skipped in *")
+    assert tracked == []
+
+
 def test_async_support(pytester: Pytester) -> None:
     pytest.importorskip("unittest.async_case")
 
