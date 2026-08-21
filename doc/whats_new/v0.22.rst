@@ -572,6 +572,10 @@ Changelog
   :class:`svm.OneClassSVM` was previously non-initialized, and had size 2. It
   has now size 1 with the correct value. :pr:`15099` by `Nicolas Hug`_.
 
+- |Fix| Fixed a bug in :class:`svm.SVR` and other libsvm-based estimators where
+  fitting sparse data with no support vectors raised a ``ZeroDivisionError``.
+  :pr:`14894` by :user:`Danna Naser <danna-naser>`.
+
 :mod:`sklearn.tree`
 ...................
 
