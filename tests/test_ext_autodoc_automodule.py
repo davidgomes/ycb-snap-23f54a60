@@ -128,6 +128,7 @@ def test_automodule_special_members(app):
 def test_subclass_of_mocked_object(app):
     sys.modules.pop('target', None)  # unload target module to clear the module cache
 
-    options = {'members': None}
+    options = {'members': None, 'show-inheritance': None}
     actual = do_autodoc(app, 'module', 'target.need_mocks', options)
     assert '.. py:class:: Inherited(*args: Any, **kwargs: Any)' in actual
+    assert '   Bases: :py:class:`missing_module.Class`' in actual

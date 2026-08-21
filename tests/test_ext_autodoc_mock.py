@@ -40,6 +40,12 @@ def test_MockObject():
     assert isinstance(mock.attr1.attr2, _MockObject)
     assert isinstance(mock.attr1.attr2.meth(), _MockObject)
 
+    assert mock.some_attr.__name__ == 'some_attr'
+    assert mock.some_attr.__qualname__ == 'some_attr'
+    assert mock.attr1.attr2.__name__ == 'attr2'
+    assert mock.attr1.attr2.__qualname__ == 'attr2'
+    assert mock.attr1.attr2.__module__ == '_MockObject.attr1'
+
     # subclassing
     class SubClass(mock.SomeClass):
         """docstring of SubClass"""
