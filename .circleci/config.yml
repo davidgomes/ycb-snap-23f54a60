@@ -1,0 +1,89 @@
+version: 2.1
+
+# Parameters required to trigger the execution
+# of the "doc-min-dependencies" and "doc" jobs
+parameters:
+  GITHUB_RUN_URL:
+    type: string
+    default: "none"
+
+jobs:
+  doc-min-dependencies:
+    docker:
+      - image: cimg/python:3.8.12
+    environment:
+      - GITHUB_ARTIFACT_URL: << pipeline.parameters.GITHUB_RUN_URL >>/doc-min-dependencies.zip
+    steps:
+      - checkout
+      - run: bash build_tools/circle/download_documentation.sh
+      - store_artifacts:
+          path: doc/_build/html/stable
+          destination: doc
+
+  doc:
+    docker:
+      - image: cimg/python:3.8.12
+    environment:
+      - GITHUB_ARTIFACT_URL: << pipeline.parameters.GITHUB_RUN_URL >>/doc.zip
+    steps:
+      - checkout
+      - run: bash build_tools/circle/download_documentation.sh
+      - store_artifacts:
+          path: doc/_build/html/stable
+          destination: doc
+      # Persists the generated documentation, so that it
+      # can be attached and deployed in the "deploy" job
+      - persist_to_workspace:
+          root: doc/_build/html
+          paths: .
+
+  deploy:
+    docker:
+      - image: cimg/python:3.8.12
+    steps:
+      - checkout
+      - run: ./build_tools/circle/checkout_merge_commit.sh
+      # Attach documentation generated in the 'doc' step so that it can be
+      # deployed.
+      - attach_workspace:
+          at: doc/_build/html
+      - run: ls -ltrh doc/_build/html/stable
+      - deploy:
+          command: |
+            if [[ "${CIRCLE_BRANCH}" =~ ^main$|^[0-9]+\.[0-9]+\.X$ ]]; then
+              bash build_tools/circle/push_doc.sh doc/_build/html/stable
+            fi
+
+  # This noop job is required for the pipeline to exist, so that the
+  # documentation related jobs can be triggered.
+  noop:
+    docker:
+      - image: cimg/python:3.8.12
+    steps:
+    - run: |
+        echo "This is no-op job for the pipeline to exist, so that it triggers "
+        echo "Circle CI jobs pushing the artifacts of the documentation built "
+        echo "via GitHub actions."
+
+workflows:
+  version: 2
+
+  build-doc-and-deploy:
+    when:
+      not:
+        equal: [ "none", << pipeline.parameters.GITHUB_RUN_URL >> ]
+    # The jobs should run only when triggered by the workflow
+    jobs:
+      - doc-min-dependencies
+      - doc
+      - deploy:
+          requires:
+            - doc
+
+  noop:
+    when:
+      equal: [ "none", << pipeline.parameters.GITHUB_RUN_URL >> ]
+    # Prevent double execution of this job: on push
+    # by default and when triggered by the workflow
+    jobs:
+      - noop
