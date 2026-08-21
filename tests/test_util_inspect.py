@@ -341,6 +341,19 @@ def test_signature_from_str_positionaly_only_args():
     assert sig.parameters['b'].kind == Parameter.POSITIONAL_OR_KEYWORD
 
 
+@pytest.mark.skipif(sys.version_info < (3, 8),
+                    reason='python-3.8 or above is required')
+def test_signature_from_str_positional_only_default_values():
+    sig = inspect.signature_from_str('(a, b=0, /, c=1)')
+    assert list(sig.parameters.keys()) == ['a', 'b', 'c']
+    assert sig.parameters['a'].kind == Parameter.POSITIONAL_ONLY
+    assert sig.parameters['a'].default == Parameter.empty
+    assert sig.parameters['b'].kind == Parameter.POSITIONAL_ONLY
+    assert sig.parameters['b'].default == '0'
+    assert sig.parameters['c'].kind == Parameter.POSITIONAL_OR_KEYWORD
+    assert sig.parameters['c'].default == '1'
+
+
 def test_signature_from_str_invalid():
     with pytest.raises(SyntaxError):
         inspect.signature_from_str('')
