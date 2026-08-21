@@ -1274,6 +1274,14 @@ def test_capture_not_started_but_reset():
     capsys.stop_capturing()
 
 
+def test_encodedfile_mode_is_not_binary():
+    class Buffer(object):
+        mode = "rb+"
+
+    encoded = capture.EncodedFile(Buffer(), "utf-8")
+    assert "b" not in encoded.mode
+
+
 def test_using_capsys_fixture_works_with_sys_stdout_encoding(capsys):
     test_text = "test text"
 

@@ -1,0 +1,3 @@
+Fix ``EncodedFile`` advertising a binary ``mode`` (for example ``rb+``) even
+though ``write()`` only accepts text. Libraries that check ``"b" in out.mode``
+to decide whether to write ``bytes`` no longer fail under captured stdout.
