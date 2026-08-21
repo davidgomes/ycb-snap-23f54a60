@@ -539,7 +539,7 @@ def _make_run_options(self: Run) -> Options:
             "verbose",
             {
                 "action": _DoNothingAction,
-                "kwargs": {},
+                "kwargs": {"nargs": 0},
                 "short": "v",
                 "help": "In verbose mode, extra non-checker-related info "
                 "will be displayed.",
@@ -550,7 +550,7 @@ def _make_run_options(self: Run) -> Options:
             "enable-all-extensions",
             {
                 "action": _DoNothingAction,
-                "kwargs": {},
+                "kwargs": {"nargs": 0},
                 "help": "Load and enable all available extensions. "
                 "Use --list-extensions to see a list all available extensions.",
                 "hide_from_config_file": True,

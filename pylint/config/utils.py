@@ -210,6 +210,10 @@ PREPROCESSABLE_OPTIONS: dict[
     "--enable-all-extensions": (False, _enable_all_extensions),
 }
 
+SHORT_PREPROCESSABLE_OPTIONS: dict[str, str] = {
+    "-v": "--verbose",
+}
+
 
 def _preprocess_options(run: Run, args: Sequence[str]) -> list[str]:
     """Preprocess options before full config parsing has started."""
@@ -218,6 +222,8 @@ def _preprocess_options(run: Run, args: Sequence[str]) -> list[str]:
     i = 0
     while i < len(args):
         argument = args[i]
+        if argument in SHORT_PREPROCESSABLE_OPTIONS:
+            argument = SHORT_PREPROCESSABLE_OPTIONS[argument]
         if not argument.startswith("--"):
             processed_args.append(argument)
             i += 1
