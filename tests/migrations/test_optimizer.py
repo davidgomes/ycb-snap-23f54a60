@@ -218,6 +218,37 @@ class OptimizerTests(SimpleTestCase):
             migrations.AlterOrderWithRespectTo("Foo", "b"),
         )
 
+    def test_optimize_elidable_alter_together(self):
+        """
+        Interleaved AlterUniqueTogether and AlterIndexTogether operations on
+        the same model collapse to the last of each type.
+        """
+        self.assertOptimizesTo(
+            [
+                migrations.AlterUniqueTogether("Foo", set()),
+                migrations.AlterIndexTogether("Foo", set()),
+                migrations.AlterUniqueTogether("Foo", {("a",)}),
+                migrations.AlterIndexTogether("Foo", {("a",)}),
+            ],
+            [
+                migrations.AlterUniqueTogether("Foo", {("a",)}),
+                migrations.AlterIndexTogether("Foo", {("a",)}),
+            ],
+        )
+
+    def test_alter_together_does_not_optimize_through_alter_field(self):
+        """
+        AlterField still blocks AlterFooTogether reduction so constraints can
+        be dropped before the field change and recreated after it.
+        """
+        self.assertDoesNotOptimize(
+            [
+                migrations.AlterUniqueTogether("Foo", set()),
+                migrations.AlterField("Foo", "a", models.IntegerField()),
+                migrations.AlterUniqueTogether("Foo", {("a",)}),
+            ],
+        )
+
     def test_optimize_through_create(self):
         """
         We should be able to optimize away create/delete through a create or delete
