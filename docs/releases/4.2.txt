@@ -194,6 +194,9 @@ Migrations
 
 * Migrations now support serialization of ``enum.Flag`` objects.
 
+* Fixed a crash when migrating a ``ManyToManyField`` whose ``through`` model
+  is defined in a different app.
+
 Models
 ~~~~~~
 
