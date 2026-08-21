@@ -120,9 +120,19 @@ class TestCaseFunction(Function):
         if hasattr(self, "_request"):
             self._request._fillfixtures()
 
+    def _is_unittest_skip(self):
+        if getattr(self._obj, "__unittest_skip_why__", None) is not None:
+            return True
+        if self._testcase is not None and getattr(
+            self._testcase.__class__, "__unittest_skip_why__", None
+        ) is not None:
+            return True
+        return False
+
     def teardown(self):
         if self._explicit_tearDown is not None:
-            self._explicit_tearDown()
+            if not self._is_unittest_skip():
+                self._explicit_tearDown()
             self._explicit_tearDown = None
         self._testcase = None
         self._obj = None
@@ -220,7 +230,7 @@ class TestCaseFunction(Function):
             # arguably we could always postpone tearDown(), but this changes the moment where the
             # TestCase instance interacts with the results object, so better to only do it
             # when absolutely needed
-            if self.config.getoption("usepdb"):
+            if self.config.getoption("usepdb") and not self._is_unittest_skip():
                 self._explicit_tearDown = self._testcase.tearDown
                 setattr(self._testcase, "tearDown", lambda *args: None)
 
