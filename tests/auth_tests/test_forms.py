@@ -458,6 +458,15 @@ class AuthenticationFormTest(TestDataMixin, TestCase):
         form = AuthenticationForm()
         self.assertEqual(form.fields['username'].widget.attrs.get('autocapitalize'), 'none')
 
+    def test_username_field_maxlength(self):
+        form = AuthenticationForm()
+        username_max_length = User._meta.get_field(User.USERNAME_FIELD).max_length or 254
+        self.assertEqual(form.fields['username'].max_length, username_max_length)
+        self.assertEqual(
+            form.fields['username'].widget.attrs['maxlength'],
+            str(username_max_length),
+        )
+
     def test_username_field_label_empty_string(self):
 
         class CustomAuthenticationForm(AuthenticationForm):
