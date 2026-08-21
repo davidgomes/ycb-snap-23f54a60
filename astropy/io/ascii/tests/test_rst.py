@@ -185,3 +185,31 @@ Col1      Col2 Col3 Col4
 ==== ========= ==== ====
 """,
     )
+
+
+def test_rst_header_rows():
+    """Round-trip RST table with multiple header rows."""
+    from astropy.table import QTable
+    import astropy.units as u
+
+    tbl = QTable(
+        {"wave": [350, 950] * u.nm, "response": [0.7, 1.2] * u.count}
+    )
+    header_rows = ["name", "unit"]
+    out = StringIO()
+    ascii.write(tbl, out, format="rst", header_rows=header_rows)
+    expected = """\
+===== ========
+ wave response
+   nm       ct
+===== ========
+350.0      0.7
+950.0      1.2
+===== ========
+"""
+    assert_equal_splitlines(out.getvalue(), expected)
+
+    dat = ascii.read(out.getvalue(), format="rst", header_rows=header_rows)
+    assert_equal(dat.colnames, ["wave", "response"])
+    assert dat["wave"].unit == u.nm
+    assert dat["response"].unit == u.count
