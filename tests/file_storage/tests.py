@@ -29,7 +29,10 @@ from django.test.utils import requires_tz_support
 from django.urls import NoReverseMatch, reverse_lazy
 from django.utils import timezone
 
-from .models import Storage, temp_storage, temp_storage_location
+from .models import (
+    CallableStorage, Storage, callable_storage, temp_storage,
+    temp_storage_location,
+)
 
 FILE_SUFFIX_REGEX = '[A-Za-z0-9]{7}'
 
@@ -911,6 +914,32 @@ class FieldCallableFileStorageTests(SimpleTestCase):
         self.assertEqual(obj.storage_callable.storage, temp_storage)
         self.assertEqual(obj.storage_callable.storage.location, temp_storage_location)
         self.assertIsInstance(obj.storage_callable_class.storage, BaseStorage)
+
+    def test_deconstruction(self):
+        """
+        Deconstructing gives the original callable, not the evaluated value.
+        """
+        obj = Storage()
+        *_, kwargs = obj._meta.get_field('storage_callable').deconstruct()
+        storage = kwargs['storage']
+        self.assertIs(storage, callable_storage)
+
+    def test_deconstruction_storage_callable_class(self):
+        obj = Storage()
+        *_, kwargs = obj._meta.get_field('storage_callable_class').deconstruct()
+        self.assertIs(kwargs['storage'], CallableStorage)
+
+    def test_deconstruction_storage_callable_default(self):
+        """
+        A callable that returns default_storage is not omitted when
+        deconstructing.
+        """
+        def get_storage():
+            return default_storage
+
+        field = FileField(storage=get_storage)
+        *_, kwargs = field.deconstruct()
+        self.assertIs(kwargs['storage'], get_storage)
 
 
 # Tests for a race condition on file saving (#4948).
