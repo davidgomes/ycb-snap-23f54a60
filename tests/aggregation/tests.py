@@ -5,8 +5,8 @@ from decimal import Decimal
 from django.core.exceptions import FieldError
 from django.db import connection
 from django.db.models import (
-    Avg, Count, DecimalField, DurationField, F, FloatField, Func, IntegerField,
-    Max, Min, Sum, Value,
+    Avg, Case, Count, DecimalField, DurationField, F, FloatField, Func,
+    IntegerField, Max, Min, Sum, Value, When,
 )
 from django.test import TestCase
 from django.test.utils import Approximate, CaptureQueriesContext
@@ -394,6 +394,12 @@ class AggregateTestCase(TestCase):
             Book.objects.aggregate(n=Count("*"))
         sql = ctx.captured_queries[0]['sql']
         self.assertIn('SELECT COUNT(*) ', sql)
+
+    def test_count_distinct_expression(self):
+        aggs = Book.objects.aggregate(
+            distinct_ratings=Count(Case(When(pages__gt=300, then='rating')), distinct=True),
+        )
+        self.assertEqual(aggs['distinct_ratings'], 4)
 
     def test_non_grouped_annotation_not_in_group_by(self):
         """
