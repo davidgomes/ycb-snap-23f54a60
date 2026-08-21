@@ -1,0 +1,1 @@
+Fixed tearDown being executed on skipped ``unittest`` tests when running with ``--pdb``.
