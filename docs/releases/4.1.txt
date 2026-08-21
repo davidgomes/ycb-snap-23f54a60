@@ -154,7 +154,8 @@ Logging
 Management Commands
 ~~~~~~~~~~~~~~~~~~~
 
-* ...
+* The :djadmin:`runserver` auto-reloader now passes CPython ``-X`` options to
+  the child process.
 
 Migrations
 ~~~~~~~~~~
