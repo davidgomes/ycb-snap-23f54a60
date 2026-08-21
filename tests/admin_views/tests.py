@@ -8464,6 +8464,24 @@ class AdminSiteFinalCatchAllPatternTests(TestCase):
         )
 
     @override_settings(APPEND_SLASH=True)
+    def test_missing_slash_append_slash_true_query_string(self):
+        superuser = User.objects.create_user(
+            username="staff",
+            password="secret",
+            email="staff@example.com",
+            is_staff=True,
+        )
+        self.client.force_login(superuser)
+        known_url = reverse("admin:admin_views_article_changelist")
+        response = self.client.get(known_url[:-1], {"id": "123"})
+        self.assertRedirects(
+            response,
+            known_url + "?id=123",
+            status_code=301,
+            target_status_code=403,
+        )
+
+    @override_settings(APPEND_SLASH=True)
     def test_missing_slash_append_slash_true_script_name(self):
         superuser = User.objects.create_user(
             username="staff",
