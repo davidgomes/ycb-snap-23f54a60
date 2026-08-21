@@ -246,6 +246,10 @@ Changelog
   :class:`feature_extraction.text.TfidfVectorizer`.
   :pr:`14602` by :user:`Gaurav Chawla <getgaurav2>`.
 
+- |Fix| `feature_extraction.text.strip_accents_unicode` now correctly
+  removes accents from strings that are in NFKD normalized form. :pr:`15100` by
+  :user:`Daniel Grady <DGrady>`.
+
 - |Fix| Functions created by ``build_preprocessor`` and ``build_analyzer`` of
   :class:`feature_extraction.text.VectorizerMixin` can now be pickled.
   :pr:`14430` by :user:`Dillon Niederhut <deniederhut>`.
