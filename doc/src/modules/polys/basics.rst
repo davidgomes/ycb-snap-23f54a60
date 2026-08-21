@@ -539,8 +539,9 @@ factors (not necessarily irreducible) of degree 1, 2 etc.::
     (1, [(x + 2, 1), (x**2 + x, 2)])
 
     >>> sqf(f)
-                2
-    (x + 2)*(x  + x)
+                    2
+            / 2    \ 
+    (x + 2)*\x  + x/ 
 
 Factorization
 -------------
