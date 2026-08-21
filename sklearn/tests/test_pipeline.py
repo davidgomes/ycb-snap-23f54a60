@@ -540,6 +540,14 @@ def test_pipeline_slice():
     assert_raises(ValueError, lambda: pipe[::-1])
 
 
+def test_pipeline_len():
+    pipe = Pipeline([('transf1', Transf()),
+                     ('transf2', Transf()),
+                     ('clf', FitParamT())])
+    assert len(pipe) == 3
+    assert pipe[:len(pipe)].steps == pipe.steps
+
+
 def test_pipeline_index():
     transf = Transf()
     clf = FitParamT()
@@ -1069,5 +1077,6 @@ def test_make_pipeline_memory():
     assert pipeline.memory is memory
     pipeline = make_pipeline(DummyTransf(), SVC())
     assert pipeline.memory is None
+    assert len(pipeline) == 2
 
     shutil.rmtree(cachedir)
