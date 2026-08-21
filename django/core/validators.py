@@ -101,6 +101,10 @@ class URLValidator(RegexValidator):
     def __call__(self, value):
         if not isinstance(value, str):
             raise ValidationError(self.message, code=self.code, params={'value': value})
+        # Prohibit newlines, carriage returns, and tabs (CVE-2021-32052 /
+        # bpo-43882: urllib.parse strips these before splitting).
+        if '\n' in value or '\r' in value or '\t' in value:
+            raise ValidationError(self.message, code=self.code, params={'value': value})
         # Check if the scheme is valid.
         scheme = value.split('://')[0].lower()
         if scheme not in self.schemes:
