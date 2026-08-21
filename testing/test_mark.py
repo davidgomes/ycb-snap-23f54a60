@@ -561,6 +561,30 @@ class TestFunctional:
         items, rec = pytester.inline_genitems(p)
         self.assert_markers(items, test_foo=("a", "b", "c"), test_bar=("a", "b", "d"))
 
+    def test_mark_decorator_multiple_baseclasses_merged(
+        self, pytester: Pytester
+    ) -> None:
+        """Marks from all base classes in the MRO should apply (#7792)."""
+        p = pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.foo
+            class Foo:
+                pass
+
+            @pytest.mark.bar
+            class Bar:
+                pass
+
+            class TestDings(Foo, Bar):
+                def test_dings(self):
+                    pass
+        """
+        )
+        items, rec = pytester.inline_genitems(p)
+        self.assert_markers(items, test_dings=("foo", "bar"))
+
     def test_mark_closest(self, pytester: Pytester) -> None:
         p = pytester.makepyfile(
             """
@@ -1109,3 +1133,27 @@ def test_marker_expr_eval_failure_handling(pytester: Pytester, expr) -> None:
     result = pytester.runpytest(foo, "-m", expr)
     result.stderr.fnmatch_lines([expected])
     assert result.ret == ExitCode.USAGE_ERROR
+
+
+def test_mark_mro() -> None:
+    xfail = pytest.mark.xfail
+
+    @xfail("a")
+    class A:
+        pass
+
+    @xfail("b")
+    class B:
+        pass
+
+    @xfail("c")
+    class C(A, B):
+        pass
+
+    from _pytest.mark.structures import get_unpacked_marks
+
+    all_marks = get_unpacked_marks(C)
+
+    assert all_marks == [xfail("c").mark, xfail("a").mark, xfail("b").mark]
+
+    assert get_unpacked_marks(C, consider_mro=False) == [xfail("c").mark]
