@@ -517,7 +517,6 @@ def test_similar_checker_skips_when_min_similarity_is_zero() -> None:
     linter = PyLinter(reporter=Reporter())
     checker = similar.SimilarChecker(linter)
     checker.set_option("min-similarity-lines", 0)
-    checker.open()
     with open(SIMILAR1, encoding="utf-8") as stream:
         checker.append_stream(SIMILAR1, stream)
     with open(SIMILAR2, encoding="utf-8") as stream:
