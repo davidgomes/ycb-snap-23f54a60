@@ -175,6 +175,22 @@ class ModelInheritanceTests(TestCase):
         self.assertIs(C._meta.parents[A], C._meta.get_field('a'))
 
     @isolate_apps('model_inheritance')
+    def test_parent_link_with_multiple_one_to_one(self):
+        class Document(models.Model):
+            pass
+
+        class Picking(Document):
+            document_ptr = models.OneToOneField(
+                Document, on_delete=models.CASCADE, parent_link=True,
+                related_name='+',
+            )
+            origin = models.OneToOneField(
+                Document, related_name='picking', on_delete=models.PROTECT,
+            )
+
+        self.assertIs(Picking._meta.parents[Document], Picking._meta.get_field('document_ptr'))
+
+    @isolate_apps('model_inheritance')
     def test_init_subclass(self):
         saved_kwargs = {}
 
