@@ -819,6 +819,26 @@ class ChangeListTests(TestCase):
         pks = m._get_edited_object_pks(request, prefix='form')
         self.assertEqual(sorted(pks), sorted([str(a.pk), str(b.pk), str(c.pk)]))
 
+    def test_get_edited_object_pks_with_regex_special_characters_in_prefix(self):
+        a = Swallow.objects.create(origin='Swallow A', load=4, speed=1)
+        b = Swallow.objects.create(origin='Swallow B', load=2, speed=2)
+        prefix = 'form.test'
+        data = {
+            f'{prefix}-TOTAL_FORMS': '2',
+            f'{prefix}-INITIAL_FORMS': '2',
+            f'{prefix}-MIN_NUM_FORMS': '0',
+            f'{prefix}-MAX_NUM_FORMS': '1000',
+            f'{prefix}-0-uuid': str(a.pk),
+            f'{prefix}-1-uuid': str(b.pk),
+            # Would match prefix 'form.test' if '.' weren't escaped in the regex.
+            'formXtest-0-uuid': str(a.pk),
+        }
+        changelist_url = reverse('admin:admin_changelist_swallow_changelist')
+        m = SwallowAdmin(Swallow, custom_site)
+        request = self.factory.post(changelist_url, data=data)
+        pks = m._get_edited_object_pks(request, prefix=prefix)
+        self.assertEqual(sorted(pks), sorted([str(a.pk), str(b.pk)]))
+
     def test_get_list_editable_queryset(self):
         a = Swallow.objects.create(origin='Swallow A', load=4, speed=1)
         Swallow.objects.create(origin='Swallow B', load=2, speed=2)
