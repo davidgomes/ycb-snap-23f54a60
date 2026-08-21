@@ -390,6 +390,8 @@ class Similar:
 
     def run(self) -> None:
         """start looking for similarities and display results on stdout"""
+        if self.min_lines == 0:
+            return
         self._display_sims(self._compute_sims())
 
     def _compute_sims(self) -> List[Tuple[int, Set[LinesChunkLimits_T]]]:
@@ -739,7 +741,10 @@ class SimilarChecker(BaseChecker, Similar, MapReduceMixin):
                 "default": DEFAULT_MIN_SIMILARITY_LINE,
                 "type": "int",
                 "metavar": "<int>",
-                "help": "Minimum lines number of a similarity.",
+                "help": (
+                    "Minimum lines number of a similarity. "
+                    "Set to 0 to disable the similar code checker."
+                ),
             },
         ),
         (
@@ -830,6 +835,8 @@ class SimilarChecker(BaseChecker, Similar, MapReduceMixin):
 
     def close(self):
         """compute and display similarities on closing (i.e. end of parsing)"""
+        if self.min_lines == 0:
+            return
         total = sum(len(lineset) for lineset in self.linesets)
         duplicated = 0
         stats = self.stats

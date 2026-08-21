@@ -1112,6 +1112,54 @@ class TestRunTC:
             expected_output=expected_output,
         )
 
+    def test_duplicate_code_disabled_with_min_similarity_zero(self) -> None:
+        path = join(HERE, "regrtest_data", "duplicate_data_raw_strings")
+        out = StringIO()
+        code = self._run_pylint(
+            [
+                path,
+                "--disable=all",
+                "--enable=duplicate-code",
+                "--min-similarity-lines=0",
+            ],
+            out=out,
+        )
+        output = out.getvalue()
+        assert code == 0
+        assert "Similar lines" not in output
+        assert "duplicate-code" not in output
+        assert "R0801" not in output
+
+    def test_duplicate_code_disabled_with_min_similarity_zero_rcfile(
+        self, tmpdir: LocalPath
+    ) -> None:
+        path = join(HERE, "regrtest_data", "duplicate_data_raw_strings")
+        rcfile = tmpdir / "pylintrc"
+        rcfile.write_text(
+            textwrap.dedent(
+                """
+                [SIMILARITIES]
+                min-similarity-lines=0
+                """
+            ),
+            encoding="utf-8",
+        )
+        out = StringIO()
+        code = self._run_pylint(
+            [
+                path,
+                "--disable=all",
+                "--enable=duplicate-code",
+                f"--rcfile={rcfile}",
+            ],
+            out=out,
+        )
+        output = out.getvalue()
+        assert code == 0
+        assert "Similar lines" not in output
+        assert "duplicate-code" not in output
+        assert "R0801" not in output
+
     def test_regression_parallel_mode_without_filepath(self) -> None:
         # Test that parallel mode properly passes filepath
         # https://github.com/PyCQA/pylint/issues/3564
