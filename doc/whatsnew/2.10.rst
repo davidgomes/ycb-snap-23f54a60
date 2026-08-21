@@ -1,0 +1,26 @@
+***************************
+ What's New in Pylint 2.10
+***************************
+
+:Release: 2.10
+:Date: TBA
+
+Summary -- Release highlights
+=============================
+
+
+New checkers
+============
+
+* Added ``unspecified-encoding``: Emitted when open() is called without specifying an encoding
+
+  Closes #3826
+
+
+Other Changes
+=============
+
+
+* Performance of the Similarity checker has been improved.
+
+* Added ``time.clock`` to deprecated functions/methods for python 3.3
