@@ -34,6 +34,8 @@ def _line_type(line, delimiter=None):
     --------
     >>> _line_type("READ SERR 3")
     'command'
+    >>> _line_type("read serr 1 2")
+    'command'
     >>> _line_type(" \\n    !some gibberish")
     'comment'
     >>> _line_type("   ")
@@ -60,7 +62,7 @@ def _line_type(line, delimiter=None):
     ValueError: Unrecognized QDP line...
     """
     _decimal_re = r"[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?"
-    _command_re = r"READ [TS]ERR(\s+[0-9]+)+"
+    _command_re = r"(?i:READ [TS]ERR(?:\s+[0-9]+)+)"
 
     sep = delimiter
     if delimiter is None:
