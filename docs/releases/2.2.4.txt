@@ -1,0 +1,26 @@
+==========================
+Django 2.2.4 release notes
+==========================
+
+*August 1, 2019*
+
+Django 2.2.4 fixes security issues and several bugs in 2.2.3.
+
+Bugfixes
+========
+
+* Fixed a regression in Django 2.2 when ordering a ``QuerySet.union()``,
+  ``intersection()``, or ``difference()`` by a field type present more than
+  once results in the wrong ordering being used (:ticket:`30628`).
+
+* Fixed a migration crash on PostgreSQL when adding a check constraint
+  with a ``contains`` lookup on
+  :class:`~django.contrib.postgres.fields.DateRangeField` or
+  :class:`~django.contrib.postgres.fields.DateTimeRangeField`, if the right
+  hand side of an expression is the same type (:ticket:`30621`).
+
+* Fixed a regression in Django 2.2 where auto-reloader crashes if a file path
+  contains nulls characters (``'\x00'``) (:ticket:`30506`).
+
+* Fixed a regression in Django 2.2 where auto-reloader crashes if a translation
+  directory cannot be resolved (:ticket:`30647`).
