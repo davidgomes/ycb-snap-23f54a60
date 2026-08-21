@@ -91,6 +91,23 @@ class AutocompleteJsonViewTests(AdminViewBasicTestCase):
             'pagination': {'more': False},
         })
 
+    def test_serialize_result(self):
+        q = Question.objects.create(question='Is this a question?')
+        request = self.factory.get(self.url, {'term': 'is', **self.opts})
+        request.user = self.superuser
+
+        class CustomAutocompleteJsonView(AutocompleteJsonView):
+            def serialize_result(self, obj, to_field_name):
+                return super().serialize_result(obj, to_field_name) | {'notes': 'note'}
+
+        response = CustomAutocompleteJsonView.as_view(**self.as_view_args)(request)
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content.decode('utf-8'))
+        self.assertEqual(data, {
+            'results': [{'id': str(q.pk), 'text': q.question, 'notes': 'note'}],
+            'pagination': {'more': False},
+        })
+
     def test_custom_to_field(self):
         q = Question.objects.create(question='Is this a question?')
         request = self.factory.get(self.url, {'term': 'is', **self.opts, 'field_name': 'question_with_to_field'})
