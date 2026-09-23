@@ -273,9 +273,9 @@ def tensor_product_simp_Mul(e):
 
     Current the main use of this is to simplify a ``Mul`` of ``TensorProduct``s
     to a ``TensorProduct`` of ``Muls``. It currently only works for relatively
-    simple cases where the initial ``Mul`` only has scalars and raw
-    ``TensorProduct``s, not ``Add``, ``Pow``, ``Commutator``s of
-    ``TensorProduct``s.
+    simple cases where the initial ``Mul`` only has scalars, raw
+    ``TensorProduct``s and powers of raw ``TensorProduct``s, not ``Add``,
+    ``Commutator``s of ``TensorProduct``s.
 
     Parameters
     ==========
@@ -310,14 +310,17 @@ def tensor_product_simp_Mul(e):
 
     """
     # TODO: This won't work with Muls that have other composites of
-    # TensorProducts, like an Add, Pow, Commutator, etc.
+    # TensorProducts, like an Add, Commutator, etc.
     # TODO: This only works for the equivalent of single Qbit gates.
     if not isinstance(e, Mul):
         return e
     c_part, nc_part = e.args_cnc()
+    nc_part = [tensor_product_simp_Pow(nc) for nc in nc_part]
     n_nc = len(nc_part)
-    if n_nc == 0 or n_nc == 1:
+    if n_nc == 0:
         return e
+    elif n_nc == 1:
+        return Mul(*c_part) * nc_part[0]
     elif e.has(TensorProduct):
         current = nc_part[0]
         if not isinstance(current, TensorProduct):
@@ -345,13 +348,39 @@ def tensor_product_simp_Mul(e):
         return e
 
 
+def tensor_product_simp_Pow(e):
+    """Evaluate a ``Pow`` whose base is a ``TensorProduct``.
+
+    The power is distributed over the arguments of the ``TensorProduct``.
+
+    Examples
+    ========
+
+        >>> from sympy.physics.quantum.tensorproduct import \
+                    tensor_product_simp_Pow, TensorProduct
+        >>> from sympy import Symbol
+        >>> A = Symbol('A',commutative=False)
+        >>> B = Symbol('B',commutative=False)
+        >>> e = TensorProduct(A,B)**2
+        >>> e
+        AxB**2
+        >>> tensor_product_simp_Pow(e)
+        (A**2)x(B**2)
+
+    """
+    if isinstance(e, Pow) and isinstance(e.base, TensorProduct):
+        return TensorProduct(*[b**e.exp for b in e.base.args])
+    return e
+
+
 def tensor_product_simp(e, **hints):
     """Try to simplify and combine TensorProducts.
 
     In general this will try to pull expressions inside of ``TensorProducts``.
     It currently only works for relatively simple cases where the products have
-    only scalars, raw ``TensorProducts``, not ``Add``, ``Pow``, ``Commutators``
-    of ``TensorProducts``. It is best to see what it does by showing examples.
+    only scalars, raw ``TensorProducts`` and powers of raw ``TensorProducts``,
+    not ``Add``, ``Commutators`` of ``TensorProducts``. It is best to see what
+    it does by showing examples.
 
     Examples
     ========
@@ -376,13 +405,19 @@ def tensor_product_simp(e, **hints):
     commutators and anticommutators as well:
 
     >>> tensor_product_simp(e**2)
-    (A*C)x(B*D)**2
+    ((A*C)**2)x((B*D)**2)
+
+    Powers of tensor products are evaluated by distributing the exponent over
+    the factors:
+
+    >>> tensor_product_simp(TensorProduct(A,B)**2)
+    (A**2)x(B**2)
 
     """
     if isinstance(e, Add):
         return Add(*[tensor_product_simp(arg) for arg in e.args])
     elif isinstance(e, Pow):
-        return tensor_product_simp(e.base) ** e.exp
+        return tensor_product_simp_Pow(tensor_product_simp(e.base) ** e.exp)
     elif isinstance(e, Mul):
         return tensor_product_simp_Mul(e)
     elif isinstance(e, Commutator):
