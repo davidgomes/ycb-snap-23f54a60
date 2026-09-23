@@ -1239,6 +1239,32 @@ class TestRunTC:
             code=0,
         )
 
+    @pytest.mark.parametrize(
+        "ignore_value",
+        ["--ignore=ignored_subdirectory", "--ignore-patterns=ignored_.*"],
+    )
+    def test_ignore_recursive(self, ignore_value):
+        self._runtest(
+            [join(HERE, "regrtest_data", "directory"), "--recursive=y", ignore_value],
+            code=0,
+        )
+
+    def test_ignore_path_recursive(self):
+        self._runtest(
+            [
+                join(HERE, "regrtest_data", "directory"),
+                "--recursive=y",
+                "--ignore-paths=.*ignored.*",
+            ],
+            code=0,
+        )
+
+    def test_not_ignored_recursive(self):
+        self._runtest(
+            [join(HERE, "regrtest_data", "directory"), "--recursive=y"],
+            code=4,
+        )
+
     def test_recursive_current_dir(self):
         with _test_sys_path():
             # pytest is including directory HERE/regrtest_data to sys.path which causes
@@ -1251,7 +1277,7 @@ class TestRunTC:
             with _test_cwd():
                 os.chdir(join(HERE, "regrtest_data", "directory"))
                 self._runtest(
-                    [".", "--recursive=y"],
+                    [".", "--recursive=y", "--ignore=ignored_subdirectory"],
                     code=0,
                 )
 
