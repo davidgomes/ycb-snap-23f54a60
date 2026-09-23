@@ -251,6 +251,14 @@ Changelog
 - |Enhancement| :class:`model_selection.RandomizedSearchCV` now accepts lists
   of parameter distributions. :pr:`14549` by `Andreas Müller`_.
 
+:mod:`sklearn.multioutput`
+..........................
+
+- |Fix| :class:`multioutput.MultiOutputClassifier` now has attribute
+  ``classes_``, a list with the ``classes_`` of each fitted estimator. This
+  fixes :func:`model_selection.cross_val_predict` with
+  ``method='predict_proba'``. :pr:`14629`.
+
 :mod:`sklearn.pipeline`
 .......................
 
