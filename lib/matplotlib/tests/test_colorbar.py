@@ -919,6 +919,32 @@ def test_proportional_colorbars():
             fig.colorbar(CS3, spacing=spacings[j], ax=axs[i, j])
 
 
+@pytest.mark.parametrize('orientation', ['horizontal', 'vertical'])
+@pytest.mark.parametrize('extend, coloroffset, ys', [
+    ('both', 1, [0., 1., 2.]),
+    ('min', 0, [0., 1.]),
+    ('max', 0, [1., 2.]),
+    ('neither', -1, [1.]),
+])
+def test_colorbar_extend_drawedges(orientation, extend, coloroffset, ys):
+    cmap = plt.get_cmap("viridis")
+    bounds = np.arange(3)
+    nb_colors = len(bounds) + coloroffset
+    colors = cmap(np.linspace(100, 255, nb_colors).astype(int))
+    cmap, norm = mcolors.from_levels_and_colors(bounds, colors, extend=extend)
+
+    fig, ax = plt.subplots(figsize=(5, 1))
+    cbar = Colorbar(ax, cmap=cmap, norm=norm, orientation=orientation,
+                    drawedges=True)
+    if orientation == 'horizontal':
+        expected = [np.array([[y, 0.], [y, 1.]]) for y in ys]
+    else:
+        expected = [np.array([[0., y], [1., y]]) for y in ys]
+    np.testing.assert_array_equal(cbar.dividers.get_segments(), expected)
+    assert cbar.dividers.get_clip_on() is False
+    fig.canvas.draw()
+
+
 def test_negative_boundarynorm():
     fig, ax = plt.subplots(figsize=(1, 3))
     cmap = plt.get_cmap("viridis")

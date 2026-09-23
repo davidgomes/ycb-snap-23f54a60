@@ -432,10 +432,13 @@ class Colorbar:
             color=mpl.rcParams['axes.facecolor'], linewidth=0.01, zorder=-1)
         ax.add_artist(self._patch)
 
+        # Dividers at an extended end lie on the axes boundary (the base of
+        # the extension). Leave clipping off so that line is not cut in half.
         self.dividers = collections.LineCollection(
             [],
             colors=[mpl.rcParams['axes.edgecolor']],
-            linewidths=[0.5 * mpl.rcParams['axes.linewidth']])
+            linewidths=[0.5 * mpl.rcParams['axes.linewidth']],
+            clip_on=False)
         self.ax.add_collection(self.dividers)
 
         self._locator = None
@@ -651,8 +654,16 @@ class Colorbar:
             if not self.drawedges:
                 if len(self._y) >= self.n_rasterize:
                     self.solids.set_rasterized(True)
-        self.dividers.set_segments(
-            np.dstack([X, Y])[1:-1] if self.drawedges else [])
+        if self.drawedges:
+            # The first and last mesh rows are the ends of the inner bar.
+            # Skip an end that is already the outline; keep it when that end
+            # is the base of an extension, which the outline does not stroke.
+            start_idx = 0 if self._extend_lower() else 1
+            end_idx = len(X) if self._extend_upper() else -1
+            segments = np.dstack([X, Y])[start_idx:end_idx]
+        else:
+            segments = []
+        self.dividers.set_segments(segments)
 
     def _add_solids_patches(self, X, Y, C, mappable):
         hatches = mappable.hatches * len(C)  # Have enough hatches.
