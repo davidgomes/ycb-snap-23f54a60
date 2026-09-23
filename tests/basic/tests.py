@@ -139,6 +139,14 @@ class ModelInstanceCreationTests(TestCase):
         with self.assertNumQueries(1):
             PrimaryKeyWithDefault().save()
 
+    def test_save_primary_with_default_raw(self):
+        # An UPDATE is attempted for raw saves (e.g. loaddata) even when the
+        # primary key has a default.
+        obj = PrimaryKeyWithDefault.objects.create()
+        with self.assertNumQueries(1):
+            PrimaryKeyWithDefault(uuid=obj.pk).save_base(raw=True)
+        self.assertEqual(PrimaryKeyWithDefault.objects.count(), 1)
+
 
 class ModelTest(TestCase):
     def test_objects_attribute_is_only_available_on_the_class_itself(self):
