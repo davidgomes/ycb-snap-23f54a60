@@ -187,6 +187,17 @@ def test_glossary_warning(app, status, warning):
     assert ("case4.rst:3: WARNING: duplicate term description of term-case4, "
             "other instance in case4" in warning.getvalue())
 
+    # terms differing only in case are not duplicates
+    text = (".. glossary::\n"
+            "\n"
+            "   term-case5\n"
+            "   Term-Case5\n")
+    restructuredtext.parse(app, text, "case5")
+    assert "case5.rst" not in warning.getvalue()
+    objects = app.env.get_domain("std").objects
+    assert ("term", "term-case5") in objects
+    assert ("term", "Term-Case5") in objects
+
 
 def test_glossary_comment(app):
     text = (".. glossary::\n"
