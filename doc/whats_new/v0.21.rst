@@ -234,6 +234,9 @@ Support for Python 3.4 and below has been officially dropped.
   now supports fitting the intercept (i.e. ``fit_intercept=True``) when
   inputs are sparse . :issue:`13336` by :user:`Bartosz Telenczuk <btel>`
 
+- |Fix| :class:`linear_model.HuberRegressor` now converts boolean ``X`` to
+  float instead of raising a ``TypeError`` in ``fit``. :issue:`13328`.
+
 :mod:`sklearn.manifold`
 ............................
 
