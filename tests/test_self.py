@@ -1429,6 +1429,9 @@ class TestCallbackOptions:
             run = Run(["--verbose=True"])
             assert run.verbose
 
+        run = Run(["-v", join(HERE, "regrtest_data", "empty.py")], exit=False)
+        assert run.verbose
+
     @staticmethod
     def test_enable_all_extensions() -> None:
         """Test to see if --enable-all-extensions does indeed load all extensions."""
