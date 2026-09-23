@@ -1987,6 +1987,15 @@ def test_Add_is_zero():
     assert (x + y).is_zero
 
 
+def test_issue_15873():
+    e = -2*I + (1 + I)**2
+    assert e.is_zero is None
+    e = Add(1, -1, (1 + I)**2, -2*I, evaluate=False)
+    assert e.is_zero is None
+    e = Add(1, -1, I, evaluate=False)
+    assert e.is_zero is False
+
+
 def test_issue_14392():
     assert (sin(zoo)**2).as_real_imag() == (nan, nan)
 
