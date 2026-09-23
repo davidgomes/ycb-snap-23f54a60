@@ -6603,6 +6603,16 @@ def test_integrate(dask):
     with pytest.raises(ValueError):
         da.integrate("x2d")
 
+    # coord keyword matches Dataset.integrate; dim remains as a deprecated alias
+    assert_equal(da.integrate(coord="x"), da.integrate("x"))
+    with pytest.warns(FutureWarning, match="Please pass `coord` instead"):
+        actual_from_dim = da.integrate(dim="x")
+    assert_equal(actual_from_dim, da.integrate("x"))
+    with pytest.raises(ValueError, match="Cannot pass both 'dim' and 'coord'"):
+        da.integrate("x", dim="x")
+    with pytest.raises(TypeError, match="missing required argument"):
+        da.integrate()
+
 
 @pytest.mark.parametrize("dask", [True, False])
 @pytest.mark.parametrize("which_datetime", ["np", "cftime"])

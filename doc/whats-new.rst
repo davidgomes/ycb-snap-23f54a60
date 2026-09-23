@@ -42,6 +42,14 @@ Breaking changes
 - remove deprecated ``autoclose`` kwargs from :py:func:`open_dataset` (:pull:`4725`).
   By `Aureliana Barghini <https://github.com/aurghs>`_.
 
+Deprecations
+~~~~~~~~~~~~
+
+- The ``dim`` argument to :py:meth:`DataArray.integrate` is deprecated in
+  favor of ``coord``, for consistency with :py:meth:`Dataset.integrate`.
+  Passing ``dim`` issues a ``FutureWarning``. It will be removed in version
+  0.19.0 (:issue:`3992`).
+
 
 New Features
 ~~~~~~~~~~~~
