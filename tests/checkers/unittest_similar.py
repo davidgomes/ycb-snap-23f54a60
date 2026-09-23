@@ -45,6 +45,15 @@ MULTILINE = str(INPUT / "multiline-import")
 HIDE_CODE_WITH_IMPORTS = str(INPUT / "hide_code_with_imports.py")
 
 
+def test_min_similarity_lines_zero_disables_check() -> None:
+    output = StringIO()
+    with redirect_stdout(output), pytest.raises(SystemExit) as ex:
+        similar.Run(["--duplicates", "0", SIMILAR1, SIMILAR2])
+    assert ex.value.code == 0
+    assert "similar lines" not in output.getvalue()
+    assert "duplicates=0" in output.getvalue()
+
+
 def test_ignore_comments() -> None:
     output = StringIO()
     with redirect_stdout(output), pytest.raises(SystemExit) as ex:

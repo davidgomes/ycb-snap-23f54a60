@@ -395,6 +395,9 @@ class Similar:
     def _compute_sims(self) -> List[Tuple[int, Set[LinesChunkLimits_T]]]:
         """compute similarities in appended files"""
         no_duplicates: Dict[int, List[Set[LinesChunkLimits_T]]] = defaultdict(list)
+        # ``0`` disables the duplicate-code check (same convention as other linters).
+        if self.min_lines == 0:
+            return []
 
         for commonality in self._iter_sims():
             num = commonality.cmn_lines_nb
@@ -739,7 +742,10 @@ class SimilarChecker(BaseChecker, Similar, MapReduceMixin):
                 "default": DEFAULT_MIN_SIMILARITY_LINE,
                 "type": "int",
                 "metavar": "<int>",
-                "help": "Minimum lines number of a similarity.",
+                "help": (
+                    "Minimum lines number of a similarity. "
+                    "Set to 0 to disable the duplicate code check."
+                ),
             },
         ),
         (
