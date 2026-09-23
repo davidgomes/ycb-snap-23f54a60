@@ -4211,6 +4211,16 @@ def test_hist_step_geometry():
     assert_array_equal(polygon.get_xy(), xy)
 
 
+def test_hist_step_autoscale_density():
+    # Autoscaling must not use a simplified path, which can drop the maximum.
+    np.random.seed(19680801)
+    data = np.random.randn(100000) * 1.2
+    fig, (ax_bar, ax_step) = plt.subplots(1, 2)
+    ax_bar.hist(data, bins=100, density=True, histtype='bar')
+    ax_step.hist(data, bins=100, density=True, histtype='step')
+    assert ax_bar.get_ylim() == pytest.approx(ax_step.get_ylim())
+
+
 def test_hist_stepfilled_bottom_geometry():
     bins = [0, 1, 2, 3]
     data = [0, 0, 1, 1, 1, 2]
