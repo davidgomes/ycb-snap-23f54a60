@@ -41,7 +41,7 @@ class LiveServerBase(LiveServerTestCase):
 
 
 class FailingLiveServerThread(LiveServerThread):
-    def _create_server(self):
+    def _create_server(self, connections_override=None):
         raise RuntimeError('Error creating server.')
 
 
@@ -90,7 +90,7 @@ class LiveServerAddress(LiveServerBase):
 
 
 class LiveServerSingleThread(LiveServerThread):
-    def _create_server(self):
+    def _create_server(self, connections_override=None):
         return WSGIServer((self.host, self.port), QuietWSGIRequestHandler, allow_reuse_address=False)
 
 
