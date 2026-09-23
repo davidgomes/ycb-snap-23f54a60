@@ -2879,9 +2879,11 @@ class IndexVariable(Variable):
     def _data_equals(self, other):
         return self.to_index().equals(other.to_index())
 
-    def to_index_variable(self):
+    def to_index_variable(self) -> IndexVariable:
         """Return this variable as an xarray.IndexVariable"""
-        return self
+        # Always return a copy so callers can safely modify dims without
+        # mutating the original IndexVariable (GH6931).
+        return self.copy()
 
     to_coord = utils.alias(to_index_variable, "to_coord")
 
