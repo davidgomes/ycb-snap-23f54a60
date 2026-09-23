@@ -225,6 +225,10 @@ def fix_svg_relative_paths(self: SphinxTranslator, filepath: str) -> None:
     href_name = '{http://www.w3.org/1999/xlink}href'
     modified = False
 
+    # relative links are written relative to the current document's output location
+    docuri = self.builder.get_target_uri(self.builder.current_docname)
+    docdir = path.join(self.builder.outdir, posixpath.dirname(urlsplit(docuri).path))
+
     for element in chain(
         root.findall('.//svg:image[@xlink:href]', ns),
         root.findall('.//svg:a[@xlink:href]', ns),
@@ -234,10 +238,10 @@ def fix_svg_relative_paths(self: SphinxTranslator, filepath: str) -> None:
             # not a relative link
             continue
 
-        old_path = path.join(self.builder.outdir, url)
+        old_path = path.join(docdir, url)
         new_path = path.relpath(
             old_path,
-            start=path.join(self.builder.outdir, self.builder.imgpath),
+            start=path.join(docdir, self.builder.imgpath),
         )
         modified_url = urlunsplit((scheme, hostname, new_path, query, fragment))
 

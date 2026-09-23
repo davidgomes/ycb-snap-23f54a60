@@ -33,10 +33,12 @@ from __future__ import annotations
 import builtins
 import hashlib
 import inspect
+import posixpath
 import re
 from collections.abc import Iterable
 from importlib import import_module
 from typing import Any, cast
+from urllib.parse import urlsplit
 
 from docutils import nodes
 from docutils.nodes import Node
@@ -407,18 +409,16 @@ def html_visit_inheritance_diagram(self: HTML5Translator, node: inheritance_diag
 
     # Create a mapping from fully-qualified class names to URLs.
     graphviz_output_format = self.builder.env.config.graphviz_output_format.upper()
-    current_filename = self.builder.current_docname + self.builder.out_suffix
+    current_uri = self.builder.get_target_uri(self.builder.current_docname)
+    current_filename = posixpath.basename(urlsplit(current_uri).path)
     urls = {}
     pending_xrefs = cast(Iterable[addnodes.pending_xref], node)
     for child in pending_xrefs:
         if child.get('refuri') is not None:
-            if graphviz_output_format == 'SVG':
-                urls[child['reftitle']] = "../" + child.get('refuri')
-            else:
-                urls[child['reftitle']] = child.get('refuri')
+            urls[child['reftitle']] = child.get('refuri')
         elif child.get('refid') is not None:
             if graphviz_output_format == 'SVG':
-                urls[child['reftitle']] = '../' + current_filename + '#' + child.get('refid')
+                urls[child['reftitle']] = current_filename + '#' + child.get('refid')
             else:
                 urls[child['reftitle']] = '#' + child.get('refid')
 
