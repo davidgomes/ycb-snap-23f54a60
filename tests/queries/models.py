@@ -745,3 +745,13 @@ class JSONFieldNullable(models.Model):
 
     class Meta:
         required_db_features = {'supports_json_field'}
+
+
+class ProductMetaDataType(models.Model):
+    label = models.CharField(max_length=255, unique=True)
+    filterable = models.BooleanField(default=False)
+
+
+class ProductMetaData(models.Model):
+    value = models.CharField(max_length=255)
+    metadata_type = models.ForeignKey(ProductMetaDataType, models.CASCADE)

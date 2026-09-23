@@ -25,8 +25,9 @@ from .models import (
     Member, MixedCaseDbColumnCategoryItem, MixedCaseFieldCategoryItem, ModelA,
     ModelB, ModelC, ModelD, MyObject, NamedCategory, Node, Note, NullableName,
     Number, ObjectA, ObjectB, ObjectC, OneToOneCategory, Order, OrderItem,
-    Page, Paragraph, Person, Plaything, PointerA, Program, ProxyCategory,
-    ProxyObjectA, ProxyObjectB, Ranking, Related, RelatedIndividual,
+    Page, Paragraph, Person, Plaything, PointerA, ProductMetaData,
+    ProductMetaDataType, Program, ProxyCategory, ProxyObjectA, ProxyObjectB,
+    Ranking, Related, RelatedIndividual,
     RelatedObject, Report, ReportComment, ReservedName, Responsibility, School,
     SharedConnection, SimpleCategory, SingleObject, SpecialCategory, Staff,
     StaffUser, Student, Tag, Task, Teacher, Ticket21203Child,
@@ -3974,3 +3975,22 @@ class Ticket23622Tests(TestCase):
             set(Ticket23605A.objects.filter(qy).values_list('pk', flat=True))
         )
         self.assertSequenceEqual(Ticket23605A.objects.filter(qx), [a2])
+
+
+class FilterableRHSTests(TestCase):
+    def test_filter_against_model_with_filterable_field(self):
+        # A model instance used as a filter RHS may have a field named
+        # "filterable". That attribute is unrelated to Expression.filterable
+        # and must not raise NotSupportedError.
+        metadata_type = ProductMetaDataType.objects.create(label='Brand', filterable=False)
+        row = ProductMetaData.objects.create(value='Dark Vador', metadata_type=metadata_type)
+        self.assertSequenceEqual(
+            ProductMetaData.objects.filter(value='Dark Vador', metadata_type=metadata_type),
+            [row],
+        )
+        metadata_type.filterable = True
+        metadata_type.save()
+        self.assertSequenceEqual(
+            ProductMetaData.objects.filter(metadata_type=metadata_type),
+            [row],
+        )
