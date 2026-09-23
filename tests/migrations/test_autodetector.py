@@ -1414,6 +1414,24 @@ class AutodetectorTests(TestCase):
         for t in tests:
             test(*t)
 
+    def test_foreign_key_mixed_case_app_label(self):
+        """
+        A ForeignKey to a model in an app with a mixed-case label doesn't
+        crash the autodetector.
+        """
+        category = ModelState('Testapp', 'Category', [
+            ('id', models.AutoField(primary_key=True)),
+        ])
+        content = ModelState('Testapp', 'Content', [
+            ('id', models.AutoField(primary_key=True)),
+            ('category', models.ForeignKey('Testapp.Category', models.CASCADE)),
+        ])
+        changes = self.get_changes([], [category, content])
+        self.assertNumberMigrations(changes, 'Testapp', 1)
+        self.assertOperationTypes(changes, 'Testapp', 0, ['CreateModel', 'CreateModel'])
+        self.assertOperationAttributes(changes, 'Testapp', 0, 0, name='Category')
+        self.assertOperationAttributes(changes, 'Testapp', 0, 1, name='Content')
+
     def test_create_model_with_indexes(self):
         """Test creation of new model with indexes already defined."""
         author = ModelState('otherapp', 'Author', [

@@ -217,6 +217,10 @@ class FieldDeconstructionTests(SimpleTestCase):
         self.assertEqual(path, "django.db.models.ForeignKey")
         self.assertEqual(args, [])
         self.assertEqual(kwargs, {"to": "something.else", "on_delete": models.CASCADE})
+        # Test app label case is preserved
+        field = models.ForeignKey("Some_App.Else", models.CASCADE)
+        name, path, args, kwargs = field.deconstruct()
+        self.assertEqual(kwargs, {"to": "Some_App.else", "on_delete": models.CASCADE})
         # Test on_delete
         field = models.ForeignKey("auth.User", models.SET_NULL)
         name, path, args, kwargs = field.deconstruct()
