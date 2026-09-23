@@ -155,6 +155,12 @@ class RegexPattern(CheckURLMixin):
             # positional arguments.
             kwargs = match.groupdict()
             args = () if kwargs else match.groups()
+            # Unmatched optional groups are None. Drop them so resolve()
+            # agrees with reverse(), which omits missing optional parameters.
+            # Filter after choosing args so a pattern that only has named
+            # groups still ignores positional arguments when every optional
+            # group is absent.
+            kwargs = {k: v for k, v in kwargs.items() if v is not None}
             return path[match.end():], args, kwargs
         return None
 
