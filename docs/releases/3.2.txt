@@ -308,6 +308,8 @@ backends.
   unique constraints (:attr:`.UniqueConstraint.include`), set
   ``DatabaseFeatures.supports_covering_indexes`` to ``True``.
 
+* ``DatabaseOperations.date_interval_sql()`` is removed.
+
 :mod:`django.contrib.gis`
 -------------------------
 
