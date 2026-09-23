@@ -612,6 +612,13 @@ def test_imps():
     raises(ValueError, lambda: lambdify(x, f(f2(x))))
 
 
+def test_imps_nested_evalf():
+    f = implemented_function('f', lambda x: x**2)
+    g = implemented_function('g', lambda x: 2*x)
+    assert f(g(2)).evalf() == 16
+    assert f(g(x)).evalf() == f(g(x))
+
+
 def test_imps_errors():
     # Test errors that implemented functions can return, and still be able to
     # form expressions.
