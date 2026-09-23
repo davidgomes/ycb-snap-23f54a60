@@ -353,6 +353,14 @@ class AdminDocViewFunctionsTests(SimpleTestCase):
             (r'^(?P<a>(x|y))/b/(?P<c>\w+)$', '/<a>/b/<c>'),
             (r'^(?P<a>(x|y))/b/(?P<c>\w+)ab', '/<a>/b/<c>ab'),
             (r'^(?P<a>(x|y)(\(|\)))/b/(?P<c>\w+)ab', '/<a>/b/<c>ab'),
+            # Groups at the end of the pattern.
+            (r'^(?P<a>\w+)/b/(?P<c>\w+)', '/<a>/b/<c>'),
+            (r'^(?P<a>\w+)/b/(\w+)', '/<a>/b/<var>'),
+            (r'^(?P<a>\w+)/b/((x|y)\w+)', '/<a>/b/<var>'),
+            (r'^(?P<a>(x|y))/b/(?P<c>\w+)', '/<a>/b/<c>'),
+            (r'^(?P<a>(x|y)(\(|\)))/b/(?P<c>\w+)', '/<a>/b/<c>'),
+            (r'entries/(?P<pk>[^/.]+)/relationships/(?P<related_field>\w+)',
+             '/entries/<pk>/relationships/<related_field>'),
             (r'^a/?$', '/a/'),
         )
         for pattern, output in tests:
