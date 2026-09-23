@@ -578,6 +578,13 @@ class ForcedTimeZoneDatabaseTests(TransactionTestCase):
         fake_dt = datetime.datetime(2011, 9, 1, 17, 20, 30, tzinfo=UTC)
         self.assertEqual(event.dt, fake_dt)
 
+    def test_query_date_lookup_uses_database_timezone(self):
+        dt = datetime.datetime(2011, 9, 1, 23, 20, 30, tzinfo=EAT)
+        with self.override_database_connection_timezone('Africa/Nairobi'):
+            Event.objects.create(dt=dt)
+            self.assertTrue(Event.objects.filter(dt__date=dt.date()).exists())
+            self.assertTrue(Event.objects.filter(dt__hour=23).exists())
+
 
 @skipUnlessDBFeature('supports_timezones')
 @override_settings(TIME_ZONE='Africa/Nairobi', USE_TZ=True)
