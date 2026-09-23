@@ -245,7 +245,8 @@ Models
 Requests and Responses
 ~~~~~~~~~~~~~~~~~~~~~~
 
-* ...
+* The new ``samesite`` argument for :meth:`.HttpResponse.delete_cookie`
+  allows setting the ``SameSite`` cookie flag when expiring a cookie.
 
 Security
 ~~~~~~~~
