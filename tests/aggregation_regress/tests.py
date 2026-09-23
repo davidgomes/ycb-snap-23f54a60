@@ -746,6 +746,24 @@ class AggregationTests(TestCase):
         # There is just one GROUP BY clause (zero commas means at most one clause).
         self.assertEqual(qstr[qstr.index('GROUP BY'):].count(', '), 0)
 
+    def test_meta_ordering_not_in_group_by(self):
+        # Meta.ordering fields must not be added to GROUP BY. Book.ordering is
+        # ('name',); grouping by publisher must not also group by name.
+        qs = Book.objects.values('publisher').annotate(max_pages=Max('pages'))
+        qstr = str(qs.query)
+        group_by = qstr[qstr.index('GROUP BY'):]
+        self.assertEqual(group_by.split('ORDER BY')[0].count(', '), 0)
+        self.assertNotIn('name', group_by.split('ORDER BY')[0])
+        self.assertSequenceEqual(
+            qs.order_by('publisher'),
+            [
+                {'publisher': self.p1.id, 'max_pages': 447},
+                {'publisher': self.p2.id, 'max_pages': 528},
+                {'publisher': self.p3.id, 'max_pages': 1132},
+                {'publisher': self.p4.id, 'max_pages': 946},
+            ],
+        )
+
     def test_duplicate_alias(self):
         # Regression for #11256 - duplicating a default alias raises ValueError.
         msg = (

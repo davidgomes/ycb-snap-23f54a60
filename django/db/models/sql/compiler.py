@@ -283,7 +283,10 @@ class SQLCompiler:
             ordering = self.query.order_by
         elif self.query.order_by:
             ordering = self.query.order_by
-        elif self.query.get_meta().ordering:
+        elif self.query.get_meta().ordering and self.query.group_by is None:
+            # Meta.ordering must not affect grouped queries: it is removed from
+            # ORDER BY, and including those columns in GROUP BY changes the
+            # aggregation (ticket #14357).
             ordering = self.query.get_meta().ordering
             self._meta_ordering = ordering
         else:
