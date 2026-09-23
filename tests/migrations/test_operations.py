@@ -2809,6 +2809,88 @@ class OperationTests(OperationTestBase):
             operation.describe(), "Alter unique_together for Pony (0 constraint(s))"
         )
 
+    def _get_unique_constraint_names(self, table, columns):
+        with connection.cursor() as cursor:
+            constraints = connection.introspection.get_constraints(cursor, table)
+        return {
+            name
+            for name, details in constraints.items()
+            if details["unique"] and details["columns"] == columns
+        }
+
+    @skipUnlessDBFeature("allows_multiple_constraints_on_same_fields")
+    def test_remove_unique_together_on_pk_field(self):
+        app_label = "test_rutopkf"
+        project_state = self.apply_operations(
+            app_label,
+            ProjectState(),
+            operations=[
+                migrations.CreateModel(
+                    "Pony",
+                    fields=[("id", models.AutoField(primary_key=True))],
+                    options={"unique_together": {("id",)}},
+                ),
+            ],
+        )
+        table_name = f"{app_label}_pony"
+        with connection.schema_editor() as editor:
+            unique_together_name = editor._create_index_name(
+                table_name, ["id"], suffix="_uniq"
+            )
+        self.assertIn(
+            unique_together_name,
+            self._get_unique_constraint_names(table_name, ["id"]),
+        )
+        new_state = project_state.clone()
+        operation = migrations.AlterUniqueTogether("Pony", set())
+        operation.state_forwards(app_label, new_state)
+        with connection.schema_editor() as editor:
+            operation.database_forwards(app_label, editor, project_state, new_state)
+        self.assertNotIn(
+            unique_together_name,
+            self._get_unique_constraint_names(table_name, ["id"]),
+        )
+        with connection.cursor() as cursor:
+            self.assertEqual(
+                connection.introspection.get_primary_key_column(cursor, table_name),
+                "id",
+            )
+
+    @skipUnlessDBFeature("allows_multiple_constraints_on_same_fields")
+    def test_remove_unique_together_on_unique_field(self):
+        app_label = "test_rutouf"
+        project_state = self.apply_operations(
+            app_label,
+            ProjectState(),
+            operations=[
+                migrations.CreateModel(
+                    "Pony",
+                    fields=[
+                        ("id", models.AutoField(primary_key=True)),
+                        ("name", models.CharField(max_length=30, unique=True)),
+                    ],
+                    options={"unique_together": {("name",)}},
+                ),
+            ],
+        )
+        table_name = f"{app_label}_pony"
+        with connection.schema_editor() as editor:
+            unique_together_name = editor._create_index_name(
+                table_name, ["name"], suffix="_uniq"
+            )
+        constraint_names = self._get_unique_constraint_names(table_name, ["name"])
+        self.assertEqual(len(constraint_names), 2)
+        self.assertIn(unique_together_name, constraint_names)
+        new_state = project_state.clone()
+        operation = migrations.AlterUniqueTogether("Pony", set())
+        operation.state_forwards(app_label, new_state)
+        with connection.schema_editor() as editor:
+            operation.database_forwards(app_label, editor, project_state, new_state)
+        self.assertEqual(
+            self._get_unique_constraint_names(table_name, ["name"]),
+            constraint_names - {unique_together_name},
+        )
+
     def test_add_index(self):
         """
         Test the AddIndex operation.
