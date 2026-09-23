@@ -626,6 +626,24 @@ class Query(BaseExpression):
         # handle subqueries when combining where and select clauses.
         self.subq_aliases |= rhs.subq_aliases
 
+        if not set(change_map).isdisjoint(change_map.values()):
+            # Some rhs aliases are also relabeling targets (e.g. T4 -> T5,
+            # T5 -> T6), which change_aliases() rejects when relabeling rhs
+            # subqueries. Relabel from a copy of rhs moved to an unused alias
+            # prefix instead (bump_prefix() keeps the alias_map order). No
+            # alias with that prefix remains in the combined query, so the
+            # prefix isn't reserved.
+            subq_aliases = self.subq_aliases
+            final_aliases = [change_map.get(alias, alias) for alias in rhs.alias_map]
+            rhs = rhs.clone()
+            rhs.bump_prefix(self)
+            self.subq_aliases = subq_aliases
+            change_map = {
+                alias: final_alias
+                for alias, final_alias in zip(rhs.alias_map, final_aliases)
+                if alias != final_alias
+            }
+
         # Now relabel a copy of the rhs where-clause and add it to the current
         # one.
         w = rhs.where.clone()
@@ -846,6 +864,9 @@ class Query(BaseExpression):
         relabelling any references to them in select columns and the where
         clause.
         """
+        # If keys and values of change_map were to intersect, an alias might be
+        # updated twice (e.g. T4 -> T5, T5 -> T6, so also T4 -> T6) depending
+        # on their order in change_map.
         assert set(change_map).isdisjoint(change_map.values())
 
         # 1. Update references in "select" (normal columns plus aliases),
