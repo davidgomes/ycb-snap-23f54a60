@@ -285,3 +285,30 @@ def test_return_annotation():
     assert solarx.unit is u.deg
     """
     return src
+
+
+@py3only
+def test_return_annotation_none():
+    src = """
+    @u.quantity_input
+    def myfunc_args(solarx: u.arcsec) -> None:
+        pass
+
+    solarx = myfunc_args(1*u.arcsec)
+    assert solarx is None
+    """
+    return src
+
+
+@py3only
+def test_return_annotation_none_constructor():
+    src = """
+    class PoC(object):
+        @u.quantity_input
+        def __init__(self, voltage: u.V) -> None:
+            pass
+
+    poc = PoC(1.*u.V)
+    assert isinstance(poc, PoC)
+    """
+    return src
