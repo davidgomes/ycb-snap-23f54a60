@@ -1,0 +1,11 @@
+:rc:`text.antialiased` is read when `.Text` objects are created
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+`.Text` objects now store their own antialiasing state (see
+`.Text.set_antialiased`), which defaults to the value of
+:rc:`text.antialiased` at the time the `.Text` is created, consistently with
+other artists.  Previously, :rc:`text.antialiased` was looked up at draw time.
+Hence, changing :rc:`text.antialiased` (e.g. with `.rc_context`) after a
+`.Text` has been created, e.g. only around a call to `.Figure.savefig`, no
+longer affects it; use `.Text.set_antialiased` instead, or set
+:rc:`text.antialiased` before creating the figure.
