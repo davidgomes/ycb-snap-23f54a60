@@ -797,6 +797,11 @@ For example::
     >>> p.get_shirt_size_display()
     'Large'
 
+``get_FOO_display()`` may be overridden on the model. An override defined on
+the model, a base class, or a mixin is preserved. A subclass that redefines
+the field's :attr:`~django.db.models.Field.choices` and does not override the
+method uses those choices.
+
 .. method:: Model.get_next_by_FOO(**kwargs)
 .. method:: Model.get_previous_by_FOO(**kwargs)
 

@@ -763,8 +763,29 @@ class Field(RegisterLookupMixin):
             if not getattr(cls, self.attname, None):
                 setattr(cls, self.attname, self.descriptor_class(self))
         if self.choices is not None:
-            setattr(cls, 'get_%s_display' % self.name,
-                    partialmethod(cls._get_FIELD_display, field=self))
+            # Keep a get_FOO_display() defined on this class or inherited from
+            # a base or mixin. Generated implementations are partialmethods and
+            # may be replaced so a subclass can override inherited choices.
+            if not self._is_user_defined_display_method(cls):
+                setattr(
+                    cls,
+                    'get_%s_display' % self.name,
+                    partialmethod(cls._get_FIELD_display, field=self),
+                )
+
+    def _is_user_defined_display_method(self, cls):
+        """
+        Return whether the nearest get_FOO_display() is user-defined.
+
+        Auto-generated methods are functools.partialmethod instances. Those
+        must not count as overrides, otherwise a subclass that redefines the
+        field's choices would keep the parent's display values.
+        """
+        name = 'get_%s_display' % self.name
+        for klass in cls.__mro__:
+            if name in klass.__dict__:
+                return not isinstance(klass.__dict__[name], partialmethod)
+        return False
 
     def get_filter_kwargs_for_object(self, obj):
         """
