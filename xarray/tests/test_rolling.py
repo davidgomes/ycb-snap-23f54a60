@@ -27,8 +27,9 @@ pytestmark = [
 
 class TestDataArrayRolling:
     @pytest.mark.parametrize("da", (1, 2), indirect=True)
-    def test_rolling_iter(self, da) -> None:
-        rolling_obj = da.rolling(time=7)
+    @pytest.mark.parametrize("center", (True, False))
+    def test_rolling_iter(self, da, center) -> None:
+        rolling_obj = da.rolling(time=7, center=center)
         rolling_obj_mean = rolling_obj.mean()
 
         assert len(rolling_obj.window_labels) == len(da["time"])

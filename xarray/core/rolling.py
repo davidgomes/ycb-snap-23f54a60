@@ -270,11 +270,18 @@ class DataArrayRolling(Rolling["DataArray"]):
     def __iter__(self) -> Iterator[tuple[RollingKey, DataArray]]:
         if self.ndim > 1:
             raise ValueError("__iter__ is only supported for 1d-rolling")
-        stops = np.arange(1, len(self.window_labels) + 1)
-        starts = stops - int(self.window[0])
-        starts[: int(self.window[0])] = 0
+        dim = self.dim[0]
+        window_size = int(self.window[0])
+        # Match Variable.rolling_window: ``window // 2`` padded samples sit
+        # before the label, so the first in-bounds index is ``i - window // 2``.
+        # That is a shift of ``(window - 1) // 2`` relative to a right-aligned window.
+        offset = ((window_size - 1) // 2) if self.center[0] else 0
+        stops = np.arange(1, len(self.window_labels) + 1) + offset
+        starts = stops - window_size
+        starts = np.clip(starts, 0, None)
+        stops = np.clip(stops, 0, len(self.window_labels))
         for (label, start, stop) in zip(self.window_labels, starts, stops):
-            window = self.obj.isel({self.dim[0]: slice(start, stop)})
+            window = self.obj.isel({dim: slice(int(start), int(stop))})
 
             counts = window.count(dim=self.dim[0])
             window = window.where(counts >= self.min_periods)
