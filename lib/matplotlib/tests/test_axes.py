@@ -6801,6 +6801,20 @@ def test_offset_label_color():
     assert ax.yaxis.get_offset_text().get_color() == 'red'
 
 
+@mpl.style.context('default')
+def test_offset_label_color_rcparams():
+    mpl.rcParams['xtick.labelcolor'] = 'red'
+    mpl.rcParams['ytick.labelcolor'] = 'blue'
+    mpl.rcParams['xtick.color'] = 'green'
+    fig, ax = plt.subplots()
+    assert ax.xaxis.get_offset_text().get_color() == 'red'
+    assert ax.yaxis.get_offset_text().get_color() == 'blue'
+
+    mpl.rcParams['xtick.labelcolor'] = 'inherit'
+    fig, ax = plt.subplots()
+    assert ax.xaxis.get_offset_text().get_color() == 'green'
+
+
 def test_offset_text_visible():
     fig, ax = plt.subplots()
     ax.plot([1.01e9, 1.02e9, 1.03e9])
