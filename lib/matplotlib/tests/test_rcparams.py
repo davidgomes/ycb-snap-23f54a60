@@ -496,6 +496,35 @@ def test_keymaps():
         assert isinstance(mpl.rcParams[k], list)
 
 
+def test_no_backend_reset_rccontext():
+    assert mpl.rcParams['backend'] != 'module://aardvark'
+    with mpl.rc_context():
+        mpl.rcParams['backend'] = 'module://aardvark'
+    assert mpl.rcParams['backend'] == 'module://aardvark'
+
+
+def test_get_backend_keeps_figures_created_in_rc_context(tmpdir):
+    # Regression test for gh-23298: if the auto backend is first resolved
+    # inside rc_context, exiting the context must not restore the sentinel.
+    # Otherwise a later get_backend() re-runs switch_backend and drops every
+    # figure from Gcf.  Run in a fresh process so the sentinel is still unset.
+    env = {**os.environ, "MPLBACKEND": "", "MPLCONFIGDIR": str(tmpdir)}
+    subprocess.run(
+        [sys.executable, "-c",
+         "import matplotlib.pyplot as plt\n"
+         "from matplotlib import get_backend, rc_context\n"
+         "with rc_context():\n"
+         "    fig = plt.figure()\n"
+         "before = dict(plt._pylab_helpers.Gcf.figs)\n"
+         "assert fig.canvas.manager in before.values()\n"
+         "get_backend()\n"
+         "after = dict(plt._pylab_helpers.Gcf.figs)\n"
+         "assert before.keys() == after.keys()\n"
+         "assert all(before[n] is after[n] for n in before)\n"
+         "plt.close(fig)\n"],
+        env=env, check=True, stderr=subprocess.PIPE)
+
+
 def test_rcparams_reset_after_fail():
     # There was previously a bug that meant that if rc_context failed and
     # raised an exception due to issues in the supplied rc parameters, the
