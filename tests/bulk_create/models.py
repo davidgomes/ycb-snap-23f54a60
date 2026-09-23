@@ -79,6 +79,11 @@ class NoFields(models.Model):
     pass
 
 
+class FieldsWithDbColumns(models.Model):
+    rank = models.IntegerField(unique=True, db_column="rAnK")
+    name = models.CharField(max_length=15, null=True, db_column="oTheRNaMe")
+
+
 class SmallAutoFieldModel(models.Model):
     id = models.SmallAutoField(primary_key=True)
 
