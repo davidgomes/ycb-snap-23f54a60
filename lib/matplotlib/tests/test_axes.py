@@ -7811,6 +7811,22 @@ def test_ytickcolor_is_not_yticklabelcolor():
         assert tick.label1.get_color() == 'blue'
 
 
+@mpl.style.context('default')
+@pytest.mark.parametrize('axis', ['x', 'y'])
+def test_offset_text_uses_tick_labelcolor(axis):
+    mpl.rcParams[f'{axis}tick.color'] = 'yellow'
+    mpl.rcParams[f'{axis}tick.labelcolor'] = 'red'
+    fig, ax = plt.subplots()
+    ax.plot([1.01e9, 1.02e9, 1.03e9])
+    offset = getattr(ax, f'{axis}axis').offsetText
+    assert offset.get_color() == 'red'
+
+    mpl.rcParams[f'{axis}tick.labelcolor'] = 'inherit'
+    fig, ax = plt.subplots()
+    offset = getattr(ax, f'{axis}axis').offsetText
+    assert offset.get_color() == 'yellow'
+
+
 @pytest.mark.parametrize('size', [size for size in mfont_manager.font_scalings
                                   if size is not None] + [8, 10, 12])
 @mpl.style.context('default')
