@@ -992,6 +992,22 @@ class TestDataset:
         assert data.attrs["foobar"], "baz"
         assert isinstance(data.attrs, dict)
 
+    def test_chunks_does_not_load_lazy_data(self) -> None:
+        # Accessing .chunks used to read Variable.data, which loads lazily
+        # indexed backends such as Zarr even when the data is not a dask array.
+        data = create_test_data()
+        var1 = data["var1"]
+        data["var1"] = (
+            var1.dims,
+            indexing.LazilyIndexedArray(InaccessibleArray(var1.values)),
+        )
+        assert data.chunks == {}
+        assert data.chunksizes == {}
+        assert data["var1"].chunks is None
+        assert data["var1"].chunksizes == {}
+        with pytest.raises(UnexpectedDataAccess):
+            data["var1"].values
+
     @requires_dask
     def test_chunk(self) -> None:
         data = create_test_data()
