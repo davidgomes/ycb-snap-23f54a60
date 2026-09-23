@@ -259,7 +259,8 @@ def urlize(text, trim_url_limit=None, nofollow=False, autoescape=False):
         http://example.com?x=1&amp;y=&lt;2&gt; => http://example.com?x=1&y=<2>
         """
         return text.replace('&amp;', '&').replace('&lt;', '<').replace(
-            '&gt;', '>').replace('&quot;', '"').replace('&#39;', "'")
+            '&gt;', '>').replace('&quot;', '"').replace('&#x27;', "'").replace(
+            '&#39;', "'")
 
     def trim_punctuation(lead, middle, trail):
         """

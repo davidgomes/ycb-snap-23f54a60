@@ -251,6 +251,10 @@ class TestUtilsHtml(SimpleTestCase):
                 'Search for <a href="http://google.com/?q=">google.com/?q=</a>!'
             ),
             ('foo@example.com', '<a href="mailto:foo@example.com">foo@example.com</a>'),
+            (
+                escape("http://example.com/it's"),
+                '<a href="http://example.com/it&#x27;s">http://example.com/it&#x27;s</a>'
+            ),
         )
         for value, output in tests:
             with self.subTest(value=value):
