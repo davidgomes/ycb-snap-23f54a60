@@ -27,6 +27,7 @@ from .models import (
     Page, Paragraph, Person, Plaything, PointerA, Program, ProxyCategory,
     ProxyObjectA, ProxyObjectB, Ranking, Related, RelatedIndividual,
     RelatedObject, Report, ReportComment, ReservedName, Responsibility, School,
+    Ticket32690Foo, Ticket32690Qux,
     SharedConnection, SimpleCategory, SingleObject, SpecialCategory, Staff,
     StaffUser, Student, Tag, Task, Teacher, Ticket21203Child,
     Ticket21203Parent, Ticket23605A, Ticket23605B, Ticket23605C, TvChef, Valid,
@@ -3995,3 +3996,18 @@ class Ticket23622Tests(TestCase):
             set(Ticket23605A.objects.filter(qy).values_list('pk', flat=True))
         )
         self.assertSequenceEqual(Ticket23605A.objects.filter(qx), [a2])
+
+
+class QuerySetOrAliasTests(TestCase):
+    def test_or_with_overlapping_aliases(self):
+        # Combining a related queryset with a filter that ORs two multi-hop
+        # __in lookups must not build a change map whose keys and values
+        # overlap (for example {'T4': 'T5', 'T5': 'T6'}).
+        qux = Ticket32690Qux.objects.create()
+        foo = Ticket32690Foo.objects.create(qux=qux)
+        qs1 = qux.foos.all()
+        qs2 = Ticket32690Foo.objects.filter(
+            Q(bars__baz__in=qux.bazes.all()) | Q(other_bars__baz__in=qux.bazes.all())
+        )
+        self.assertSequenceEqual(qs2 | qs1, [foo])
+        self.assertSequenceEqual(qs1 | qs2, [foo])

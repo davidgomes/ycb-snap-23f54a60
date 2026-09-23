@@ -1898,6 +1898,10 @@ SQL equivalent:
 
     SELECT ... WHERE x=1 OR y=2
 
+``|`` is not commutative. ``qs1 | qs2`` and ``qs2 | qs1`` return the same
+rows, but the generated SQL can differ because joins are copied from the
+right-hand query onto the left-hand query.
+
 Methods that do not return ``QuerySet``\s
 -----------------------------------------
 

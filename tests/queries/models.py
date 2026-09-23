@@ -748,3 +748,23 @@ class JSONFieldNullable(models.Model):
 
     class Meta:
         required_db_features = {'supports_json_field'}
+
+
+class Ticket32690Qux(models.Model):
+    bazes = models.ManyToManyField('Ticket32690Baz', related_name='quxes')
+
+
+class Ticket32690Baz(models.Model):
+    pass
+
+
+class Ticket32690Foo(models.Model):
+    qux = models.ForeignKey(Ticket32690Qux, models.CASCADE, related_name='foos')
+
+
+class Ticket32690Bar(models.Model):
+    foo = models.ForeignKey(Ticket32690Foo, models.CASCADE, related_name='bars')
+    another_foo = models.ForeignKey(
+        Ticket32690Foo, models.CASCADE, related_name='other_bars',
+    )
+    baz = models.ForeignKey(Ticket32690Baz, models.CASCADE, related_name='bars')
