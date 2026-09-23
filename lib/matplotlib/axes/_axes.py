@@ -4847,8 +4847,8 @@ default: :rc:`scatter.edgecolors`
         yscale : {'linear', 'log'}, default: 'linear'
             Use a linear or log10 scale on the vertical axis.
 
-        mincnt : int > 0, default: *None*
-            If not *None*, only display cells with more than *mincnt*
+        mincnt : int >= 0, default: *None*
+            If not *None*, only display cells with at least *mincnt*
             number of points in the cell.
 
         marginals : bool, default: *False*
@@ -4914,6 +4914,11 @@ default: :rc:`scatter.edgecolors`
             - `numpy.mean`: average of the points
             - `numpy.sum`: integral of the point values
             - `numpy.amax`: value taken from the largest point
+
+            By default, only cells with at least 1 point are reduced, because
+            some reduction functions (such as `numpy.amax`) error or warn on
+            empty input. *mincnt* changes that cutoff; ``mincnt=0`` passes
+            empty input to the reduction function.
 
         data : indexable object, optional
             DATA_PARAMETER_PLACEHOLDER
@@ -5012,9 +5017,12 @@ default: :rc:`scatter.edgecolors`
                 else:
                     Cs_at_i2[i2[i]].append(C[i])
             if mincnt is None:
-                mincnt = 0
+                # Same visible cutoff as ``mincnt=1``: do not call the
+                # reducer on empty cells.  An explicit ``mincnt=0`` still
+                # reduces empty cells (``len(acc) >= 0``).
+                mincnt = 1
             accum = np.array(
-                [reduce_C_function(acc) if len(acc) > mincnt else np.nan
+                [reduce_C_function(acc) if len(acc) >= mincnt else np.nan
                  for Cs_at_i in [Cs_at_i1, Cs_at_i2]
                  for acc in Cs_at_i[1:]],  # [1:] drops out-of-range points.
                 float)

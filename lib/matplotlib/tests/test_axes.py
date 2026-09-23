@@ -948,6 +948,9 @@ def test_hexbin_empty():
     # From #23922: creating hexbin with log scaling from empty
     # dataset raises ValueError
     ax.hexbin([], [], bins='log')
+    # Empty cells must not be passed to reducers that reject empty input
+    # when *mincnt* is left at its default (gh-27103).
+    ax.hexbin([], [], C=[], reduce_C_function=np.max)
 
 
 def test_hexbin_pickable():
@@ -997,6 +1000,67 @@ def test_hexbin_log_clim():
     fig, ax = plt.subplots()
     h = ax.hexbin(x, y, bins='log', vmin=2, vmax=100)
     assert h.get_clim() == (2, 100)
+
+
+@check_figures_equal(extensions=['png'])
+def test_hexbin_mincnt_behavior_upon_C_parameter(fig_test, fig_ref):
+    # see: gh-12926
+    datapoints = [
+        # list of (x, y)
+        (0, 0),
+        (0, 0),
+        (6, 0),
+        (0, 6),
+    ]
+    X, Y = zip(*datapoints)
+    extent = [-10., 10, -10., 10]
+    gridsize = (7, 7)
+
+    ax_test = fig_test.subplots()
+    ax_ref = fig_ref.subplots()
+
+    # without C parameter
+    ax_ref.hexbin(
+        X, Y,
+        extent=extent,
+        gridsize=gridsize,
+        mincnt=1,
+    )
+    ax_ref.set_facecolor("green")  # for contrast of background
+
+    # with C parameter
+    ax_test.hexbin(
+        X, Y,
+        C=[1] * len(X),
+        reduce_C_function=lambda v: sum(v),
+        mincnt=1,
+        extent=extent,
+        gridsize=gridsize,
+    )
+    ax_test.set_facecolor("green")
+
+
+def test_hexbin_mincnt_inclusive_with_C():
+    # gh-12926: mincnt is a minimum count, with or without C.
+    datapoints = [(0, 0), (0, 0), (6, 0), (0, 6)]
+    X, Y = zip(*datapoints)
+    extent = [-10., 10, -10., 10]
+    gridsize = (7, 7)
+    fig, axes = plt.subplots(1, 2)
+    without_c = axes[0].hexbin(
+        X, Y, extent=extent, gridsize=gridsize, mincnt=1)
+    with_c = axes[1].hexbin(
+        X, Y, C=np.ones(len(X)), reduce_C_function=np.sum,
+        mincnt=1, extent=extent, gridsize=gridsize)
+    assert_array_equal(without_c.get_array(), with_c.get_array())
+    assert_array_equal(without_c.get_offsets(), with_c.get_offsets())
+    # Exactly one point is below mincnt=2; two points is included.
+    hidden = axes[0].hexbin(
+        X, Y, C=np.ones(len(X)), reduce_C_function=np.sum,
+        mincnt=2, extent=extent, gridsize=gridsize)
+    assert len(hidden.get_array()) == 1
+    assert hidden.get_array()[0] == 2
+    plt.close(fig)
 
 
 def test_inverted_limits():
