@@ -11,6 +11,11 @@ Release date: TBA
 
 * astroid has been upgraded to 2.6.0
 
+* ``pyreverse`` now uses type hints (PEP 484) to determine attribute types,
+  displaying ``Optional[...]`` when the default value is ``None``.
+
+  Closes #1548
+
 * ``setuptools_scm`` has been removed and replaced by ``tbump`` in order to not
   have hidden runtime dependencies to setuptools
 

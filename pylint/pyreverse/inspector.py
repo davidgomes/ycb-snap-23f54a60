@@ -218,7 +218,7 @@ class Linker(IdGeneratorMixIn, utils.LocalsVisitor):
                     self.visit_module(frame)
 
             current = frame.locals_type[node.name]
-            values = set(node.infer())
+            values = utils.infer_node(node)
             frame.locals_type[node.name] = list(set(current) | values)
         except astroid.InferenceError:
             pass
@@ -230,7 +230,7 @@ class Linker(IdGeneratorMixIn, utils.LocalsVisitor):
         handle instance_attrs_type
         """
         try:
-            values = set(node.infer())
+            values = utils.infer_node(node)
             current = set(parent.instance_attrs_type[node.attrname])
             parent.instance_attrs_type[node.attrname] = list(current | values)
         except astroid.InferenceError:

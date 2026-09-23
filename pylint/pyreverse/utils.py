@@ -19,6 +19,9 @@
 import os
 import re
 import sys
+from typing import Optional, Union
+
+import astroid
 
 RCFILE = ".pyreverserc"
 
@@ -213,3 +216,58 @@ class LocalsVisitor(ASTWalker):
         if methods[1] is not None:
             return methods[1](node)
         return None
+
+
+def get_annotation_label(ann: Union[astroid.Name, astroid.Subscript]) -> str:
+    label = ""
+    if isinstance(ann, astroid.Subscript):
+        label = ann.as_string()
+    elif isinstance(ann, astroid.Name):
+        label = ann.name
+    return label
+
+
+def get_annotation(
+    node: Union[astroid.AssignAttr, astroid.AssignName]
+) -> Optional[Union[astroid.Name, astroid.Subscript]]:
+    """return the annotation for `node`"""
+    ann = None
+    if isinstance(node.parent, astroid.AnnAssign):
+        ann = node.parent.annotation
+    elif isinstance(node, astroid.AssignAttr):
+        # `self.attr = arg`: use the annotation of `arg` in the enclosing method
+        value = getattr(node.parent, "value", None)
+        func = node.frame()
+        if isinstance(value, astroid.Name) and isinstance(func, astroid.FunctionDef):
+            for arg, arg_ann in zip(func.args.args, func.args.annotations):
+                if arg.name == value.name:
+                    ann = arg_ann
+                    break
+    if not isinstance(ann, (astroid.Name, astroid.Subscript)):
+        return None
+
+    label = get_annotation_label(ann)
+    try:
+        default, *_ = node.infer()
+    except astroid.InferenceError:
+        default = None
+    if (
+        isinstance(default, astroid.Const)
+        and default.value is None
+        and not label.startswith("Optional")
+    ):
+        label = f"Optional[{label}]"
+    ann.name = label
+    return ann
+
+
+def infer_node(node: Union[astroid.AssignAttr, astroid.AssignName]) -> set:
+    """Return a set containing the node annotation if it exists
+    otherwise return a set of the inferred types using the NodeNG.infer method"""
+    ann = get_annotation(node)
+    if ann:
+        return {ann}
+    try:
+        return set(node.infer())
+    except astroid.InferenceError:
+        return set()
