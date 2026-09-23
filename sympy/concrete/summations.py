@@ -855,6 +855,14 @@ def eval_sum(f, limits):
     if a == b:
         return f.subs(i, a)
     if isinstance(f, Piecewise):
+        from sympy.core.relational import Le, Ge
+        in_range = {Le(a, i): S.true, Ge(i, a): S.true,
+                    Le(i, b): S.true, Ge(b, i): S.true}
+        newargs = [(e, c.xreplace(in_range)) for e, c in f.args]
+        if any(c is S.true for _, c in newargs):
+            f = f.func(*newargs)
+            if not isinstance(f, Piecewise):
+                return eval_sum(f, limits)
         if not any(i in arg.args[1].free_symbols for arg in f.args):
             # Piecewise conditions do not depend on the dummy summation variable,
             # therefore we can fold:     Sum(Piecewise((e, c), ...), limits)

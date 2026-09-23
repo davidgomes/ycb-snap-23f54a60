@@ -91,6 +91,18 @@ def test_Identity_doit():
     assert isinstance(Inn.doit().rows, Mul)
 
 
+def test_Identity_symbolic_entries():
+    from sympy import Symbol
+    N = Symbol('N', integer=True, positive=True)
+    i, j = symbols('i j', integer=True)
+    I = Identity(N)
+    assert I[0, 0] == 1
+    assert I[0, 1] == 0
+    assert I[i, j] == KroneckerDelta(i, j)
+    assert Sum(I[i, i], (i, 0, N - 1)).doit() == N
+    assert Sum(Sum(I[i, j], (i, 0, N - 1)), (j, 0, N - 1)).doit() == N
+
+
 def test_addition():
     A = MatrixSymbol('A', n, m)
     B = MatrixSymbol('B', n, m)
