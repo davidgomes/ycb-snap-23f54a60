@@ -34,6 +34,9 @@ Enhancements
 Bug fixes
 ~~~~~~~~~
 
+- :py:func:`~xarray.combine_by_coords` no longer requires coordinate
+  dimensions that are identical across datasets to be monotonic
+  (:pull:`3151`).
 - Improved error handling and documentation for `.expand_dims()` 
   read-only view.
 - Fix tests for big-endian systems (:issue:`3125`).
