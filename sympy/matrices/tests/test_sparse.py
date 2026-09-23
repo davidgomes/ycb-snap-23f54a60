@@ -587,3 +587,17 @@ def test_hermitian():
     assert a.is_hermitian is None
     a[0, 1] = a[1, 0]*I
     assert a.is_hermitian is False
+
+def test_null_matrix_stacking():
+    # test regression #12938
+    m = SparseMatrix.hstack(*[SparseMatrix.zeros(0, n) for n in range(4)])
+    assert m.shape == (0, 6)
+    m = SparseMatrix.vstack(*[SparseMatrix.zeros(n, 0) for n in range(4)])
+    assert m.shape == (6, 0)
+    m = SparseMatrix.hstack(*[SparseMatrix.zeros(1, n) for n in range(4)])
+    assert m.shape == (1, 6)
+    assert SparseMatrix.zeros(0, 2).row_join(Matrix(0, 3, [])).shape == (0, 5)
+    assert SparseMatrix.zeros(2, 0).col_join(Matrix(3, 0, [])).shape == (5, 0)
+    assert SparseMatrix().row_join(Matrix([1, 2])) == Matrix([1, 2])
+    assert SparseMatrix().col_join(Matrix([[1, 2]])) == Matrix([[1, 2]])
+    raises(ShapeError, lambda: SparseMatrix.zeros(0, 1).row_join(zeros(1, 1)))
