@@ -162,6 +162,19 @@ class GetFieldDisplayTests(SimpleTestCase):
         self.assertEqual(Whiz(c='').get_c_display(), '')        # Empty value
         self.assertEqual(WhizDelayed(c=0).get_c_display(), 'Other')  # Delayed choices
 
+    def test_overriding_FIELD_display(self):
+        class FooBar(models.Model):
+            foo_bar = models.IntegerField(choices=[(1, 'foo'), (2, 'bar')])
+
+            def get_foo_bar_display(self):
+                return 'something'
+
+            class Meta:
+                app_label = 'model_fields'
+
+        f = FooBar(foo_bar=1)
+        self.assertEqual(f.get_foo_bar_display(), 'something')
+
     def test_get_FIELD_display_translated(self):
         """A translated display value is coerced to str."""
         val = Whiz(c=5).get_c_display()
