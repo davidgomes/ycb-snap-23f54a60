@@ -25,7 +25,6 @@ except ImportError:
             "cairo backend requires that pycairo>=1.14.0 or cairocffi "
             "is installed") from err
 
-import matplotlib as mpl
 from .. import _api, cbook, font_manager
 from matplotlib.backend_bases import (
     _Backend, FigureCanvasBase, FigureManagerBase, GraphicsContextBase,
