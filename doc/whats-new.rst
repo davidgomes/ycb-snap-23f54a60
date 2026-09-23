@@ -137,6 +137,8 @@ Enhancements
 Bug fixes
 ~~~~~~~~~
 
+- :py:meth:`DataArray.quantile` now honors the ``keep_attrs`` argument
+  (:issue:`3304`).
 - Improve "missing dimensions" error message for :py:func:`~xarray.apply_ufunc` 
   (:issue:`2078`). 
   By `Rick Russotto <https://github.com/rdrussotto>`_.
