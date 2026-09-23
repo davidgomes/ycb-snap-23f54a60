@@ -1,5 +1,6 @@
 from sympy.core.basic import Basic
 from sympy.core.numbers import (I, Rational, pi)
+from sympy.core.parameters import evaluate
 from sympy.core.singleton import S
 from sympy.core.symbol import Symbol
 from sympy.core.sympify import sympify
@@ -450,6 +451,15 @@ def test__normalize_dimension():
     assert Point._normalize_dimension(
         Point(1, 2), Point(3, 4, 0), on_morph='ignore') == [
         Point(1, 2, 0), Point(3, 4, 0)]
+
+
+def test_issue_22684():
+    # Used to give an error
+    with evaluate(False):
+        assert Point(1, 2) == Point2D(1, 2)
+        assert sympify('Point2D(Integer(1),Integer(2))') == Point2D(1, 2)
+        raises(ValueError, lambda: Point(I, 1))
+        raises(ValueError, lambda: Point2D(1, 2*I))
 
 
 def test_direction_cosine():
