@@ -664,6 +664,15 @@ def test_annotation_update():
                            rtol=1e-6)
 
 
+def test_annotate_xy_is_copied():
+    fig, ax = plt.subplots()
+    xy = np.array([0.5, 0.5])
+    an = ax.annotate('', xy=xy, xytext=(0.1, 0.1),
+                     arrowprops=dict(arrowstyle='<->'))
+    xy[1] = 3
+    assert an.xy == (0.5, 0.5)
+
+
 @check_figures_equal(extensions=["png"])
 def test_annotation_units(fig_test, fig_ref):
     ax = fig_test.add_subplot()
