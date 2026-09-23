@@ -181,6 +181,19 @@ class MiddlewareNotUsedTests(SimpleTestCase):
             with self.assertLogs('django.request', 'DEBUG'):
                 self.client.get('/middleware_exceptions/view/')
 
+    @override_settings(MIDDLEWARE=[
+        'middleware_exceptions.middleware.PaymentMiddleware',
+        'middleware_exceptions.tests.MyMiddleware',
+    ])
+    async def test_async_client_middleware_not_used(self):
+        with self.assertLogs('django.request', 'DEBUG') as cm:
+            response = await self.async_client.get('/middleware_exceptions/view/')
+        self.assertEqual(response.status_code, 402)
+        self.assertIn(
+            "MiddlewareNotUsed: 'middleware_exceptions.tests.MyMiddleware'",
+            [record.getMessage() for record in cm.records],
+        )
+
 
 @override_settings(
     DEBUG=True,
