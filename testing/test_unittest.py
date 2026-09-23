@@ -1196,9 +1196,9 @@ def test_pdb_teardown_called(testdir, monkeypatch):
 @pytest.mark.parametrize(
     "class_mark, method_mark",
     [
-        ("", "@unittest.skip"),
-        ("@unittest.skip", ""),
-        ("", "@pytest.mark.skip"),
+        ("", "@unittest.skip('skipped for reasons')"),
+        ("@unittest.skip('skipped for reasons')", ""),
+        ("", "@pytest.mark.skip('skipped for reasons')"),
     ],
 )
 def test_pdb_teardown_skipped(testdir, monkeypatch, class_mark, method_mark):
