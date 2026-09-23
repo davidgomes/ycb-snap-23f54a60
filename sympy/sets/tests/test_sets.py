@@ -226,6 +226,12 @@ def test_complement():
                                                              Interval(0, oo, True, True)
                                                              ,FiniteSet(x), evaluate=False)
 
+    assert Complement(FiniteSet(x, y, 2), Interval(-10, 10)) == \
+        Complement(FiniteSet(x, y), Interval(-10, 10), evaluate=False)
+    assert Complement(FiniteSet(x, y, 20), Interval(-10, 10)) == \
+        Union(FiniteSet(20),
+              Complement(FiniteSet(x, y), Interval(-10, 10), evaluate=False))
+
     square = Interval(0, 1) * Interval(0, 1)
     notsquare = square.complement(S.Reals*S.Reals)
 
