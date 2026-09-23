@@ -182,6 +182,14 @@ Models
   and :meth:`.QuerySet.aupdate_or_create` methods allows specifying a different
   field values for the create operation.
 
+* The new ``violation_error_code`` argument of
+  :class:`~django.db.models.BaseConstraint`,
+  :class:`~django.db.models.CheckConstraint`,
+  :class:`~django.db.models.UniqueConstraint`, and
+  :class:`~django.contrib.postgres.constraints.ExclusionConstraint` allows
+  customizing the ``code`` of ``ValidationError`` raised during
+  :ref:`model validation <validating-objects>`.
+
 Requests and Responses
 ~~~~~~~~~~~~~~~~~~~~~~
 

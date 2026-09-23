@@ -397,6 +397,17 @@ class ExclusionConstraintTests(PostgreSQLTestCase):
             "(F(datespan), '-|-')] name='exclude_overlapping' "
             "violation_error_message='Overlapping must be excluded'>",
         )
+        constraint = ExclusionConstraint(
+            name="exclude_overlapping",
+            expressions=[(F("datespan"), RangeOperators.ADJACENT_TO)],
+            violation_error_code="overlapping",
+        )
+        self.assertEqual(
+            repr(constraint),
+            "<ExclusionConstraint: index_type='GIST' expressions=["
+            "(F(datespan), '-|-')] name='exclude_overlapping' "
+            "violation_error_code='overlapping'>",
+        )
 
     def test_eq(self):
         constraint_1 = ExclusionConstraint(
@@ -452,6 +463,15 @@ class ExclusionConstraintTests(PostgreSQLTestCase):
             ],
             include=["cancelled"],
         )
+        constraint_12 = ExclusionConstraint(
+            name="exclude_overlapping",
+            expressions=[
+                (F("datespan"), RangeOperators.OVERLAPS),
+                (F("room"), RangeOperators.EQUAL),
+            ],
+            condition=Q(cancelled=False),
+            violation_error_code="custom_code",
+        )
         constraint_10 = ExclusionConstraint(
             name="exclude_overlapping",
             expressions=[
@@ -475,6 +495,8 @@ class ExclusionConstraintTests(PostgreSQLTestCase):
         self.assertNotEqual(constraint_1, constraint_2)
         self.assertNotEqual(constraint_1, constraint_3)
         self.assertNotEqual(constraint_1, constraint_4)
+        self.assertNotEqual(constraint_1, constraint_12)
+        self.assertEqual(constraint_12, constraint_12)
         self.assertNotEqual(constraint_1, constraint_10)
         self.assertNotEqual(constraint_2, constraint_3)
         self.assertNotEqual(constraint_2, constraint_4)
