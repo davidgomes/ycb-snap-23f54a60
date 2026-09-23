@@ -25,7 +25,7 @@ def test__wrap_in_pandas_container_dense():
 
 
 def test__wrap_in_pandas_container_dense_update_columns_and_index():
-    """Check that _wrap_in_pandas_container overrides columns and index."""
+    """Check that _wrap_in_pandas_container overrides columns but not the index."""
     pd = pytest.importorskip("pandas")
     X_df = pd.DataFrame([[1, 0, 3], [0, 0, 1]], columns=["a", "b", "c"])
     new_columns = np.asarray(["f0", "f1", "f2"], dtype=object)
@@ -33,7 +33,9 @@ def test__wrap_in_pandas_container_dense_update_columns_and_index():
 
     new_df = _wrap_in_pandas_container(X_df, columns=new_columns, index=new_index)
     assert_array_equal(new_df.columns, new_columns)
-    assert_array_equal(new_df.index, new_index)
+
+    # Index does not change when the input is a DataFrame
+    assert_array_equal(new_df.index, X_df.index)
 
 
 def test__wrap_in_pandas_container_error_validation():
@@ -260,3 +262,61 @@ def test_set_output_mro():
         pass
 
     assert C().transform(None) == "B"
+
+
+class EstimatorWithSetOutputIndex(_SetOutputMixin):
+    def fit(self, X, y=None):
+        self.n_features_in_ = X.shape[1]
+        return self
+
+    def transform(self, X, y=None):
+        import pandas as pd
+
+        # transform by giving output a new index.
+        return pd.DataFrame(X.to_numpy(), index=[f"s{i}" for i in range(X.shape[0])])
+
+    def get_feature_names_out(self, input_features=None):
+        return np.asarray([f"X{i}" for i in range(self.n_features_in_)], dtype=object)
+
+
+def test_set_output_pandas_keep_index():
+    """Check that set_output does not override index.
+
+    Non-regression test for gh-25730.
+    """
+    pd = pytest.importorskip("pandas")
+
+    X = pd.DataFrame([[1, 2, 3], [4, 5, 6]], index=[0, 1])
+    est = EstimatorWithSetOutputIndex().set_output(transform="pandas")
+    est.fit(X)
+
+    X_trans = est.transform(X)
+    assert_array_equal(X_trans.index, ["s0", "s1"])
+
+
+def test_feature_union_pandas_output_with_aggregation():
+    """FeatureUnion keeps an aggregated index when pandas output is selected.
+
+    Non-regression test for gh-25730.
+    """
+    pd = pytest.importorskip("pandas")
+    from sklearn.base import BaseEstimator, TransformerMixin
+    from sklearn.pipeline import make_union
+
+    class SumByDate(BaseEstimator, TransformerMixin):
+        def fit(self, X, y=None):
+            return self
+
+        def transform(self, X):
+            return X["value"].groupby(X["date"]).sum()
+
+    index = pd.date_range("2020-01-01", periods=48, freq="H")
+    data = pd.DataFrame({"value": np.ones(len(index))}, index=index)
+    data["date"] = index.date
+
+    with config_context(transform_output="pandas"):
+        X_trans = make_union(SumByDate()).fit_transform(data)
+
+    assert isinstance(X_trans, pd.DataFrame)
+    assert_array_equal(X_trans.index, pd.Index(sorted(set(index.date))))
+    assert_array_equal(X_trans.to_numpy().ravel(), [24, 24])
