@@ -151,6 +151,20 @@ def test_clear(caplog):
     assert not caplog.text
 
 
+def test_get_records_after_clear(caplog):
+    def verify_consistency() -> None:
+        assert caplog.get_records("call") == caplog.records
+
+    verify_consistency()
+    logger.warning("a")
+    verify_consistency()
+    caplog.clear()
+    verify_consistency()
+    logger.warning("b")
+    verify_consistency()
+    assert [r.getMessage() for r in caplog.get_records("call")] == ["b"]
+
+
 @pytest.fixture
 def logging_during_setup_and_teardown(caplog):
     caplog.set_level("INFO")
