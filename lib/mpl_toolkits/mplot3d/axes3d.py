@@ -626,7 +626,9 @@ class Axes3D(Axes):
         reverse = left > right
         left, right = self.xaxis.get_major_locator().nonsingular(left, right)
         left, right = self.xaxis.limit_range_for_scale(left, right)
-        left, right = sorted([left, right], reverse=reverse)
+        left, right = sorted([left, right])
+        if reverse:
+            left, right = right, left
         self.xy_viewLim.intervalx = (left, right)
 
         if auto is not None:
@@ -686,7 +688,9 @@ class Axes3D(Axes):
         reverse = bottom > top
         bottom, top = self.yaxis.get_major_locator().nonsingular(bottom, top)
         bottom, top = self.yaxis.limit_range_for_scale(bottom, top)
-        bottom, top = sorted([bottom, top], reverse=reverse)
+        bottom, top = sorted([bottom, top])
+        if reverse:
+            bottom, top = top, bottom
         self.xy_viewLim.intervaly = (bottom, top)
 
         if auto is not None:
@@ -746,7 +750,9 @@ class Axes3D(Axes):
         reverse = bottom > top
         bottom, top = self.zaxis.get_major_locator().nonsingular(bottom, top)
         bottom, top = self.zaxis.limit_range_for_scale(bottom, top)
-        bottom, top = sorted([bottom, top], reverse=reverse)
+        bottom, top = sorted([bottom, top])
+        if reverse:
+            bottom, top = top, bottom
         self.zz_viewLim.intervalx = (bottom, top)
 
         if auto is not None:
