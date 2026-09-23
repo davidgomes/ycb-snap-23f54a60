@@ -1251,7 +1251,7 @@ def test_Eq():
     assert Eq(FiniteSet({x, y}).subs(y, x+1), FiniteSet({x})) is S.false
     assert Eq(FiniteSet({x, y}), FiniteSet({x})).subs(y, x+1) is S.false
 
-    assert Eq(ProductSet({1}, {2}), Interval(1, 2)) not in (S.true, S.false)
+    assert Eq(ProductSet({1}, {2}), Interval(1, 2)) is S.false
     assert Eq(ProductSet({1}), ProductSet({1}, {2})) is S.false
 
     assert Eq(FiniteSet(()), FiniteSet(1)) is S.false

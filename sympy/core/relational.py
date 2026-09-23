@@ -305,6 +305,8 @@ class Relational(Boolean, EvalfMixin):
         r = self
         r = r.func(*[i.simplify(**kwargs) for i in r.args])
         if r.is_Relational:
+            if not isinstance(r.lhs, Expr) or not isinstance(r.rhs, Expr):
+                return r
             dif = r.lhs - r.rhs
             # replace dif with a valid Number that will
             # allow a definitive comparison with 0
@@ -561,6 +563,8 @@ class Equality(Relational):
         # standard simplify
         e = super()._eval_simplify(**kwargs)
         if not isinstance(e, Equality):
+            return e
+        if not isinstance(e.lhs, Expr) or not isinstance(e.rhs, Expr):
             return e
         free = self.free_symbols
         if len(free) == 1:
@@ -1360,6 +1364,10 @@ def is_eq(lhs, rhs):
         isinstance(lhs, Boolean) !=
         isinstance(rhs, Boolean)):
         return False  # only Booleans can equal Booleans
+
+    from sympy.sets.sets import Set
+    if isinstance(lhs, Set) and isinstance(rhs, Set):
+        return fuzzy_and([lhs.is_subset(rhs), rhs.is_subset(lhs)])
 
     if lhs.is_infinite or rhs.is_infinite:
         if fuzzy_xor([lhs.is_infinite, rhs.is_infinite]):
