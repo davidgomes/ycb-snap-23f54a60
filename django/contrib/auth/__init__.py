@@ -199,9 +199,23 @@ def get_user(request):
             # Verify the session
             if hasattr(user, "get_session_auth_hash"):
                 session_hash = request.session.get(HASH_SESSION_KEY)
-                session_hash_verified = session_hash and constant_time_compare(
-                    session_hash, user.get_session_auth_hash()
-                )
+                if not session_hash:
+                    session_hash_verified = False
+                else:
+                    session_auth_hash = user.get_session_auth_hash()
+                    session_hash_verified = constant_time_compare(
+                        session_hash, session_auth_hash
+                    )
+                    if not session_hash_verified and hasattr(
+                        user, "get_session_auth_fallback_hash"
+                    ):
+                        session_hash_verified = any(
+                            constant_time_compare(session_hash, fallback_hash)
+                            for fallback_hash in user.get_session_auth_fallback_hash()
+                        )
+                        if session_hash_verified:
+                            request.session.cycle_key()
+                            request.session[HASH_SESSION_KEY] = session_auth_hash
                 if not session_hash_verified:
                     request.session.flush()
                     user = None

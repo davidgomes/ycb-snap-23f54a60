@@ -68,6 +68,11 @@ Minor features
 * ``AuthenticationMiddleware`` now adds an :meth:`.HttpRequest.auser`
   asynchronous method that returns the currently logged-in user.
 
+* :meth:`.AbstractBaseUser.get_session_auth_hash` now honors
+  :setting:`SECRET_KEY_FALLBACKS`, so rotating :setting:`SECRET_KEY` no longer
+  logs out sessions whose hash was created with a previous key still listed in
+  the fallbacks. Matching fallback sessions are rehashed with the current key.
+
 :mod:`django.contrib.contenttypes`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

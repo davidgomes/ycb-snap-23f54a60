@@ -1,8 +1,9 @@
+from django.contrib.auth import HASH_SESSION_KEY, get_user
 from django.contrib.auth.middleware import AuthenticationMiddleware
 from django.contrib.auth.models import User
 from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpRequest, HttpResponse
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 
 class TestAuthenticationMiddleware(TestCase):
@@ -33,6 +34,36 @@ class TestAuthenticationMiddleware(TestCase):
         self.assertTrue(self.request.user.is_anonymous)
         # session should be flushed
         self.assertIsNone(self.request.session.session_key)
+
+    def test_session_hash_verified_with_secret_key_fallbacks(self):
+        with override_settings(SECRET_KEY="oldsecret"):
+            self.client.force_login(self.user)
+            old_hash = self.client.session[HASH_SESSION_KEY]
+        with override_settings(
+            SECRET_KEY="newsecret", SECRET_KEY_FALLBACKS=["oldsecret"]
+        ):
+            request = HttpRequest()
+            request.session = self.client.session
+            user = get_user(request)
+            self.assertEqual(user, self.user)
+            self.assertEqual(
+                request.session[HASH_SESSION_KEY], user.get_session_auth_hash()
+            )
+            self.assertNotEqual(request.session[HASH_SESSION_KEY], old_hash)
+
+    def test_session_hash_rejected_when_secret_key_rotated_without_fallback(self):
+        with override_settings(SECRET_KEY="newsecret"):
+            self.client.force_login(self.user)
+            session = self.client.session
+            session[HASH_SESSION_KEY] = self.user._get_session_auth_hash(
+                secret="oldsecret"
+            )
+            session.save()
+            request = HttpRequest()
+            request.session = session
+            user = get_user(request)
+        self.assertTrue(user.is_anonymous)
+        self.assertIsNone(request.session.session_key)
 
     def test_no_session(self):
         msg = (
