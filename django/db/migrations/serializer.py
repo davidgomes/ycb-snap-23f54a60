@@ -6,6 +6,7 @@ import enum
 import functools
 import math
 import re
+import sys
 import types
 import uuid
 
@@ -95,9 +96,29 @@ class DeconstructableSerializer(BaseSerializer):
             imports = {"from django.db import models"}
             name = "models.%s" % name
         else:
-            imports = {"import %s" % module}
+            imports = {"import %s" % DeconstructableSerializer._get_path_module(path)}
             name = path
         return name, imports
+
+    @staticmethod
+    def _get_path_module(path):
+        """
+        Return the name of the module to import for path. The object may be
+        a nested class (e.g. "app.models.Outer.Inner"), so the module is the
+        longest loaded prefix of path from which the object can be looked up.
+        """
+        parts = path.split('.')
+        for i in range(len(parts) - 1, 0, -1):
+            module_name = '.'.join(parts[:i])
+            module = sys.modules.get(module_name)
+            if module is None:
+                continue
+            try:
+                functools.reduce(getattr, parts[i:], module)
+            except AttributeError:
+                continue
+            return module_name
+        return path.rsplit('.', 1)[0]
 
     def serialize(self):
         return self.serialize_deconstructed(*self.value.deconstruct())

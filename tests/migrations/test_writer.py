@@ -197,6 +197,9 @@ class WriterTests(SimpleTestCase):
         X = 'X', 'X value'
         Y = 'Y', 'Y value'
 
+    class NestedField(models.CharField):
+        pass
+
     def safe_exec(self, string, value=None):
         d = {}
         try:
@@ -614,6 +617,17 @@ class WriterTests(SimpleTestCase):
                     ),
                 )
                 self.assertSerializedEqual(nested_cls)
+
+    def test_serialize_nested_field(self):
+        field = self.NestedField(max_length=20)
+        self.assertSerializedResultEqual(
+            field,
+            (
+                "migrations.test_writer.WriterTests.NestedField(max_length=20)",
+                {'import migrations.test_writer'},
+            ),
+        )
+        self.assertSerializedFieldEqual(field)
 
     def test_simple_migration(self):
         """
