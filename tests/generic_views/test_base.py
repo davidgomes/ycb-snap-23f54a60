@@ -3,7 +3,7 @@ import time
 from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpResponse
 from django.test import (
-    RequestFactory, SimpleTestCase, ignore_warnings, override_settings,
+    RequestFactory, SimpleTestCase, TestCase, ignore_warnings, override_settings,
 )
 from django.test.utils import require_jinja2
 from django.urls import resolve
@@ -11,6 +11,7 @@ from django.utils.deprecation import RemovedInDjango40Warning
 from django.views.generic import RedirectView, TemplateView, View
 
 from . import views
+from .models import Author
 
 
 class SimpleView(View):
@@ -603,3 +604,19 @@ class DeprecationTests(SimpleTestCase):
             str(response.context['foo2'])
         self.assertEqual(response.context['key'], 'value')
         self.assertIsInstance(response.context['view'], View)
+
+
+class LazyURLKwargLookupTests(TestCase):
+    @ignore_warnings(category=RemovedInDjango40Warning)
+    def test_lazy_url_kwargs_are_usable_in_filters(self):
+        # TemplateView.get_context_data() receives URL kwargs wrapped in
+        # SimpleLazyObject. Those must still work as ORM lookup values.
+        from django.views.generic.base import _wrap_url_kwargs_with_deprecation_warning
+
+        author = Author.objects.create(name='Roberto Bolaño', slug='roberto-bolano')
+        kwargs = _wrap_url_kwargs_with_deprecation_warning({
+            'slug': author.slug,
+            'pk': author.pk,
+        })
+        self.assertEqual(Author.objects.get(slug=kwargs['slug']), author)
+        self.assertEqual(Author.objects.get(pk=kwargs['pk']), author)
