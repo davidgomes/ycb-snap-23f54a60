@@ -4007,6 +4007,23 @@ relation, hence reducing the number of queries even further:
     >>> Question.objects.prefetch_related(prefetch).get().choice_set.all()
     <QuerySet [<Choice: The sky>]>
 
+The ``queryset`` may also be sliced. The slice is applied per parent object
+rather than to the combined result, which is useful when only a few example
+related objects are needed for each parent:
+
+    >>> Question.objects.prefetch_related(
+    ...     Prefetch(
+    ...         'choice_set',
+    ...         queryset=Choice.objects.all()[:3],
+    ...         to_attr='example_choices',
+    ...     )
+    ... )
+
+.. versionchanged:: 4.2
+
+    ``Prefetch`` objects now support sliced querysets on backends that
+    support window functions.
+
 The ``to_attr`` argument sets the result of the prefetch operation to a custom
 attribute:
 
