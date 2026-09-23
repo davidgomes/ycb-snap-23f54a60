@@ -205,6 +205,25 @@ def test_cython_wrapper_unique_dummyvars():
     expected = expected_template.format(x_id=x_id, y_id=y_id, z_id=z_id)
     assert source == expected
 
+def test_cython_wrapper_unused_array_arg():
+    from sympy import MatrixSymbol
+    x = MatrixSymbol('x', 2, 1)
+    # x does not appear in expr
+    routine = make_routine("test", 1.0, argument_sequence=(x,))
+    code_gen = CythonCodeWrapper(C99CodeGen())
+    source = get_string(code_gen.dump_pyx, [routine])
+    expected = (
+        "import numpy as np\n"
+        "cimport numpy as np\n"
+        "\n"
+        "cdef extern from 'file.h':\n"
+        "    double test(double *x)\n"
+        "\n"
+        "def test_c(np.ndarray[np.double_t, ndim=2] x):\n"
+        "\n"
+        "    return test(<double*> x.data)")
+    assert source == expected
+
 def test_autowrap_dummy():
     x, y, z = symbols('x y z')
 
