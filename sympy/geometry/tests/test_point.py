@@ -1,5 +1,6 @@
 from sympy.core.basic import Basic
 from sympy.core.numbers import (I, Rational, pi)
+from sympy.core.parameters import evaluate
 from sympy.core.singleton import S
 from sympy.core.symbol import Symbol
 from sympy.core.sympify import sympify
@@ -435,6 +436,14 @@ def test_arguments():
     raises(ValueError, lambda: Point(1, 1, dim=3, on_morph='unknown'))
     # test invalid expressions
     raises(TypeError, lambda: Point(Basic(), Basic()))
+
+
+def test_issue_22684():
+    # Used to give an error
+    with evaluate(False):
+        Point(1, 2)
+        raises(ValueError, lambda: Point(1, I))
+
 
 def test_unit():
     assert Point(1, 1).unit == Point(sqrt(2)/2, sqrt(2)/2)
