@@ -698,7 +698,9 @@ def locator_to_legend_entries(locator, limits, dtype):
     if isinstance(locator, mpl.ticker.LogLocator):
         formatter = mpl.ticker.LogFormatter()
     else:
-        formatter = mpl.ticker.ScalarFormatter()
+        # Legend labels have no place to show an offset, so disable it
+        formatter = mpl.ticker.ScalarFormatter(useOffset=False)
+        formatter.set_scientific(False)
     formatter.axis = dummy_axis()
 
     # TODO: The following two lines should be replaced
