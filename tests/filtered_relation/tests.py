@@ -237,6 +237,62 @@ class FilteredRelationTests(TestCase):
             [self.author1],
         )
 
+    def test_multiple_filtered_relations_same_relation(self):
+        qs = (
+            Author.objects.alias(
+                book_title_alice=FilteredRelation(
+                    "book", condition=Q(book__title__icontains="alice")
+                ),
+                book_title_jane=FilteredRelation(
+                    "book", condition=Q(book__title__icontains="jane")
+                ),
+            )
+            .filter(name="Jane")
+            .values("book_title_alice__title", "book_title_jane__title")
+            .order_by("book_title_jane__title")
+        )
+        self.assertSequenceEqual(
+            qs,
+            [
+                {
+                    "book_title_alice__title": None,
+                    "book_title_jane__title": self.book2.title,
+                },
+                {
+                    "book_title_alice__title": None,
+                    "book_title_jane__title": self.book3.title,
+                },
+            ],
+        )
+
+    def test_multiple_filtered_relations_same_nested_relation(self):
+        qs = (
+            Author.objects.alias(
+                editor_a=FilteredRelation(
+                    "book__editor", condition=Q(book__editor__name="a")
+                ),
+                editor_b=FilteredRelation(
+                    "book__editor", condition=Q(book__editor__name="b")
+                ),
+            )
+            .annotate(
+                editor_name=Case(
+                    When(editor_b__isnull=True, then=F("editor_a__name")),
+                    default=F("editor_b__name"),
+                ),
+            )
+            .values("name", "editor_name")
+            .order_by("name")
+            .distinct()
+        )
+        self.assertSequenceEqual(
+            qs,
+            [
+                {"name": self.author1.name, "editor_name": self.editor_a.name},
+                {"name": self.author2.name, "editor_name": self.editor_b.name},
+            ],
+        )
+
     def test_exclude_relation_with_join(self):
         self.assertSequenceEqual(
             Author.objects.annotate(
