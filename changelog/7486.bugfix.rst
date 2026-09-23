@@ -1,0 +1,1 @@
+An ``xfail`` mark added dynamically during test execution, for example with ``request.node.add_marker``, is now honored.
