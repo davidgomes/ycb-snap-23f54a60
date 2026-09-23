@@ -1518,6 +1518,33 @@ class OtherModelTests(SimpleTestCase):
 
         self.assertEqual(C.check(), [])
 
+    def test_m2m_through_fields_list_hashable_on_proxy_model(self):
+        class Parent(models.Model):
+            name = models.CharField(max_length=256)
+
+        class ProxyParent(Parent):
+            class Meta:
+                proxy = True
+
+        class Child(models.Model):
+            parent = models.ForeignKey(Parent, on_delete=models.CASCADE)
+            many_to_many_field = models.ManyToManyField(
+                to=Parent,
+                through='ManyToManyModel',
+                through_fields=['child', 'parent'],
+                related_name='something',
+            )
+
+        class ManyToManyModel(models.Model):
+            parent = models.ForeignKey(Parent, on_delete=models.CASCADE, related_name='+')
+            child = models.ForeignKey(Child, on_delete=models.CASCADE, related_name='+')
+            second_child = models.ForeignKey(Child, on_delete=models.CASCADE, null=True, default=None)
+
+        self.assertEqual(Parent.check(), [])
+        self.assertEqual(ProxyParent.check(), [])
+        self.assertEqual(Child.check(), [])
+        self.assertEqual(ManyToManyModel.check(), [])
+
     @isolate_apps('django.contrib.auth', kwarg_name='apps')
     def test_lazy_reference_checks(self, apps):
         class DummyModel(models.Model):
