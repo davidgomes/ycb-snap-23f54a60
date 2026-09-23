@@ -667,3 +667,32 @@ class ModelInheritanceTest(TestCase):
             Politician.objects.get(pk=c1.politician_ptr_id).title,
             "senator 1",
         )
+
+    def test_mti_update_parent_through_child(self):
+        Politician.objects.create()
+        Congressman.objects.create()
+        Congressman.objects.update(title="senator 1")
+        self.assertEqual(Congressman.objects.get().title, "senator 1")
+
+    def test_mti_update_grand_parent_through_child(self):
+        Politician.objects.create()
+        Senator.objects.create()
+        Senator.objects.update(title="senator 1")
+        self.assertEqual(Senator.objects.get().title, "senator 1")
+
+    def test_mti_update_non_primary_parent_does_not_affect_other_rows(self):
+        other_politicians = [
+            Politician.objects.create(title="other 1"),
+            Politician.objects.create(title="other 2"),
+        ]
+        Congressman.objects.create(name="John", title="c1")
+        Congressman.objects.create(name="Bill", title="c2")
+        self.assertEqual(Congressman.objects.update(name="Joe", title="updated"), 2)
+        self.assertSequenceEqual(
+            Congressman.objects.values_list("name", "title"),
+            [("Joe", "updated"), ("Joe", "updated")],
+        )
+        for politician in other_politicians:
+            old_title = politician.title
+            politician.refresh_from_db()
+            self.assertEqual(politician.title, old_title)
