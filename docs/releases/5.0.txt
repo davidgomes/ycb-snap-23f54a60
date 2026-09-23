@@ -167,7 +167,7 @@ Logging
 Management Commands
 ~~~~~~~~~~~~~~~~~~~
 
-* ...
+* :djadmin:`runserver` no longer returns response bodies for ``HEAD`` requests.
 
 Migrations
 ~~~~~~~~~~

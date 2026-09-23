@@ -11,6 +11,7 @@ import logging
 import socket
 import socketserver
 import sys
+from collections import deque
 from wsgiref import simple_server
 
 from django.core.exceptions import ImproperlyConfigured
@@ -129,7 +130,10 @@ class ServerHandler(simple_server.ServerHandler):
         )
 
     def cleanup_headers(self):
-        super().cleanup_headers()
+        # For HEAD requests no body is sent, so wsgiref would compute a
+        # misleading "Content-Length: 0" from the bytes written.
+        if self.environ["REQUEST_METHOD"] != "HEAD":
+            super().cleanup_headers()
         # HTTP/1.1 requires support for persistent connections. Send 'close' if
         # the content length is unknown to prevent clients from reusing the
         # connection.
@@ -146,6 +150,17 @@ class ServerHandler(simple_server.ServerHandler):
     def close(self):
         self.get_stdin().read()
         super().close()
+
+    def finish_response(self):
+        if self.environ["REQUEST_METHOD"] == "HEAD":
+            try:
+                deque(self.result, maxlen=0)  # Consume iterator.
+                if not self.headers_sent:
+                    self.send_headers()
+            finally:
+                self.close()
+        else:
+            super().finish_response()
 
 
 class WSGIRequestHandler(simple_server.WSGIRequestHandler):
