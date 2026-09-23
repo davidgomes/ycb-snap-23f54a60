@@ -1918,22 +1918,23 @@ def polyval(
 
 
 def _ensure_numeric(data: T_Xarray) -> T_Xarray:
-    """Converts all datetime64 variables to float64
+    """Converts all datetime64 and timedelta64 variables to float64
 
     Parameters
     ----------
     data : DataArray or Dataset
-        Variables with possible datetime dtypes.
+        Variables with possible datetime or timedelta dtypes.
 
     Returns
     -------
     DataArray or Dataset
-        Variables with datetime64 dtypes converted to float64.
+        Variables with datetime64 and timedelta64 dtypes converted to float64.
     """
     from .dataset import Dataset
 
     def to_floatable(x: DataArray) -> DataArray:
-        if x.dtype.kind in "mM":
+        if x.dtype.kind == "M":
+            # datetimes: nanoseconds since the Unix epoch, matching polyfit
             return x.copy(
                 data=datetime_to_numeric(
                     x.data,
@@ -1941,6 +1942,9 @@ def _ensure_numeric(data: T_Xarray) -> T_Xarray:
                     datetime_unit="ns",
                 ),
             )
+        elif x.dtype.kind == "m":
+            # timedeltas: numeric value in the array's own units, matching polyfit
+            return x.astype(float)
         return x
 
     if isinstance(data, Dataset):
