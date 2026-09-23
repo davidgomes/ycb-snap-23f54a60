@@ -496,6 +496,11 @@ def test_partitions():
     assert [p.copy() for p in partitions(S(3), m=2)] == [
         {3: 1}, {1: 1, 2: 1}]
 
+    assert list(partitions(6, k=2)) == [
+        {2: 3}, {1: 2, 2: 2}, {1: 4, 2: 1}, {1: 6}]
+    assert list(partitions(6, k=2, size=True)) == [
+        (3, {2: 3}), (4, {1: 2, 2: 2}), (5, {1: 4, 2: 1}), (6, {1: 6})]
+
     assert [i.copy() for i in partitions(4, k=3)] == [
         {1: 1, 3: 1}, {2: 2}, {1: 2, 2: 1}, {1: 4}] == [
         i.copy() for i in partitions(4) if all(k <= 3 for k in i)]
