@@ -3013,6 +3013,11 @@ def test_MatrixExpressions():
     assert pretty(Z) == ascii_str
     assert upretty(Z) == ucode_str
 
+    A = MatrixSymbol('A', n, n)
+    B = MatrixSymbol('B', n, n)
+    assert pretty(A - A*B - B) == "-B - A*B + A"
+    assert upretty(A - A*B - B) == u("-B - A⋅B + A")
+
 def test_pretty_dotproduct():
     from sympy.matrices import Matrix, MatrixSymbol
     from sympy.matrices.expressions.dotproduct import DotProduct

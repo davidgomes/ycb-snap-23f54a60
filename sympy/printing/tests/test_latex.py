@@ -1198,6 +1198,10 @@ def test_matAdd():
     assert l._print_MatAdd(C + 2*B) in ['2 B + C', 'C + 2 B']
     assert l._print_MatAdd(B - 2*C) in ['B -2 C', '-2 C + B']
     assert l._print_MatAdd(B + 2*C) in ['B + 2 C', '2 C + B']
+    A = MatrixSymbol('A', 5, 5)
+    assert latex(A - A*B - B) == r'- B - A B + A'
+    assert latex(-B) == r'- B'
+    assert latex(-(A + B)) in [r'- \left(A + B\right)', r'- \left(B + A\right)']
 
 
 def test_matMul():
@@ -1710,7 +1714,7 @@ def test_MatrixElement_printing():
     assert latex(3 * A[0, 0]) == r"3 A_{0, 0}"
 
     F = C[0, 0].subs(C, A - B)
-    assert latex(F) == r"\left(-1 B + A\right)_{0, 0}"
+    assert latex(F) == r"\left(- B + A\right)_{0, 0}"
 
 
 def test_Quaternion_latex_printing():

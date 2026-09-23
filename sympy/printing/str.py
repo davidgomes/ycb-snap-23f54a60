@@ -304,7 +304,15 @@ class StrPrinter(Printer):
             return sign + '*'.join(a_str) + "/(%s)" % '*'.join(b_str)
 
     def _print_MatMul(self, expr):
-        return '*'.join([self.parenthesize(arg, precedence(expr))
+        c, m = expr.as_coeff_mmul()
+        if c.is_number and c.is_negative:
+            # Print ``(-1)*A*B`` as ``-A*B`` rather than with an explicit factor.
+            expr = _keep_coeff(-c, m)
+            sign = "-"
+        else:
+            sign = ""
+
+        return sign + '*'.join([self.parenthesize(arg, precedence(expr))
             for arg in expr.args])
 
     def _print_HadamardProduct(self, expr):
@@ -312,8 +320,21 @@ class StrPrinter(Printer):
             for arg in expr.args])
 
     def _print_MatAdd(self, expr):
-        return ' + '.join([self.parenthesize(arg, precedence(expr))
-            for arg in expr.args])
+        # Same sign folding as ``_print_Add``: a leading negative coefficient
+        # is printed as subtraction (``A - B``) instead of ``A + (-1)*B``.
+        terms = [self.parenthesize(arg, precedence(expr)) for arg in expr.args]
+        l = []
+        for term in terms:
+            if term.startswith('-'):
+                sign = "-"
+                term = term[1:]
+            else:
+                sign = "+"
+            l.extend([sign, term])
+        sign = l.pop(0)
+        if sign == '+':
+            sign = ""
+        return sign + ' '.join(l)
 
     def _print_NaN(self, expr):
         return 'nan'

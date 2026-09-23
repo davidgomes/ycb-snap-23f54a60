@@ -744,6 +744,13 @@ def test_MatMul_MatAdd():
     from sympy import MatrixSymbol
     assert str(2*(MatrixSymbol("X", 2, 2) + MatrixSymbol("Y", 2, 2))) == \
         "2*(X + Y)"
+    A = MatrixSymbol('A', 2, 2)
+    B = MatrixSymbol('B', 2, 2)
+    # Negative matrix terms print as subtraction, not ``(-1)*``.
+    assert str(A - B) == "-B + A"
+    assert str(A - A*B - B) == "-B - A*B + A"
+    assert str(-2*A) == "-2*A"
+    assert str(-(A + B)) == "-(A + B)"
 
 def test_MatrixSlice():
     from sympy.matrices.expressions import MatrixSymbol
@@ -784,4 +791,4 @@ def test_MatrixElement_printing():
     assert(str(3 * A[0, 0]) == "3*A[0, 0]")
 
     F = C[0, 0].subs(C, A - B)
-    assert str(F) == "((-1)*B + A)[0, 0]"
+    assert str(F) == "(-B + A)[0, 0]"
