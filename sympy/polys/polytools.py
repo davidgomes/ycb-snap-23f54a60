@@ -106,6 +106,9 @@ class Poly(Expr):
 
     is_commutative = True
     is_Poly = True
+    # Above Expr (10.0) so ``expr * Poly`` dispatches to Poly.__rmul__.
+    # Below Matrix (10.01) so matrices keep handling mixed products.
+    _op_priority = 10.001
 
     def __new__(cls, rep, *gens, **args):
         """Create a new polynomial instance out of something useful. """

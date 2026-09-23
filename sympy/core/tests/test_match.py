@@ -133,7 +133,9 @@ def test_mul():
     e = exp(x)
     assert e.match(x**p*exp(x*q)) == {p: 0, q: 1}
 
-    e = I*Poly(x, x)
+    # I*Poly evaluates to a Poly, so build an unevaluated product to
+    # check that matching still sees Poly as a factor.
+    e = Mul(I, Poly(x, x), evaluate=False)
     assert e.match(I*p) == {p: Poly(x, x)}
 
 
