@@ -3260,6 +3260,15 @@ class TestDataset:
         assert_identical(obj, ds, check_default_indexes=False)
         assert len(obj.xindexes) == 0
 
+    def test_reset_index_drop_multiindex_dim(self) -> None:
+        # GH6946
+        ds = Dataset(coords={"a": ("x", [1, 2, 3]), "b": ("x", ["a", "b", "c"])})
+        reset = ds.set_index(z=["a", "b"]).reset_index("z", drop=True)
+        assert "z" not in reset.variables
+        assert "z" not in reset.coords
+        assert len(reset.data_vars) == 0
+        repr(reset)
+
     def test_reorder_levels(self) -> None:
         ds = create_test_multiindex()
         mindex = ds["x"].to_index()
