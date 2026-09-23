@@ -155,6 +155,26 @@ class TestMockDecoration:
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=1)
 
+    def test_unittest_mock_and_numpy_array(self, testdir):
+        testdir.makepyfile(
+            """
+            import unittest.mock
+
+            class NumpyLike:
+                def __eq__(self, other):
+                    raise ValueError("ambiguous truth value")
+
+            ARRAY = NumpyLike()
+
+            @unittest.mock.patch("os.path.abspath", new=ARRAY)
+            def test_hello():
+                import os
+                assert os.path.abspath is ARRAY
+        """
+        )
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=1)
+
     def test_unittest_mock_and_pypi_mock(self, testdir):
         pytest.importorskip("mock", "1.0.1")
         testdir.makepyfile(
