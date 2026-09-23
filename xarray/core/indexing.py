@@ -1305,3 +1305,16 @@ class PandasIndexAdapter(ExplicitlyIndexedNDArrayMixin):
     def __repr__(self):
         return ('%s(array=%r, dtype=%r)'
                 % (type(self).__name__, self.array, self.dtype))
+
+    def copy(self, deep=True):
+        """Copy this adapter, preserving the stored dtype.
+
+        ``pandas.Index.copy(deep=True)`` can cast unicode indexes to object.
+        Re-wrap the result with the original dtype so that copy does not
+        change it.
+
+        Shallow copies of the underlying ndarrays become deep copies upon
+        pickling, so a deep copy of the index is made when ``deep`` is True.
+        """
+        array = self.array.copy(deep=True) if deep else self.array
+        return type(self)(array, self._dtype)
