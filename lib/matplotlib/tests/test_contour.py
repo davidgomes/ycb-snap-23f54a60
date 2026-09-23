@@ -787,6 +787,17 @@ def test_contour_clip_path():
     assert cs.get_clip_path() is not None
 
 
+def test_contour_set_paths():
+    fig, ax = plt.subplots()
+    cs = ax.contour([[0, 1], [1, 0]])
+    new_paths = [p.transformed(mpl.transforms.Affine2D().translate(1, 1))
+                 for p in cs.get_paths()]
+    cs.set_paths(new_paths)
+    assert cs.get_paths() is new_paths
+    assert cs.stale
+    fig.canvas.draw()
+
+
 def test_bool_autolevel():
     x, y = np.random.rand(2, 9)
     z = (np.arange(9) % 2).reshape((3, 3)).astype(bool)

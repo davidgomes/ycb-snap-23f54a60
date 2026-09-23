@@ -932,6 +932,18 @@ class ContourSet(ContourLabeler, mcoll.Collection):
                 ", ".join(map(repr, kwargs))
             )
 
+    def set_paths(self, paths):
+        """
+        Set the contour paths.
+
+        Parameters
+        ----------
+        paths : list of `.Path`
+            One path per contour level, in the same order as `.get_paths`.
+        """
+        self._paths = paths
+        self.stale = True
+
     allsegs = _api.deprecated("3.8", pending=True)(property(lambda self: [
         p.vertices for c in self.collections for p in c.get_paths()]))
     allkinds = _api.deprecated("3.8", pending=True)(property(lambda self: [
