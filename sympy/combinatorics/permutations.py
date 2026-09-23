@@ -801,8 +801,8 @@ class Permutation(Basic):
     def __new__(cls, *args, **kwargs):
         """
         Constructor for the Permutation object from a list or a
-        list of lists in which all elements of the permutation may
-        appear only once.
+        list of lists. Elements in array form may appear only once.
+        Cycles may share elements; they are applied from left to right.
 
         Examples
         ========
@@ -843,6 +843,13 @@ class Permutation(Basic):
         Permutation([0, 4, 3, 5, 1, 2], size=10)
         >>> _.array_form
         [0, 4, 3, 5, 1, 2, 6, 7, 8, 9]
+
+        Non-disjoint cycles are allowed and are applied from left to right:
+
+        >>> Permutation([[0, 1], [0, 1]])
+        Permutation([0, 1])
+        >>> Permutation([[0, 1], [0, 2]])
+        Permutation([1, 2, 0])
         """
         size = kwargs.pop('size', None)
         if size is not None:
@@ -895,12 +902,8 @@ class Permutation(Basic):
         # counting starts from 1.
 
         temp = flatten(args)
-        if has_dups(temp):
-            if is_cycle:
-                raise ValueError('there were repeated elements; to resolve '
-                'cycles use Cycle%s.' % ''.join([str(tuple(c)) for c in args]))
-            else:
-                raise ValueError('there were repeated elements.')
+        if has_dups(temp) and not is_cycle:
+            raise ValueError('there were repeated elements.')
         temp = set(temp)
 
         if not is_cycle and \
