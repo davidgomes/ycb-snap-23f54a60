@@ -787,6 +787,20 @@ def test_skipped_reasons_functional(testdir):
     assert result.ret == 0
 
 
+def test_skip_location_with_runxfail(testdir):
+    testdir.makepyfile(
+        test_one="""
+            import pytest
+            @pytest.mark.skip
+            def test_skip_location():
+                assert 0
+        """
+    )
+    result = testdir.runpytest("-rs", "--runxfail")
+    result.stdout.fnmatch_lines(["SKIPPED [[]1[]] test_one.py:2: unconditional skip"])
+    assert result.ret == 0
+
+
 def test_skipped_folding(testdir):
     testdir.makepyfile(
         test_one="""
