@@ -8195,3 +8195,14 @@ def test_bar_leading_nan():
         for b in rest:
             assert np.isfinite(b.xy).all()
             assert np.isfinite(b.get_width())
+
+
+@pytest.mark.parametrize('x, height', [([np.nan], [np.nan]),
+                                       ([np.nan], [0]),
+                                       ([0], [np.nan])])
+def test_bar_all_nan(x, height):
+    fig, ax = plt.subplots()
+    bars = ax.bar(x, height)
+    assert len(bars) == 1
+    hbars = ax.barh(x, height)
+    assert len(hbars) == 1
