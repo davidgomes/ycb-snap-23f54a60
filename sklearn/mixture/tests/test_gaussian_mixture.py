@@ -584,11 +584,9 @@ def test_gaussian_mixture_fit_predict(seed, max_iter, tol):
         X = rand_data.X[covar_type]
         Y = rand_data.Y
         g = GaussianMixture(n_components=rand_data.n_components,
-                            random_state=rng, weights_init=rand_data.weights,
-                            means_init=rand_data.means,
-                            precisions_init=rand_data.precisions[covar_type],
+                            random_state=rng,
                             covariance_type=covar_type,
-                            max_iter=max_iter, tol=tol)
+                            max_iter=max_iter, tol=tol, n_init=5)
 
         # check if fit_predict(X) is equivalent to fit(X).predict(X)
         f = copy.deepcopy(g)

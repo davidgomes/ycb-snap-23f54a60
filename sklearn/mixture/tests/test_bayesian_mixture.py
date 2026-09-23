@@ -441,7 +441,7 @@ def test_bayesian_mixture_fit_predict(seed, max_iter, tol):
     for covar_type in COVARIANCE_TYPE:
         bgmm1 = BayesianGaussianMixture(n_components=n_components,
                                         max_iter=max_iter, random_state=rng,
-                                        tol=tol, reg_covar=0)
+                                        tol=tol, reg_covar=0, n_init=2)
         bgmm1.covariance_type = covar_type
         bgmm2 = copy.deepcopy(bgmm1)
         X = rand_data.X[covar_type]
