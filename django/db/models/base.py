@@ -569,6 +569,13 @@ class Model(metaclass=ModelBase):
         return getattr(self, meta.pk.attname)
 
     def _set_pk_val(self, value):
+        # Multi-table inheritance keeps a parent link per concrete ancestor.
+        # Assigning the primary key must also assign those parents' primary
+        # keys. Otherwise ``pk = None`` leaves the parent rows addressable and
+        # save() updates them in place.
+        for parent_link in self._meta.parents.values():
+            if parent_link and parent_link != self._meta.pk:
+                setattr(self, parent_link.target_field.attname, value)
         return setattr(self, self._meta.pk.attname, value)
 
     pk = property(_get_pk_val, _set_pk_val)
@@ -806,7 +813,14 @@ class Model(metaclass=ModelBase):
             # Make sure the link fields are synced between parent and self.
             if (field and getattr(self, parent._meta.pk.attname) is None and
                     getattr(self, field.attname) is not None):
-                setattr(self, parent._meta.pk.attname, getattr(self, field.attname))
+                if self._state.adding:
+                    setattr(self, parent._meta.pk.attname, getattr(self, field.attname))
+                else:
+                    # The parent primary key was cleared on an existing child
+                    # (``id = None`` / ``uid = None``) so save() can insert a
+                    # copy. Copying the stale parent link back onto that key
+                    # would update the original row instead.
+                    setattr(self, field.attname, None)
             parent_inserted = self._save_parents(cls=parent, using=using, update_fields=update_fields)
             updated = self._save_table(
                 cls=parent, using=using, update_fields=update_fields,

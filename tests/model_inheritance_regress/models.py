@@ -232,3 +232,16 @@ class Congressman(Person, Politician):
 
 class Senator(Congressman):
     pass
+
+
+class Item(models.Model):
+    uid = models.AutoField(primary_key=True, editable=False)
+    f = models.BooleanField(default=False)
+
+    def reset(self):
+        self.uid = None
+        self.f = False
+
+
+class Derived(Item):
+    pass
