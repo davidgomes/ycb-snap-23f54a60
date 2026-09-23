@@ -17,6 +17,7 @@ from typing import (Any, Callable, Dict, Generator, List, NewType, Optional, Tup
 
 import pytest
 
+from sphinx.ext.autodoc.mock import mock
 from sphinx.util.typing import restify, stringify
 
 
@@ -168,6 +169,13 @@ def test_restify_type_union_operator():
 
 def test_restify_broken_type_hints():
     assert restify(BrokenType) == ':py:class:`tests.test_util_typing.BrokenType`'
+
+
+def test_restify_mock():
+    with mock(['unknown']):
+        import unknown
+        assert restify(unknown) == ':py:class:`unknown`'
+        assert restify(unknown.secret.Class) == ':py:class:`unknown.secret.Class`'
 
 
 def test_stringify():

@@ -131,3 +131,7 @@ def test_subclass_of_mocked_object(app):
     options = {'members': None}
     actual = do_autodoc(app, 'module', 'target.need_mocks', options)
     assert '.. py:class:: Inherited(*args: Any, **kwargs: Any)' in actual
+
+    options = {'members': None, 'show-inheritance': None}
+    actual = do_autodoc(app, 'module', 'target.need_mocks', options)
+    assert '   Bases: :py:class:`missing_module.Class`' in actual
