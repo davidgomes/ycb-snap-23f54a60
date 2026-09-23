@@ -710,23 +710,39 @@ def test_issue_10003():
     assert P(G < -1) == S.Zero
 
 def test_precomputed_cdf():
-    x = symbols("x", real=True, finite=True)
-    mu = symbols("mu", real=True, finite=True)
-    sigma, xm, alpha = symbols("sigma xm alpha", positive=True, finite=True)
-    n = symbols("n", integer=True, positive=True, finite=True)
-    distribs = [
-            Normal("X", mu, sigma),
-            Pareto("P", xm, alpha),
-            ChiSquared("C", n),
-            Exponential("E", sigma),
-            # LogNormal("L", mu, sigma),
-    ]
-    for X in distribs:
-        compdiff = cdf(X)(x) - simplify(X.pspace.density.compute_cdf()(x))
-        compdiff = simplify(compdiff.rewrite(erfc))
-        assert compdiff == 0
+    from sympy import diff, uppergamma, asin
+    from sympy.stats import (Arcsin, Dagum, Erlang, Frechet, Gamma,
+        GammaInverse, Kumaraswamy, Laplace, Logistic, Nakagami, StudentT,
+        UniformSum)
+    x = Symbol('x', positive=True)
+    cases = [(Arcsin('A', 0, 3), [S(1)/3, S(5)/2]),
+             (Dagum('B', S(1)/3, S(1)/5, 2), [S(1)/3, S(7)/2]),
+             (Erlang('C', 2, 3), [S(1)/3, S(7)/2]),
+             (Frechet('D', S(4)/3, 1, 2), [S(7)/3, S(7)/2]),
+             (Gamma('E', S(1)/2, 2), [S(1)/3, S(7)/2]),
+             (GammaInverse('F', S(5)/7, 2), [S(1)/3, S(7)/2]),
+             (Kumaraswamy('G', S(1)/123, 5), [S(1)/3, S(3)/4]),
+             (Laplace('H', 2, 3), [S(1)/3, S(7)/2]),
+             (Logistic('I', 1, S(1)/10), [S(4)/5, S(6)/5]),
+             (Nakagami('J', S(7)/3, 1), [S(1)/3, S(3)/2]),
+             (StudentT('K', 10), [S(1)/3, S(7)/2])]
+    for X, points in cases:
+        c = cdf(X)(x)
+        d = density(X)(x)
+        for p in points:
+            assert abs(N(diff(c, x).subs(x, p).doit()) - N(d.subs(x, p).doit())) < 1e-8
 
-def test_issue_13324():
-    X = Uniform('X', 0, 1)
-    assert E(X, X > Rational(1,2)) == Rational(3,4)
-    assert E(X, X > 0) == Rational(1,2)
+    # floor() in the sum prevents symbolic differentiation
+    X = UniformSum('L', 3)
+    h = S(1)/10**6
+    for p in [S(1)/3, S(7)/4, S(5)/2]:
+        fd = (cdf(X)(p + h) - cdf(X)(p - h)).doit()/(2*h)
+        assert abs(N(fd) - N(density(X)(p).doit())) < 1e-8
+
+    assert cdf(Arcsin("x", 0, 3))(1) == 2*asin(sqrt(3)/3)/pi
+    assert cdf(Erlang("x", 1, 1))(1) == 1 - exp(-1)
+    assert cdf(GammaInverse("x", S(5)/7, 2))(3) == \
+        uppergamma(S(5)/7, S(2)/3)/gamma(S(5)/7)
+    assert cdf(Laplace("x", 2, 3))(5) == 1 - exp(-1)/2
+    assert abs(N(cdf(StudentT("x", 10))(2)) - 0.963305982614630) < 1e-12
+    assert cdf(UniformSum("x", 5))(2).doit() == S(9)/40
