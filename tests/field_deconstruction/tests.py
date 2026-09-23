@@ -259,6 +259,12 @@ class FieldDeconstructionTests(SimpleTestCase):
         self.assertEqual(path, "django.db.models.ForeignKey")
         self.assertEqual(args, [])
         self.assertEqual(kwargs, {"to": "auth.permission", "unique": True, "on_delete": models.CASCADE})
+        # Test mixed-case app label is preserved.
+        field = models.ForeignKey("DJ_RegLogin.Category", models.CASCADE)
+        name, path, args, kwargs = field.deconstruct()
+        self.assertEqual(path, "django.db.models.ForeignKey")
+        self.assertEqual(args, [])
+        self.assertEqual(kwargs, {"to": "DJ_RegLogin.category", "on_delete": models.CASCADE})
 
     @override_settings(AUTH_USER_MODEL="auth.Permission")
     def test_foreign_key_swapped(self):
