@@ -322,6 +322,32 @@ def test_autodoc_docstring_signature(app):
 
 
 @pytest.mark.sphinx('html', testroot='ext-autodoc')
+def test_autodoc_docstring_signature_overloaded(app):
+    options = {"members": None}
+    actual = do_autodoc(app, 'class', 'target.docstring_signature_overload.Math', options)
+    assert list(actual) == [
+        '',
+        '.. py:class:: Math()',
+        '   :module: target.docstring_signature_overload',
+        '',
+        '',
+        '   .. py:method:: Math.diff(self, a, b)',
+        '      :module: target.docstring_signature_overload',
+        '',
+        '      Return the difference.',
+        '',
+        '',
+        '   .. py:method:: Math.sum(self, a: int, b: int) -> int',
+        '                  Math.sum(self, a: float, b: float) -> float',
+        '                  Math.sum(self, a: str, b: str) -> str',
+        '      :module: target.docstring_signature_overload',
+        '',
+        '      Return the sum of *a* and *b*.',
+        '',
+    ]
+
+
+@pytest.mark.sphinx('html', testroot='ext-autodoc')
 def test_autoclass_content_and_docstring_signature_class(app):
     app.config.autoclass_content = 'class'
     options = {"members": None,
