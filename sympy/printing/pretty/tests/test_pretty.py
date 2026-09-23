@@ -19,7 +19,8 @@ from sympy.functions import (Abs, Chi, Ci, Ei, KroneckerDelta,
 from sympy.codegen.ast import (Assignment, AddAugmentedAssignment,
     SubAugmentedAssignment, MulAugmentedAssignment, DivAugmentedAssignment, ModAugmentedAssignment)
 
-from sympy.matrices import Adjoint, Inverse, MatrixSymbol, Transpose
+from sympy.matrices import (Adjoint, Inverse, MatAdd, MatMul, MatrixSymbol,
+    Transpose)
 
 from sympy.printing.pretty import pretty as xpretty
 from sympy.printing.pretty import pprint
@@ -6087,6 +6088,18 @@ def test_MatrixElement_printing():
     F = C[0, 0].subs(C, A - B)
     assert pretty(F)  == ascii_str1
     assert upretty(F) == ucode_str1
+
+
+def test_MatrixSymbol_printing():
+    A = MatrixSymbol("A", 3, 3)
+    B = MatrixSymbol("B", 3, 3)
+    C = MatrixSymbol("C", 3, 3)
+
+    assert pretty(-A*B*C) == "-A*B*C"
+    assert pretty(A - B) == "-B + A"
+    assert pretty(A*B*C - A*B - B*C) == "-A*B -B*C + A*B*C"
+    assert upretty(A - A*B - B) == u("-B -A⋅B + A")
+    assert pretty(MatAdd(C, MatMul(A, -1, B))) == "C + A*(-1)*B"
 
 
 def test_degree_printing():

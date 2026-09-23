@@ -819,7 +819,21 @@ class PrettyPrinter(Printer):
         return self._print(B.blocks)
 
     def _print_MatAdd(self, expr):
-        return self._print_seq(expr.args, None, None, ' + ')
+        from sympy import MatMul
+        s = None
+        for item in expr.args:
+            pform = self._print(item)
+            if s is None:
+                s = pform
+            else:
+                if isinstance(item, MatMul) and _coeff_isneg(item.args[0]):
+                    # the term's pretty form already starts with a minus sign
+                    delimiter = ' '
+                else:
+                    delimiter = ' + '
+                s = prettyForm(*stringPict.next(s, delimiter))
+                s = prettyForm(*stringPict.next(s, pform))
+        return s
 
     def _print_MatMul(self, expr):
         args = list(expr.args)
