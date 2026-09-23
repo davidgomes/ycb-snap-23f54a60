@@ -4010,6 +4010,20 @@ def test_hist_step_horiz():
     ax.hist((d1, d2), histtype="step", orientation="horizontal")
 
 
+def test_hist_step_autoscale_density():
+    # Autoscaling of step histograms must not depend on the data scale
+    # (path simplification used to drop the peak vertices).
+    np.random.seed(19680801)
+    data = np.random.randn(100000)
+    for scale in [1, 1.2, 10]:
+        fig, ax = plt.subplots()
+        n, _, _ = ax.hist(data * scale, bins=100, density=True,
+                          histtype="step")
+        assert ax.dataLim.y1 == pytest.approx(n.max())
+        assert ax.get_ylim()[1] >= n.max()
+        plt.close(fig)
+
+
 @image_comparison(['hist_stacked_weights'])
 def test_hist_stacked_weighted():
     # make some data
