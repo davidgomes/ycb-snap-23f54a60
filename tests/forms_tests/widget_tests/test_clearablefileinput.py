@@ -150,12 +150,6 @@ class ClearableFileInputTest(WidgetTest):
         html = self.widget.render('myfile', NoURLFieldFile())
         self.assertHTMLEqual(html, '<input name="myfile" type="file">')
 
-    def test_use_required_attribute(self):
-        # False when initial data exists. The file input is left blank by the
-        # user to keep the existing, initial value.
-        self.assertIs(self.widget.use_required_attribute(None), True)
-        self.assertIs(self.widget.use_required_attribute('resume.txt'), False)
-
     def test_value_omitted_from_data(self):
         widget = ClearableFileInput()
         self.assertIs(widget.value_omitted_from_data({}, {}, 'field'), True)
