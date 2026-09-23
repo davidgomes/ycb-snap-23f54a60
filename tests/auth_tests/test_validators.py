@@ -238,6 +238,7 @@ class UsernameValidatorsTests(SimpleTestCase):
             "o'connell", "عبد ال",
             "zerowidth\u200Bspace", "nonbreaking\u00A0space",
             "en\u2013dash",
+            "trailing\n",
         ]
         v = validators.UnicodeUsernameValidator()
         for valid in valid_usernames:
@@ -250,7 +251,7 @@ class UsernameValidatorsTests(SimpleTestCase):
 
     def test_ascii_validator(self):
         valid_usernames = ['glenn', 'GLEnN', 'jean-marc']
-        invalid_usernames = ["o'connell", 'Éric', 'jean marc', "أحمد"]
+        invalid_usernames = ["o'connell", 'Éric', 'jean marc', "أحمد", "trailing\n"]
         v = validators.ASCIIUsernameValidator()
         for valid in valid_usernames:
             with self.subTest(valid=valid):
