@@ -17,10 +17,12 @@ from django.test import (
     skipIfDBFeature,
     skipUnlessDBFeature,
 )
+from django.test.utils import CaptureQueriesContext
 
 from .models import (
     BigAutoFieldModel,
     Country,
+    FieldsWithDbColumn,
     NoFields,
     NullableFields,
     Pizzeria,
@@ -772,3 +774,25 @@ class BulkCreateTests(TestCase):
     @skipIfDBFeature("supports_update_conflicts_with_target")
     def test_update_conflicts_no_unique_fields(self):
         self._test_update_conflicts([])
+
+    @skipUnlessDBFeature("supports_update_conflicts")
+    def test_update_conflicts_unique_fields_update_fields_db_column(self):
+        FieldsWithDbColumn.objects.bulk_create(
+            [FieldsWithDbColumn(rank=1, name="a")]
+        )
+        with CaptureQueriesContext(connection) as captured_queries:
+            FieldsWithDbColumn.objects.bulk_create(
+                [FieldsWithDbColumn(rank=1, name="b")],
+                update_conflicts=True,
+                unique_fields=["rank"]
+                if connection.features.supports_update_conflicts_with_target
+                else None,
+                update_fields=["name"],
+            )
+        sql = captured_queries.captured_queries[0]["sql"]
+        self.assertIn(connection.ops.quote_name("oTheR"), sql)
+        self.assertNotIn(connection.ops.quote_name("name"), sql)
+        if connection.features.supports_update_conflicts_with_target:
+            self.assertIn(connection.ops.quote_name("rAnK"), sql)
+            self.assertNotIn(connection.ops.quote_name("rank"), sql)
+        self.assertEqual(FieldsWithDbColumn.objects.get().name, "b")

@@ -132,6 +132,11 @@ class NullableFields(models.Model):
     uuid_field = models.UUIDField(null=True, default=uuid.uuid4)
 
 
+class FieldsWithDbColumn(models.Model):
+    rank = models.IntegerField(unique=True, db_column="rAnK")
+    name = models.CharField(max_length=15, db_column="oTheR")
+
+
 class RelatedModel(models.Model):
     name = models.CharField(max_length=15, null=True)
     country = models.OneToOneField(Country, models.CASCADE, primary_key=True)
