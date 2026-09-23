@@ -331,6 +331,12 @@ class ProxyModelTests(TestCase):
         resp = StateProxy.objects.select_related().get(name="New South Wales")
         self.assertEqual(resp.name, "New South Wales")
 
+    def test_select_related_only(self):
+        user = ProxyTrackerUser.objects.create(name="Joe Doe", status="test")
+        issue = Issue.objects.create(summary="New issue", assignee=user)
+        qs = Issue.objects.select_related("assignee").only("assignee__status")
+        self.assertEqual(qs.get(), issue)
+
     def test_filter_proxy_relation_reverse(self):
         tu = TrackerUser.objects.create(name="Contributor", status="contrib")
         ptu = ProxyTrackerUser.objects.get()
