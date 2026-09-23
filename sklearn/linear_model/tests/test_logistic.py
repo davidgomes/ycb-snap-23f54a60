@@ -1554,6 +1554,20 @@ def test_LogisticRegressionCV_no_refit(multi_class):
     assert lrcv.coef_.shape == (n_classes, n_features)
 
 
+@pytest.mark.parametrize('solver', ('liblinear', 'lbfgs', 'newton-cg', 'sag',
+                                   'saga'))
+def test_LogisticRegressionCV_no_refit_binary_auto(solver):
+    # multi_class='auto' is OvR for binary targets. refit=False used to index
+    # coefs_paths_ with the multinomial layout and raise IndexError.
+    X, y = make_classification(n_samples=100, n_features=3, n_informative=3,
+                               n_redundant=0, n_classes=2, random_state=0)
+    lrcv = LogisticRegressionCV(cv=3, solver=solver, tol=1e-2, refit=False,
+                                multi_class='auto', random_state=0)
+    lrcv.fit(X, y)
+    assert lrcv.coef_.shape == (1, 3)
+    assert lrcv.C_.shape == (1,)
+
+
 def test_LogisticRegressionCV_elasticnet_attribute_shapes():
     # Make sure the shapes of scores_ and coefs_paths_ attributes are correct
     # when using elasticnet (added one dimension for l1_ratios)
