@@ -1,0 +1,10 @@
+Colormap names
+~~~~~~~~~~~~~~
+
+`.ColormapRegistry.register` now stores a copy of the colormap whose ``name``
+attribute is set to the name it was registered under.  Previously, the copy
+kept the original colormap's name, so e.g. ``plt.set_cmap("registered_name")``
+would store the original name in :rc:`image.cmap` and later fail to look it up.
+
+Colormap equality no longer takes the name into account; two colormaps with
+the same colors and extremes now compare equal even if their names differ.

@@ -152,6 +152,22 @@ def test_double_register_builtin_cmap():
         cm.register_cmap(name, mpl.colormaps[name], override_builtin=True)
 
 
+def test_colormap_registered_name_differs_from_cmap_name():
+    cmap = mcolors.LinearSegmentedColormap.from_list(
+        'some_cmap_name', [[0.1, 0.1, 0.1], [0.9, 0.9, 0.9]])
+    matplotlib.colormaps.register(cmap, name='my_cmap_name')
+    try:
+        assert matplotlib.colormaps['my_cmap_name'].name == 'my_cmap_name'
+        assert cmap.name == 'some_cmap_name'
+        with plt.rc_context():
+            plt.set_cmap('my_cmap_name')
+            _, ax = plt.subplots()
+            im = ax.imshow([[1, 1], [2, 2]])
+            assert im.get_cmap().name == 'my_cmap_name'
+    finally:
+        matplotlib.colormaps.unregister('my_cmap_name')
+
+
 def test_unregister_builtin_cmap():
     name = "viridis"
     match = f'cannot unregister {name!r} which is a builtin colormap.'
@@ -195,10 +211,10 @@ def test_colormap_equals():
     # Make sure we can compare different sizes without failure
     cm_copy._lut = cm_copy._lut[:10, :]
     assert cm_copy != cmap
-    # Test different names are not equal
+    # Test different names are equal if the lookup table is the same
     cm_copy = cmap.copy()
     cm_copy.name = "Test"
-    assert cm_copy != cmap
+    assert cm_copy == cmap
     # Test colorbar extends
     cm_copy = cmap.copy()
     cm_copy.colorbar_extend = not cmap.colorbar_extend
