@@ -17,7 +17,7 @@ from unittest import mock
 from django import conf, get_version
 from django.conf import settings
 from django.core.management import (
-    BaseCommand, CommandError, call_command, color,
+    BaseCommand, CommandError, call_command, color, execute_from_command_line,
 )
 from django.core.management.commands.loaddata import Command as LoaddataCommand
 from django.core.management.commands.runserver import (
@@ -31,6 +31,7 @@ from django.db.migrations.recorder import MigrationRecorder
 from django.test import (
     LiveServerTestCase, SimpleTestCase, TestCase, override_settings,
 )
+from django.test.utils import captured_stderr, captured_stdout
 
 custom_templates_dir = os.path.join(os.path.dirname(__file__), 'custom_templates')
 
@@ -2269,6 +2270,20 @@ class MainModule(AdminScriptTestCase):
     def test_program_name_in_help(self):
         out, err = self.run_test(['-m', 'django', 'help'])
         self.assertOutput(out, "Type 'python -m django help <subcommand>' for help on a specific subcommand.")
+
+
+class ExecuteFromCommandLine(SimpleTestCase):
+    def test_program_name_from_argv(self):
+        """
+        Program name is computed from the execute_from_command_line()'s argv
+        argument, not sys.argv.
+        """
+        args = ['help', 'shell']
+        with captured_stdout() as out, captured_stderr() as err:
+            with mock.patch('sys.argv', [None] + args):
+                execute_from_command_line(['django-admin'] + args)
+        self.assertIn('usage: django-admin shell', out.getvalue())
+        self.assertEqual(err.getvalue(), '')
 
 
 class DjangoAdminSuggestions(AdminScriptTestCase):
