@@ -432,6 +432,9 @@ name is ``rinoh``. Refer to the `rinohtype manual`_ for details.
    ``requests``, and writes an overview which ones are broken and redirected to
    standard output and to :file:`output.txt` in the output directory.
 
+   Links to local files are checked for existence, relative to the directory of
+   the source document containing the link.
+
    .. autoattribute:: name
 
    .. autoattribute:: format
@@ -441,6 +444,10 @@ name is ``rinoh``. Refer to the `rinohtype manual`_ for details.
    .. versionchanged:: 1.5
 
       Since Sphinx-1.5, the linkcheck builder comes to use requests module.
+
+   .. versionchanged:: 3.2
+
+      Links to local files are now checked.
 
 .. module:: sphinx.builders.xml
 .. class:: XMLBuilder

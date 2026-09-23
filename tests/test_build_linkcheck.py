@@ -30,7 +30,9 @@ def test_defaults(app, status, warning):
     # images should fail
     assert "Not Found for url: https://www.google.com/image.png" in content
     assert "Not Found for url: https://www.google.com/image2.png" in content
-    assert len(content.splitlines()) == 5
+    # looking for local file should fail
+    assert "[broken] path/to/notfound" in content
+    assert len(content.splitlines()) == 6
 
 
 @pytest.mark.sphinx('linkcheck', testroot='linkcheck', freshenv=True)
@@ -47,8 +49,8 @@ def test_defaults_json(app, status, warning):
                  "info"]:
         assert attr in row
 
-    assert len(content.splitlines()) == 8
-    assert len(rows) == 8
+    assert len(content.splitlines()) == 10
+    assert len(rows) == 10
     # the output order of the rows is not stable
     # due to possible variance in network latency
     rowsby = {row["uri"]:row for row in rows}
@@ -63,13 +65,13 @@ def test_defaults_json(app, status, warning):
     # looking for non-existent URL should fail
     dnerow = rowsby['https://localhost:7777/doesnotexist']
     assert dnerow['filename'] == 'links.txt'
-    assert dnerow['lineno'] == 13
+    assert dnerow['lineno'] == 15
     assert dnerow['status'] == 'broken'
     assert dnerow['code'] == 0
     assert dnerow['uri'] == 'https://localhost:7777/doesnotexist'
     assert rowsby['https://www.google.com/image2.png'] == {
         'filename': 'links.txt',
-        'lineno': 16,
+        'lineno': 18,
         'status': 'broken',
         'code': 0,
         'uri': 'https://www.google.com/image2.png',
@@ -83,6 +85,36 @@ def test_defaults_json(app, status, warning):
     # images should fail
     assert "Not Found for url: https://www.google.com/image.png" in \
         rowsby["https://www.google.com/image.png"]["info"]
+    # local files
+    assert rowsby["conf.py"]["status"] == "working"
+    assert rowsby["path/to/notfound"]["status"] == "broken"
+
+
+@pytest.mark.sphinx('linkcheck', testroot='linkcheck-localfiles', freshenv=True)
+def test_local_links(app, status, warning):
+    app.builder.build_all()
+
+    content = (app.outdir / 'output.json').read_text()
+    rows = [json.loads(x) for x in content.splitlines()]
+    statuses = {(row['filename'], row['uri']): row['status'] for row in rows}
+    assert statuses == {
+        ('index.rst', 'conf.py'): 'working',
+        ('index.rst', 'conf.py#L1'): 'working',
+        ('index.rst', 'path/to/notfound'): 'broken',
+        ('index.rst', 'ftp://example.com/'): 'unchecked',
+        ('index.rst', 'mailto:user@example.com'): 'unchecked',
+        ('index.rst', '/path/to/notfound'): 'unchecked',
+        ('sub/index.rst', '../conf.py'): 'working',
+        ('sub/index.rst', 'index.rst'): 'working',
+        ('sub/index.rst', 'conf.py'): 'broken',
+    }
+
+    content = (app.outdir / 'output.txt').read_text()
+    assert content.splitlines() == [
+        'index.rst:6: [broken] path/to/notfound: Local file not found',
+        'sub/index.rst:8: [broken] conf.py: Local file not found',
+    ]
+    assert app.statuscode == 1
 
 
 @pytest.mark.sphinx(
@@ -92,7 +124,8 @@ def test_defaults_json(app, status, warning):
                        'https://localhost:7777/doesnotexist',
                        'http://www.sphinx-doc.org/en/1.7/intro.html#',
                        'https://www.google.com/image.png',
-                       'https://www.google.com/image2.png']
+                       'https://www.google.com/image2.png',
+                       'path/to/notfound']
                    })
 def test_anchors_ignored(app, status, warning):
     app.builder.build_all()

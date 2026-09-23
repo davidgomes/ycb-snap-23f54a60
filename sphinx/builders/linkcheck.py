@@ -16,7 +16,7 @@ import threading
 from html.parser import HTMLParser
 from os import path
 from typing import Any, Dict, List, Set, Tuple
-from urllib.parse import unquote, urlparse
+from urllib.parse import unquote, urlparse, urlsplit
 
 from docutils import nodes
 from docutils.nodes import Node
@@ -39,6 +39,9 @@ logger = logging.getLogger(__name__)
 DEFAULT_REQUEST_HEADERS = {
     'Accept': 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.8',
 }
+
+# matches URIs having a scheme (ex. ftp:), protocol-relative URIs and absolute paths
+uri_re = re.compile(r'[a-z][a-z0-9+.-]*:|/', re.IGNORECASE)
 
 
 class AnchorCheckParser(HTMLParser):
@@ -208,12 +211,23 @@ class CheckExternalLinksBuilder(Builder):
                 else:
                     return 'redirected', new_url, 0
 
+        def check_local_uri() -> Tuple[str, str, int]:
+            # local links are relative to the directory of the linking document
+            filename = unquote(urlsplit(uri).path)
+            docdir = path.dirname(self.env.doc2path(docname))
+            if path.exists(path.join(docdir, filename)):
+                return 'working', '', 0
+            else:
+                return 'broken', __('Local file not found'), 0
+
         def check() -> Tuple[str, str, int]:
             # check for various conditions without bothering the network
-            if len(uri) == 0 or uri.startswith(('#', 'mailto:', 'ftp:')):
+            if len(uri) == 0 or uri.startswith('#'):
                 return 'unchecked', '', 0
-            elif not uri.startswith(('http:', 'https:')):
-                return 'local', '', 0
+            elif not uri.startswith(('http:', 'https:')) and uri_re.match(uri):
+                # other schemes are not supported, and absolute paths depend on
+                # where the documentation is deployed
+                return 'unchecked', '', 0
             elif uri in self.good:
                 return 'working', 'old', 0
             elif uri in self.broken:
@@ -223,6 +237,9 @@ class CheckExternalLinksBuilder(Builder):
             for rex in self.to_ignore:
                 if rex.match(uri):
                     return 'ignored', '', 0
+
+            if not uri.startswith(('http:', 'https:')):
+                return check_local_uri()
 
             # need to actually check the URI
             for _ in range(self.app.config.linkcheck_retries):
@@ -267,14 +284,11 @@ class CheckExternalLinksBuilder(Builder):
             else:
                 logger.info(darkgray('-ignored- ') + uri)
             self.write_linkstat(linkstat)
-        elif status == 'local':
-            logger.info(darkgray('-local-   ') + uri)
-            self.write_entry('local', docname, filename, lineno, uri)
-            self.write_linkstat(linkstat)
         elif status == 'working':
             logger.info(darkgreen('ok        ') + uri + info)
             self.write_linkstat(linkstat)
         elif status == 'broken':
+            self.app.statuscode = 1
             if self.app.quiet or self.app.warningiserror:
                 logger.warning(__('broken link: %s (%s)'), uri, info,
                                location=(filename, lineno))
@@ -333,9 +347,6 @@ class CheckExternalLinksBuilder(Builder):
         while done < n:
             self.process_result(self.rqueue.get())
             done += 1
-
-        if self.broken:
-            self.app.statuscode = 1
 
     def write_entry(self, what: str, docname: str, filename: str, line: int,
                     uri: str) -> None:
