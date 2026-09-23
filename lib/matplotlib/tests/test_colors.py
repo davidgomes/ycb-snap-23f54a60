@@ -197,6 +197,13 @@ def test_colormap_equals():
     assert cm_copy != cmap
 
 
+@pytest.mark.parametrize("dtype", [np.uint8, int, np.float16, float])
+def test_index_dtype(dtype):
+    # We use subtraction in the indexing, so need to verify that uint8 works
+    cm = mpl.colormaps["viridis"]
+    assert_array_equal(cm(dtype(0)), cm(0))
+
+
 def test_colormap_endian():
     """
     GitHub issue #1005: a bug in putmask caused erroneous
