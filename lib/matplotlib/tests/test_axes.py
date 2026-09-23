@@ -2075,6 +2075,18 @@ def test_hist_density():
     ax.hist(data, density=True)
 
 
+@pytest.mark.parametrize('histtype', ['step', 'stepfilled'])
+def test_hist_step_density_autoscale(histtype):
+    # Step outlines have enough vertices to trigger path simplification, which
+    # must not be applied when computing data limits.
+    np.random.seed(19680801)
+    data = np.random.standard_normal(100_000) * 10
+    fig, ax = plt.subplots()
+    n, _, _ = ax.hist(data, bins=100, density=True, histtype=histtype)
+    assert ax.dataLim.y1 == pytest.approx(n.max())
+    assert ax.get_ylim()[1] >= n.max()
+
+
 def test_hist_unequal_bins_density():
     # Test correct behavior of normalized histogram with unequal bins
     # https://github.com/matplotlib/matplotlib/issues/9557
