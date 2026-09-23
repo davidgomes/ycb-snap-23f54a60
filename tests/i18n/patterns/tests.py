@@ -76,6 +76,20 @@ class URLPrefixTests(URLTestCaseBase):
         with translation.override(None):
             self.assertEqual(reverse('prefixed'), '/%s/prefixed/' % settings.LANGUAGE_CODE)
 
+    @override_settings(LANGUAGES=[
+        ('en', 'English'),
+        ('en-us', 'English'),
+        ('en-latn-us', 'Latin English'),
+        ('en-Latn-US', 'BCP 47 case format'),
+        ('nl', 'Dutch'),
+        ('pt-br', 'Brazilian Portuguese'),
+    ])
+    def test_script_and_region_prefix(self):
+        for path in ('/en-latn-us/prefixed/', '/en-Latn-US/prefixed/'):
+            with self.subTest(path=path):
+                response = self.client.get(path)
+                self.assertEqual(response.status_code, 200)
+
     @override_settings(ROOT_URLCONF='i18n.patterns.urls.wrong')
     def test_invalid_prefix_use(self):
         msg = 'Using i18n_patterns in an included URLconf is not allowed.'

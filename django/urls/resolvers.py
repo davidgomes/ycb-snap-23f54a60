@@ -322,7 +322,10 @@ class LocalePrefixPattern:
 
     def match(self, path):
         language_prefix = self.language_prefix
-        if path.startswith(language_prefix):
+        # RFC 5646 language tags are case-insensitive, but the active language
+        # is stored in lowercase. Compare case-insensitively so prefixes such
+        # as "en-Latn-US/" still match.
+        if path.lower().startswith(language_prefix.lower()):
             return path[len(language_prefix):], (), {}
         return None
 
