@@ -2411,6 +2411,9 @@ def test_factor():
 
     assert factor(f) == f
     assert factor(f, extension=I) == (x**2 - I)*(x**2 + I)
+
+    # issue 18895
+    assert factor(expand((x - 1)*(y - 1)), extension=I) == (x - 1)*(y - 1)
     assert factor(f, gaussian=True) == (x**2 - I)*(x**2 + I)
     assert factor(
         f, extension=sqrt(2)) == (x**2 + sqrt(2)*x + 1)*(x**2 - sqrt(2)*x + 1)
