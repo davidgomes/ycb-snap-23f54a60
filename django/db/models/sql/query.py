@@ -403,6 +403,7 @@ class Query(BaseExpression):
         # Store annotation mask prior to temporarily adding aggregations for
         # resolving purpose to facilitate their subsequent removal.
         refs_subquery = False
+        refs_window = False
         replacements = {}
         annotation_select_mask = self.annotation_select_mask
         for alias, aggregate_expr in aggregate_exprs.items():
@@ -417,6 +418,10 @@ class Query(BaseExpression):
             self.append_annotation_mask([alias])
             refs_subquery |= any(
                 getattr(self.annotations[ref], "subquery", False)
+                for ref in aggregate.get_refs()
+            )
+            refs_window |= any(
+                getattr(self.annotations[ref], "contains_over_clause", True)
                 for ref in aggregate.get_refs()
             )
             aggregate = aggregate.replace_expressions(replacements)
@@ -442,6 +447,12 @@ class Query(BaseExpression):
         # get_aggregation() must produce just one result and thus must not use
         # GROUP BY.
         #
+        # Existing window functions must also be computed in a subquery.
+        # Aggregate functions cannot contain window function calls, so
+        # inlining an OVER clause into the aggregate crashes (e.g. on
+        # PostgreSQL: "aggregate function calls cannot contain window function
+        # calls").
+        #
         # If the query has limit or distinct, or uses set operations, then
         # those operations must be done in a subquery so that the query
         # aggregates on the limit and/or distinct results instead of applying
@@ -451,6 +462,7 @@ class Query(BaseExpression):
             or self.is_sliced
             or has_existing_aggregation
             or refs_subquery
+            or refs_window
             or qualify
             or self.distinct
             or self.combinator
