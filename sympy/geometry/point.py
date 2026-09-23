@@ -265,9 +265,22 @@ class Point(GeometryEntity):
         >>> p3.distance(Point(0, 0))
         sqrt(x**2 + y**2)
 
+        A point with fewer coordinates is treated as having zeros in the
+        missing dimensions, so those coordinates are included:
+
+        >>> Point(2, 0).distance(Point(1, 0, 2))
+        sqrt(5)
+
         """
-        return sqrt(sum([(a - b)**2 for a, b in zip(
-            self.args, p.args if isinstance(p, Point) else p)]))
+        coords = p.args if isinstance(p, Point) else p
+        if len(coords) != len(self):
+            # zip() stops at the shorter sequence and drops the extra
+            # coordinates. Missing coordinates are zero.
+            n = max(len(self), len(coords))
+            s = list(self.args) + [S.Zero]*(n - len(self))
+            o = list(coords) + [S.Zero]*(n - len(coords))
+            return sqrt(sum([(a - b)**2 for a, b in zip(s, o)]))
+        return sqrt(sum([(a - b)**2 for a, b in zip(self.args, coords)]))
 
     def taxicab_distance(self, p):
         """The Taxicab Distance from self to point p.
