@@ -339,3 +339,38 @@ def test_base_estimator_property_deprecated():
     )
     with pytest.warns(FutureWarning, match=warn_msg):
         model.base_estimator_
+
+
+def test_iforest_preserve_feature_names():
+    """Check that feature names are preserved when contamination is not "auto".
+
+    Feature names are required for consistency checks during scoring.
+
+    Non-regression test for Issue #25844
+    """
+    pd = pytest.importorskip("pandas")
+    rng = np.random.RandomState(0)
+
+    X = pd.DataFrame(data=rng.randn(4), columns=["a"])
+    model = IsolationForest(random_state=0, contamination=0.05)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
+        model.fit(X)
+
+
+@pytest.mark.parametrize("sparse_container", [csc_matrix, csr_matrix])
+def test_iforest_sparse_input_float_contamination(sparse_container):
+    """Check that `IsolationForest` accepts sparse matrix input and float value for
+    contamination.
+    """
+    X, _ = make_classification(n_samples=50, n_features=4, random_state=0)
+    X = sparse_container(X)
+    X.sort_indices()
+    contamination = 0.1
+    iforest = IsolationForest(
+        n_estimators=5, contamination=contamination, random_state=0
+    ).fit(X)
+
+    X_decision = iforest.decision_function(X)
+    assert (X_decision < 0).sum() / X.shape[0] == pytest.approx(contamination)
