@@ -1,5 +1,7 @@
-from django.db.models import F, Q
+from django.db.models import Exists, F, OuterRef, Q
 from django.test import SimpleTestCase
+
+from .models import Tag
 
 
 class QTests(SimpleTestCase):
@@ -27,6 +29,21 @@ class QTests(SimpleTestCase):
     def test_combine_or_both_empty(self):
         self.assertEqual(Q() | Q(), Q())
 
+    def test_combine_and_boolean_expression(self):
+        tagged = Tag.objects.filter(category=OuterRef('pk'))
+        q = Q(Exists(tagged))
+        tests = [
+            q & Q(),
+            Q() & q,
+            q | Q(),
+            Q() | q,
+        ]
+        for combined in tests:
+            with self.subTest(combined=combined):
+                self.assertEqual(combined, q)
+        self.assertIsInstance(Q(x=1) & Exists(tagged), Q)
+        self.assertIsInstance(Q(x=1) | Exists(tagged), Q)
+
     def test_combine_not_q_object(self):
         obj = object()
         q = Q(x=1)
@@ -39,17 +56,21 @@ class QTests(SimpleTestCase):
         q = Q(price__gt=F('discounted_price'))
         path, args, kwargs = q.deconstruct()
         self.assertEqual(path, 'django.db.models.Q')
-        self.assertEqual(args, ())
-        self.assertEqual(kwargs, {'price__gt': F('discounted_price')})
+        self.assertEqual(args, (('price__gt', F('discounted_price')),))
+        self.assertEqual(kwargs, {})
 
     def test_deconstruct_negated(self):
         q = ~Q(price__gt=F('discounted_price'))
         path, args, kwargs = q.deconstruct()
-        self.assertEqual(args, ())
-        self.assertEqual(kwargs, {
-            'price__gt': F('discounted_price'),
-            '_negated': True,
-        })
+        self.assertEqual(args, (('price__gt', F('discounted_price')),))
+        self.assertEqual(kwargs, {'_negated': True})
+
+    def test_deconstruct_boolean_expression(self):
+        tagged = Tag.objects.filter(category=OuterRef('pk'))
+        q = Q(Exists(tagged))
+        _, args, kwargs = q.deconstruct()
+        self.assertEqual(args, (Exists(tagged),))
+        self.assertEqual(kwargs, {})
 
     def test_deconstruct_or(self):
         q1 = Q(price__gt=F('discounted_price'))
