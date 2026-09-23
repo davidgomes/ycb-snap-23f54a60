@@ -1922,6 +1922,34 @@ def test_where() -> None:
     assert_identical(expected, actual)
 
 
+def test_where_attrs() -> None:
+    cond = xr.DataArray([True, False], dims="x", attrs={"attr": "cond"})
+    x = xr.DataArray([1, 1], dims="x", attrs={"attr": "x"})
+    y = xr.DataArray([0, 0], dims="x", attrs={"attr": "y"})
+    actual = xr.where(cond, x, y, keep_attrs=True)
+    expected = xr.DataArray([1, 0], dims="x", attrs={"attr": "x"})
+    assert_identical(expected, actual)
+
+    # default still drops attrs
+    assert xr.where(cond, x, y).attrs == {}
+
+    # scalar choices have no attrs; this must not raise
+    assert xr.where(cond, 1, 0, keep_attrs=True).attrs == {"attr": "cond"}
+
+    # attributes follow the original array when it is passed as y
+    da = xr.DataArray(1, attrs={"foo": "bar"})
+    assert xr.where(da == 0, -1, da, keep_attrs=True).attrs == {"foo": "bar"}
+    assert xr.where(da == 0, -1, da).attrs == {}
+
+    # coordinate attributes survive when only one input carries them
+    coord = xr.Variable("x", [0, 1], {"units": "m"})
+    cond = cond.assign_coords(x=coord)
+    x = x.assign_coords(x=coord.copy())
+    actual = xr.where(cond, x, 0, keep_attrs=True)
+    assert actual.attrs == {"attr": "x"}
+    assert actual.x.attrs == {"units": "m"}
+
+
 @pytest.mark.parametrize("use_dask", [True, False])
 @pytest.mark.parametrize("use_datetime", [True, False])
 def test_polyval(use_dask, use_datetime) -> None:
