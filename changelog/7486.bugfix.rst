@@ -1,0 +1,1 @@
+Fixed regression where an ``xfail`` marker dynamically added during the test run (e.g. with ``request.node.add_marker``) was ignored.

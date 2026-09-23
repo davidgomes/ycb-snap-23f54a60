@@ -425,6 +425,31 @@ class TestXFail:
         result = testdir.runpytest(p)
         result.stdout.fnmatch_lines(["*1 xfailed*"])
 
+    def test_dynamic_xfail_set_during_runtest_failed(self, testdir):
+        # Issue #7486.
+        p = testdir.makepyfile(
+            """
+            import pytest
+            def test_this(request):
+                request.node.add_marker(pytest.mark.xfail(reason="xfail"))
+                assert 0
+        """
+        )
+        result = testdir.runpytest(p)
+        result.assert_outcomes(xfailed=1)
+
+    def test_dynamic_xfail_set_during_runtest_passed_strict(self, testdir):
+        # Issue #7486.
+        p = testdir.makepyfile(
+            """
+            import pytest
+            def test_this(request):
+                request.node.add_marker(pytest.mark.xfail(reason="xfail", strict=True))
+        """
+        )
+        result = testdir.runpytest(p)
+        result.assert_outcomes(failed=1)
+
     @pytest.mark.parametrize(
         "expected, actual, matchline",
         [
