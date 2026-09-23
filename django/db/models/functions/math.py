@@ -154,6 +154,11 @@ class Random(NumericOutputFieldMixin, Func):
     def as_sqlite(self, compiler, connection, **extra_context):
         return super().as_sql(compiler, connection, function='RAND', **extra_context)
 
+    def get_group_by_cols(self, alias=None):
+        # Random values do not define groups. Including them in GROUP BY
+        # (for example via order_by('?')) would split aggregated rows.
+        return []
+
 
 class Round(Transform):
     function = 'ROUND'
