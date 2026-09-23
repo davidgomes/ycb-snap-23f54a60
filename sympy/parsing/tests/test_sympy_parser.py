@@ -6,7 +6,8 @@ import builtins
 import types
 
 from sympy.assumptions import Q
-from sympy.core import Symbol, Function, Float, Rational, Integer, I, Mul, Pow, Eq
+from sympy.core import (Symbol, Function, Float, Rational, Integer, I, Add,
+    Mul, Pow, Eq, Ne, Lt, Le, Gt, Ge)
 from sympy.functions import exp, factorial, factorial2, sin, Min, Max
 from sympy.logic import And
 from sympy.series import Limit
@@ -207,6 +208,24 @@ def test_function_evaluate_false():
         assert case == str(expr) != str(expr.doit())
     assert str(parse_expr('ln(0)', evaluate=False)) == 'log(0)'
     assert str(parse_expr('cbrt(0)', evaluate=False)) == '0**(1/3)'
+
+
+def test_relational_evaluate_false():
+    x = Symbol('x')
+    inputs = {
+        '1 < 2': Lt(1, 2, evaluate=False),
+        '1 <= 1': Le(1, 1, evaluate=False),
+        '2 > 1': Gt(2, 1, evaluate=False),
+        '1 >= 1': Ge(1, 1, evaluate=False),
+        '1 == 2': Eq(1, 2, evaluate=False),
+        '1 != 1': Ne(1, 1, evaluate=False),
+        'x + 1 < 1 + 1': Lt(Add(x, 1, evaluate=False),
+                            Add(1, 1, evaluate=False), evaluate=False),
+    }
+    for text, result in inputs.items():
+        expr = parse_expr(text, evaluate=False)
+        assert expr == result
+        assert type(expr) is type(result)
 
 
 def test_issue_10773():
