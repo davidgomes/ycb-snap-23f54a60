@@ -1747,7 +1747,9 @@ class Model(metaclass=ModelBase):
                     else:
                         _cls = None
                 except (FieldDoesNotExist, AttributeError):
-                    if fld is None or fld.get_transform(part) is None:
+                    if fld is None or (
+                        fld.get_transform(part) is None and fld.get_lookup(part) is None
+                    ):
                         errors.append(
                             checks.Error(
                                 "'ordering' refers to the nonexistent field, "
@@ -1756,6 +1758,7 @@ class Model(metaclass=ModelBase):
                                 id='models.E015',
                             )
                         )
+                    break
 
         # Skip ordering on pk. This is always a valid order_by field
         # but is an alias and therefore won't be found by opts.get_field.

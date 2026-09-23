@@ -893,6 +893,51 @@ class OtherModelTests(SimpleTestCase):
         with register_lookup(models.CharField, Lower):
             self.assertEqual(Model.check(), [])
 
+    def test_ordering_pointing_to_lookup_not_transform(self):
+        class Model(models.Model):
+            test = models.CharField(max_length=100)
+
+            class Meta:
+                ordering = ('test__isnull',)
+
+        self.assertEqual(Model.check(), [])
+
+    def test_ordering_pointing_to_related_model_lookup(self):
+        class Model(models.Model):
+            test = models.CharField(max_length=100)
+            parent = models.ForeignKey('self', models.CASCADE, null=True)
+
+            class Meta:
+                ordering = ('parent__test__isnull',)
+
+        self.assertEqual(Model.check(), [])
+
+    def test_ordering_pointing_to_related_model_transform(self):
+        class Model(models.Model):
+            test = models.CharField(max_length=100)
+            parent = models.ForeignKey('self', models.CASCADE, null=True)
+
+            class Meta:
+                ordering = ('parent__test__lower',)
+
+        with register_lookup(models.CharField, Lower):
+            self.assertEqual(Model.check(), [])
+
+    def test_ordering_pointing_to_lookup_across_relations(self):
+        class Product(models.Model):
+            parent = models.ForeignKey('self', models.CASCADE, null=True)
+
+        class Supply(models.Model):
+            product = models.ForeignKey(Product, models.CASCADE)
+
+        class Stock(models.Model):
+            supply = models.ForeignKey(Supply, models.CASCADE)
+
+            class Meta:
+                ordering = ('supply__product__parent__isnull',)
+
+        self.assertEqual(Stock.check(), [])
+
     def test_ordering_pointing_to_related_model_pk(self):
         class Parent(models.Model):
             pass
