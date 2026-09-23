@@ -47,6 +47,18 @@ Changelog
   need to store the entire dense matrix at once.
   :pr:`13960` by :user:`Scott Gigante <scottgigante>`.
 
+- |Enhancement| :func:`decomposition.dict_learning()` and
+  :func:`decomposition.dict_learning_online()` now accept `method_max_iter` and
+  pass it to :meth:`decomposition.sparse_encode`.
+  :pr:`12682` by `Adrin Jalali`_.
+
+- |Enhancement| :class:`decomposition.SparseCoder`,
+  :class:`decomposition.DictionaryLearning`, and
+  :class:`decomposition.MiniBatchDictionaryLearning` now take a
+  `transform_max_iter` parameter and pass it to either
+  :func:`decomposition.dict_learning()` or
+  :func:`decomposition.sparse_encode()`. :pr:`12682` by `Adrin Jalali`_.
+
 :mod:`sklearn.ensemble`
 .......................
 
