@@ -2995,6 +2995,20 @@ class TestDataset:
         assert isinstance(actual.variables["x"], Variable)
         assert actual.xindexes["y"].equals(expected.xindexes["y"])
 
+    def test_swap_dims_does_not_modify_original(self) -> None:
+        # "lev" ends up as an IndexVariable stored as a data variable
+        original = (
+            Dataset({"y": ("z", [1, 2, 3]), "lev": ("z", [10, 20, 30])})
+            .swap_dims(z="lev")
+            .rename_dims(lev="z")
+            .reset_index("lev")
+            .reset_coords()
+        )
+        before = original.copy(deep=True)
+        original.swap_dims(z="lev")
+        assert_identical(original, before)
+        assert original["lev"].dims == ("z",)
+
     def test_expand_dims_error(self) -> None:
         original = Dataset(
             {
