@@ -1049,6 +1049,15 @@ class TestDataset:
         with pytest.raises(ValueError, match=r"some chunks"):
             data.chunk({"foo": 10})
 
+    def test_chunks_does_not_load_data(self) -> None:
+        # regression test for GH6538
+        store = InaccessibleVariableDataStore()
+        create_test_data().dump_to_store(store)
+        ds = open_dataset(store)
+        assert ds.chunks == {}
+        assert ds.chunksizes == {}
+        assert ds["var1"].chunksizes == {}
+
     @requires_dask
     def test_dask_is_lazy(self) -> None:
         store = InaccessibleVariableDataStore()

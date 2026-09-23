@@ -1015,7 +1015,7 @@ class Variable(AbstractArray, NdimSizeLenMixin, VariableArithmetic):
         xarray.unify_chunks
         """
         if hasattr(self._data, "chunks"):
-            return Frozen({dim: c for dim, c in zip(self.dims, self.data.chunks)})
+            return Frozen({dim: c for dim, c in zip(self.dims, self._data.chunks)})
         else:
             return {}
 
