@@ -410,6 +410,10 @@ Support for Python 3.4 and below has been officially dropped.
   step (e.g. ``my_pipeline['svc']``), rather than accessing ``named_steps``.
   :issue:`2568` by `Joel Nothman`_.
 
+- |Feature| :class:`pipeline.Pipeline` now implements ``__len__``, so
+  ``len(my_pipeline)`` returns the number of steps and slices such as
+  ``my_pipeline[:len(my_pipeline)]`` work. :pr:`13439`.
+
 - |API| :class:`pipeline.Pipeline` now supports using ``'passthrough'`` as a
   transformer. :issue:`11144` by :user:`Thomas Fan <thomasjpfan>`.
 
