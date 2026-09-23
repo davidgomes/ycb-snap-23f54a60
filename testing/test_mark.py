@@ -561,6 +561,31 @@ class TestFunctional:
         items, rec = pytester.inline_genitems(p)
         self.assert_markers(items, test_foo=("a", "b", "c"), test_bar=("a", "b", "d"))
 
+    def test_mark_decorator_multiple_baseclasses_merged(
+        self, pytester: Pytester
+    ) -> None:
+        p = pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.a
+            class BaseA: pass
+
+            @pytest.mark.b
+            class BaseB: pass
+
+            @pytest.mark.c
+            class Test1(BaseA, BaseB):
+                def test_foo(self): pass
+
+            class Test2(BaseA, BaseB):
+                @pytest.mark.d
+                def test_bar(self): pass
+        """
+        )
+        items, rec = pytester.inline_genitems(p)
+        self.assert_markers(items, test_foo=("a", "b", "c"), test_bar=("a", "b", "d"))
+
     def test_mark_closest(self, pytester: Pytester) -> None:
         p = pytester.makepyfile(
             """
