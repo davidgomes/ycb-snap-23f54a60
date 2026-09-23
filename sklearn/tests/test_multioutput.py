@@ -202,6 +202,19 @@ def test_multi_output_predict_proba():
         multi_target_linear.predict_proba(X)
 
 
+def test_multi_output_classes_():
+    forest = RandomForestClassifier(n_estimators=10, random_state=1)
+    multi_target_forest = MultiOutputClassifier(forest)
+    multi_target_forest.fit(X, y)
+
+    assert len(multi_target_forest.classes_) == n_outputs
+    for estimator, expected_classes, fitted_classes in zip(
+            multi_target_forest.estimators_, classes,
+            multi_target_forest.classes_):
+        assert_array_equal(estimator.classes_, fitted_classes)
+        assert_array_equal(expected_classes, fitted_classes)
+
+
 # 0.23. warning about tol not having its correct default value.
 @pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_multi_output_classification_partial_fit():

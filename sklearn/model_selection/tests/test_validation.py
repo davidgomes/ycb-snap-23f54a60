@@ -70,6 +70,7 @@ from io import StringIO
 from sklearn.base import BaseEstimator
 from sklearn.base import clone
 from sklearn.multiclass import OneVsRestClassifier
+from sklearn.multioutput import MultiOutputClassifier
 from sklearn.utils import shuffle
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_multilabel_classification
@@ -1477,6 +1478,18 @@ def test_cross_val_predict_with_method_multilabel_rf():
             # Suppress "RuntimeWarning: divide by zero encountered in log"
             warnings.simplefilter('ignore')
             check_cross_val_predict_multilabel(est, X, y, method=method)
+
+
+def test_cross_val_predict_with_method_multilabel_multioutput_classifier():
+    # MultiOutputClassifier returns a list of predict_proba outputs, one per
+    # label, and exposes the matching list of per-label classes_.
+    X, y = make_multilabel_classification(n_samples=100, n_labels=3,
+                                          n_classes=4, n_features=5,
+                                          random_state=42)
+    y[:, 0] += y[:, 1]  # Put three classes in the first column
+    est = MultiOutputClassifier(LogisticRegression(solver="liblinear",
+                                                   random_state=0))
+    check_cross_val_predict_multilabel(est, X, y, method='predict_proba')
 
 
 def test_cross_val_predict_with_method_rare_class():
