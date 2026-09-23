@@ -254,11 +254,18 @@ Here is a more detailed list of these events.
    whose single element is the contents of the source file.  You can process the
    contents and replace this item to implement source-level transformations.
 
+   The same event is emitted for files read via the :dudir:`include` directive,
+   with the included text passed in *source*.  Literal includes are not parsed
+   as reStructuredText and do not emit this event.
+
    For example, if you want to use ``$`` signs to delimit inline math, like in
    LaTeX, you can use a regular expression to replace ``$...$`` by
    ``:math:`...```.
 
    .. versionadded:: 0.5
+
+   .. versionchanged:: 7.2
+      Included files now also emit ``source-read``.
 
 .. event:: object-description-transform (app, domain, objtype, contentnode)
 
