@@ -50,6 +50,21 @@ def test_change_level_undo(testdir):
     result.stdout.no_fnmatch_line("*log from test2*")
 
 
+def test_change_level_restores_handler_level(testdir):
+    """The capture handler level set by set_level is restored after the test."""
+    testdir.makepyfile(
+        """
+        def test_foo(caplog):
+            caplog.set_level(42)
+
+        def test_bar(caplog):
+            assert caplog.handler.level == 0
+    """
+    )
+    result = testdir.runpytest()
+    result.assert_outcomes(passed=2)
+
+
 def test_with_statement(caplog):
     with caplog.at_level(logging.INFO):
         logger.debug("handler DEBUG level")

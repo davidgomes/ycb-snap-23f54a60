@@ -1,0 +1,1 @@
+The ``caplog`` fixture now restores the log handler level changed by :meth:`caplog.set_level` at the end of the test.
