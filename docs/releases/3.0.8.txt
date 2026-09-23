@@ -14,3 +14,6 @@ Bugfixes
 
 * Fixed a regression in Django 3.0.7 that caused a queryset crash when grouping
   by a many-to-one relationship (:ticket:`31660`).
+
+* Fixed a regression in Django 3.0 that caused a crash when filtering against a
+  model instance that has a ``filterable`` attribute (:ticket:`31664`).
