@@ -34,6 +34,8 @@ def test_Symbol():
     c, d = symbols('c,d', cls=Dummy)
     assert isinstance(c, Dummy)
     assert isinstance(d, Dummy)
+    (c, d), (e,) = symbols(('c:2', 'e:1'), cls=Dummy)
+    assert all(isinstance(i, Dummy) for i in (c, d, e))
     raises(TypeError, lambda: Symbol())
 
 
