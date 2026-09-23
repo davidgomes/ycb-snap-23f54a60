@@ -3,7 +3,7 @@ from __future__ import print_function, division
 from sympy.concrete.expr_with_limits import AddWithLimits
 from sympy.concrete.expr_with_intlimits import ExprWithIntLimits
 from sympy.core.function import Derivative
-from sympy.core.relational import Eq
+from sympy.core.relational import Eq, _Inequality
 from sympy.core.singleton import S
 from sympy.core.symbol import Dummy, Wild, Symbol
 from sympy.core.add import Add
@@ -12,7 +12,7 @@ from sympy.concrete.gosper import gosper_sum
 from sympy.functions.special.zeta_functions import zeta
 from sympy.functions.elementary.piecewise import Piecewise
 from sympy.logic.boolalg import And
-from sympy.polys import apart, PolynomialError
+from sympy.polys import apart, PolynomialError, degree
 from sympy.solvers import solve
 from sympy.series.limits import limit
 from sympy.series.order import O
@@ -843,6 +843,24 @@ def telescopic(L, R, limits):
         return telescopic_direct(L, R, s, (i, a, b))
 
 
+def _restrict_piecewise_conds(f, i, a, b):
+    """Replace inequalities in the conditions of Piecewise ``f`` that are
+    linear in ``i`` by True or False when they hold (or fail) for every
+    ``i`` in ``[a, b]``."""
+    reps = {}
+    for arg in f.args:
+        for r in arg.cond.atoms(_Inequality):
+            if i not in r.free_symbols:
+                continue
+            p = r.lhs - r.rhs
+            if not p.is_polynomial(i) or degree(p, i) != 1:
+                continue
+            lo, hi = r.subs(i, a), r.subs(i, b)
+            if lo is hi and lo in (S.true, S.false):
+                reps[r] = lo
+    return f.xreplace(reps) if reps else f
+
+
 def eval_sum(f, limits):
     from sympy.concrete.delta import deltasummation, _has_simple_delta
     from sympy.functions import KroneckerDelta
@@ -855,6 +873,9 @@ def eval_sum(f, limits):
     if a == b:
         return f.subs(i, a)
     if isinstance(f, Piecewise):
+        f = _restrict_piecewise_conds(f, i, a, b)
+        if not isinstance(f, Piecewise):
+            return eval_sum(f, limits)
         if not any(i in arg.args[1].free_symbols for arg in f.args):
             # Piecewise conditions do not depend on the dummy summation variable,
             # therefore we can fold:     Sum(Piecewise((e, c), ...), limits)
