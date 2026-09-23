@@ -166,7 +166,11 @@ class Mod(Function):
         # XXX other possibilities?
 
         # extract gcd; any further simplification should be done by the user
-        G = gcd(p, q)
+        from sympy.polys.polyerrors import PolynomialError
+        try:
+            G = gcd(p, q)
+        except PolynomialError:
+            G = S.One
         if G != 1:
             p, q = [
                 gcd_terms(i/G, clear=False, fraction=False) for i in (p, q)]
