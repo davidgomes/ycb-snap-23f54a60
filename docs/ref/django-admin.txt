@@ -208,7 +208,9 @@ Runs the command-line client for the database engine specified in your
 :setting:`ENGINE <DATABASE-ENGINE>` setting, with the connection parameters
 specified in your :setting:`USER`, :setting:`PASSWORD`, etc., settings.
 
-* For PostgreSQL, this runs the ``psql`` command-line client.
+* For PostgreSQL, this runs the ``psql`` command-line client. Client
+  certificate settings (``sslmode``, ``sslrootcert``, ``sslcert``, and
+  ``sslkey``) in :setting:`OPTIONS <DATABASE-OPTIONS>` are passed through.
 * For MySQL, this runs the ``mysql`` command-line client.
 * For SQLite, this runs the ``sqlite3`` command-line client.
 * For Oracle, this runs the ``sqlplus`` command-line client.
