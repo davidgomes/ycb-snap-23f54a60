@@ -1256,6 +1256,15 @@ def test_collect_sub_with_symlinks(use_pkg, testdir):
     )
 
 
+def test_collect_symlink_dir(testdir):
+    """A symlinked directory is collected."""
+    dir = testdir.mkdir("dir")
+    dir.join("test_it.py").write("def test_it(): pass")
+    symlink_or_skip(dir, testdir.tmpdir.join("symlink_dir"))
+    result = testdir.runpytest()
+    result.assert_outcomes(passed=2)
+
+
 def test_collector_respects_tbstyle(testdir):
     p1 = testdir.makepyfile("assert 0")
     result = testdir.runpytest(p1, "--tb=native")
