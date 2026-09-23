@@ -332,9 +332,14 @@ class StrPrinter(Printer):
                 if item.exp is not S.NegativeOne:
                     b.append(apow(item))
                 else:
-                    if (len(item.args[0].args) != 1 and
-                            isinstance(item.base, Mul)):
+                    if len(item.args[0].args) != 1 and isinstance(
+                            item.base, Mul):
                         # To avoid situations like #14160
+                        pow_paren.append(item)
+                    elif (isinstance(item.base, Pow) and
+                            item.base.exp.is_negative):
+                        # A denominator that is itself a fraction must stay
+                        # grouped, otherwise 1/(1/x) prints as 1/1/x (#21585).
                         pow_paren.append(item)
                     b.append(item.base)
             elif item.is_Rational and item is not S.Infinity:

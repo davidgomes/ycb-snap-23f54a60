@@ -252,6 +252,11 @@ def test_Mul():
     # For issue 14160
     assert str(Mul(-2, x, Pow(Mul(y,y,evaluate=False), -1, evaluate=False),
                                                 evaluate=False)) == '-2*x/(y*y)'
+    # For issue 21585: inverse of a fraction must stay grouped
+    A, B, C = symbols('a,b,c')
+    numer = Mul(A**3 + B, Pow(C, -1, evaluate=False), evaluate=False)
+    denom = Pow(Pow(C**2, -1, evaluate=False), -1, evaluate=False)
+    assert str(Mul(numer, denom, evaluate=False)) == '((a**3 + b)/c)/(1/(c**2))'
 
 
     class CustomClass1(Expr):

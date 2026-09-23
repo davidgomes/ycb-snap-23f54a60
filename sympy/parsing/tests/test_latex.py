@@ -319,3 +319,10 @@ def test_failing_not_parseable():
     for latex_str in FAILING_BAD_STRINGS:
         with raises(LaTeXParsingError):
             parse_latex(latex_str)
+
+
+def test_nested_frac_denominator_grouping():
+    # issue 21585: the denominator fraction must stay in parentheses
+    from sympy.parsing.latex import parse_latex
+    expr = parse_latex(r"\frac{\frac{a^3+b}{c}}{\frac{1}{c^2}}")
+    assert str(expr) == "((a**3 + b)/c)/(1/(c**2))"
