@@ -337,6 +337,25 @@ def test_patch_linestyle_none(fig_test, fig_ref):
     ax_ref.set_ylim([-1, i + 1])
 
 
+@check_figures_equal(extensions=['png'])
+def test_dash_offset_patch_draw(fig_test, fig_ref):
+    ax_test = fig_test.add_subplot()
+    ax_ref = fig_ref.add_subplot()
+
+    loc = (0.1, 0.1)
+    width, height = (0.8, 0.8)
+    # (0, [0, 6, 6, 0]) is equivalent to (6, [6, 6]) but has no dash offset.
+    ax_ref.add_patch(Rectangle(loc, width, height, linewidth=3,
+                               edgecolor='b', linestyle=(0, [6, 6])))
+    ax_ref.add_patch(Rectangle(loc, width, height, linewidth=3,
+                               edgecolor='r', linestyle=(0, [0, 6, 6, 0])))
+
+    ax_test.add_patch(Rectangle(loc, width, height, linewidth=3,
+                                edgecolor='b', linestyle=(0, [6, 6])))
+    ax_test.add_patch(Rectangle(loc, width, height, linewidth=3,
+                                edgecolor='r', linestyle=(6, [6, 6])))
+
+
 def test_wedge_movement():
     param_dict = {'center': ((0, 0), (1, 1), 'set_center'),
                   'r': (5, 8, 'set_radius'),
