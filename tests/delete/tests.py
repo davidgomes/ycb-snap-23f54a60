@@ -7,8 +7,8 @@ from django.test import TestCase, skipIfDBFeature, skipUnlessDBFeature
 
 from .models import (
     MR, A, Avatar, Base, Child, HiddenUser, HiddenUserProfile, M, M2MFrom,
-    M2MTo, MRNull, Origin, Parent, R, RChild, RChildChild, Referrer, S, T,
-    User, create_a, get_default_r,
+    M2MTo, MRNull, Origin, Parent, Person, R, RChild, RChildChild, Referrer, S,
+    SecondReferrer, T, User, create_a, get_default_r,
 )
 
 
@@ -588,5 +588,63 @@ class FastDeleteTests(TestCase):
         # in a single DELETE WHERE referrer_id OR unique_field.
         origin = Origin.objects.create()
         referer = Referrer.objects.create(origin=origin, unique_field=42)
-        with self.assertNumQueries(2):
-            referer.delete()
+        other = Referrer.objects.create(origin=origin, unique_field=43)
+        both = SecondReferrer.objects.create(referrer=referer, other_referrer=referer)
+        via_referrer = SecondReferrer.objects.create(referrer=referer, other_referrer=other)
+        via_unique = SecondReferrer.objects.create(referrer=other, other_referrer=referer)
+        unrelated = SecondReferrer.objects.create(referrer=other, other_referrer=other)
+        with self.assertNumQueries(2) as ctx:
+            deleted, deleted_objs = referer.delete()
+        self.assertIn(' OR ', ctx.captured_queries[0]['sql'])
+        self.assertEqual(deleted, 4)
+        self.assertEqual(deleted_objs[SecondReferrer._meta.label], 3)
+        self.assertEqual(deleted_objs[Referrer._meta.label], 1)
+        self.assertFalse(SecondReferrer.objects.filter(pk__in=[both.pk, via_referrer.pk, via_unique.pk]).exists())
+        self.assertTrue(SecondReferrer.objects.filter(pk=unrelated.pk).exists())
+        self.assertTrue(Referrer.objects.filter(pk=other.pk).exists())
+        self.assertTrue(Origin.objects.filter(pk=origin.pk).exists())
+
+    def test_fast_delete_combined_relationships_batches(self):
+        # The combined OR lookup uses one parameter per field per object, so
+        # batches must shrink with the number of fields (SQLite's variable limit).
+        origin = Origin.objects.create()
+        field_names = ['referrer', 'other_referrer']
+        batch_size = max(connection.ops.bulk_batch_size(field_names, range(1000)), 1)
+        count = batch_size + 1
+        Referrer.objects.bulk_create([
+            Referrer(origin=origin, unique_field=i) for i in range(count)
+        ])
+        referrers = list(Referrer.objects.filter(origin=origin))
+        SecondReferrer.objects.bulk_create([
+            SecondReferrer(referrer=referrer, other_referrer=referrer)
+            for referrer in referrers
+        ])
+        collector = Collector(using='default')
+        collector.collect(list(referrers))
+        fast = [qs for qs in collector.fast_deletes if qs.model is SecondReferrer]
+        self.assertEqual(len(fast), ceil(count / batch_size))
+        deleted, deleted_objs = collector.delete()
+        self.assertEqual(deleted, count * 2)
+        self.assertEqual(deleted_objs[SecondReferrer._meta.label], count)
+        self.assertEqual(deleted_objs[Referrer._meta.label], count)
+        self.assertFalse(SecondReferrer.objects.exists())
+        self.assertFalse(Referrer.objects.exists())
+
+    def test_fast_delete_combined_self_referential_m2m(self):
+        # Both sides of a self-referential M2M through table are one DELETE.
+        person = Person.objects.create()
+        friend = Person.objects.create()
+        outsider = Person.objects.create()
+        person.friends.add(friend)
+        friend.friends.add(outsider)
+        through = Person._meta.get_field('friends').remote_field.through
+        through_count = through.objects.count()
+        with self.assertNumQueries(2) as ctx:
+            deleted, deleted_objs = friend.delete()
+        self.assertIn(' OR ', ctx.captured_queries[0]['sql'])
+        self.assertEqual(deleted_objs[through._meta.label], through_count)
+        self.assertEqual(deleted_objs[Person._meta.label], 1)
+        self.assertEqual(deleted, through_count + 1)
+        self.assertFalse(through.objects.exists())
+        self.assertTrue(Person.objects.filter(pk=person.pk).exists())
+        self.assertTrue(Person.objects.filter(pk=outsider.pk).exists())

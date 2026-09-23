@@ -147,3 +147,7 @@ class SecondReferrer(models.Model):
     other_referrer = models.ForeignKey(
         Referrer, models.CASCADE, to_field='unique_field', related_name='+'
     )
+
+
+class Person(models.Model):
+    friends = models.ManyToManyField('self')
