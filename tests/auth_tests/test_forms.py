@@ -33,6 +33,7 @@ from .models.custom_user import (
     CustomUserWithoutIsActiveField,
     ExtensionUser,
 )
+from .models.with_many_to_many import CustomUserWithM2M, Organization
 from .models.with_custom_email_field import CustomEmailField
 from .models.with_integer_username import IntegerUsernameUser
 from .settings import AUTH_TEMPLATES
@@ -222,6 +223,25 @@ class UserCreationFormTest(TestDataMixin, TestCase):
         }
         form = CustomUserCreationForm(data)
         self.assertTrue(form.is_valid())
+
+    def test_custom_form_saves_many_to_many_field(self):
+        org = Organization.objects.create(name="org")
+
+        class CustomUserCreationForm(UserCreationForm):
+            class Meta(UserCreationForm.Meta):
+                model = CustomUserWithM2M
+                fields = ("username", "orgs")
+
+        data = {
+            "username": "testclient",
+            "password1": "testclient",
+            "password2": "testclient",
+            "orgs": [str(org.pk)],
+        }
+        form = CustomUserCreationForm(data)
+        self.assertIs(form.is_valid(), True)
+        user = form.save(commit=True)
+        self.assertSequenceEqual(user.orgs.all(), [org])
 
     def test_custom_form_with_different_username_field(self):
         class CustomUserCreationForm(UserCreationForm):
