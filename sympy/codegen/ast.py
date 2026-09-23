@@ -895,7 +895,6 @@ class String(Token):
 
     """
     __slots__ = ('text',)
-    not_in_args = ['text']
     is_Atom = True
 
     @classmethod
@@ -906,6 +905,12 @@ class String(Token):
 
     def _sympystr(self, printer, *args, **kwargs):
         return self.text
+
+    def matches(self, expr, repl_dict=None, old=False):
+        if self == expr:
+            if repl_dict is None:
+                return {}
+            return repl_dict.copy()
 
 
 class QuotedString(String):

@@ -496,7 +496,8 @@ class Basic(Printable, metaclass=ManagedProperties):
         if types:
             result = {node for node in nodes if isinstance(node, types)}
         else:
-            result = {node for node in nodes if not node.args}
+            result = {node for node in nodes if isinstance(node, Basic)
+                      and (not node.args or node.is_Atom)}
         return result
 
     @property
