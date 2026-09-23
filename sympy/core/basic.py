@@ -1180,7 +1180,7 @@ class Basic(with_metaclass(ManagedProperties)):
 
     def _has_matcher(self):
         """Helper for .has()"""
-        return self.__eq__
+        return lambda other: self == other
 
     def replace(self, query, value, map=False, simultaneous=True, exact=False):
         """
