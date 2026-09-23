@@ -43,6 +43,8 @@ Bugs fixed
   is decorated
 * #8434: autodoc: :confval:`autodoc_type_aliases` does not effect to variables
   and attributes
+* #8459: autodoc: :confval:`autodoc_type_aliases` does not effect when
+  :confval:`autodoc_typehints` is set to ``"description"``
 * #8443: autodoc: autodata directive can't create document for PEP-526 based
   type annotated variables
 * #8443: autodoc: autoattribute directive can't create document for PEP-526
