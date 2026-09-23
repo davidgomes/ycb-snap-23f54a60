@@ -3773,6 +3773,10 @@ class Dataset(
             dims = tuple(dims_dict.get(dim, dim) for dim in v.dims)
             if k in result_dims:
                 var = v.to_index_variable()
+                # IndexVariable.to_index_variable() returns self; assigning dims
+                # would mutate the variable still held by the original dataset.
+                if var is v:
+                    var = var.copy(deep=False)
                 var.dims = dims
                 if k in self._indexes:
                     indexes[k] = self._indexes[k]
