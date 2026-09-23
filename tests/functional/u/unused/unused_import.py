@@ -61,3 +61,10 @@ class NonRegr(object):
     def blop(self):
         """yo"""
         print(self, 'blip')
+
+
+import abc
+from abc import ABC
+
+X = ...  # type: abc.ABC
+Y = ...  # type: ABC
