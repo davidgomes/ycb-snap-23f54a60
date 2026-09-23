@@ -256,6 +256,12 @@ def pytest_runtest_call(item: Item) -> Generator[None, None, None]:
 
     yield
 
+    # Refresh in case an xfail marker was added during the test call,
+    # for example via request.node.add_marker(pytest.mark.xfail).
+    xfailed = item._store.get(xfailed_key, None)
+    if xfailed is None:
+        item._store[xfailed_key] = evaluate_xfail_marks(item)
+
 
 @hookimpl(hookwrapper=True)
 def pytest_runtest_makereport(item: Item, call: CallInfo[None]):

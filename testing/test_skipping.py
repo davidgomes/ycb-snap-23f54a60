@@ -411,6 +411,19 @@ class TestXFail:
         result = testdir.runpytest(p, "-rxX")
         result.stdout.fnmatch_lines(["*XFAIL*test_this*", "*NOTRUN*"])
 
+    def test_dynamic_xfail_set_during_test(self, testdir):
+        p = testdir.makepyfile(
+            """
+            import pytest
+            def test_this(request):
+                request.node.add_marker(pytest.mark.xfail(reason="xfail"))
+                assert 0
+        """
+        )
+        result = testdir.runpytest(p, "-rsx")
+        result.stdout.fnmatch_lines(["*XFAIL*test_this*", "*xfail*"])
+        assert result.ret == 0
+
     def test_dynamic_xfail_set_during_funcarg_setup(self, testdir):
         p = testdir.makepyfile(
             """

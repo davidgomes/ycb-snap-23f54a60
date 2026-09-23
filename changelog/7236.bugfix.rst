@@ -1,0 +1,1 @@
+Fixed a regression where an ``xfail`` marker added during test execution (for example with ``request.node.add_marker(pytest.mark.xfail)``) was ignored, so the test failed instead of being reported as xfailed.
