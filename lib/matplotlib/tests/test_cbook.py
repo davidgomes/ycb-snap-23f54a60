@@ -597,6 +597,27 @@ def test_grouper_private():
         assert mapping[ref(o)] is base_set
 
 
+class _Pickleable:
+    """Module-level so instances can be pickled from Grouper tests."""
+
+
+def test_grouper_pickle():
+    a, b, c = (_Pickleable() for _ in range(3))
+    g = cbook.Grouper()
+    g.join(a, b)
+    g.join(c)
+    # Pickle alongside the members so identity is shared, as when a Figure
+    # owns both the Grouper and its Axes.
+    g2, (a2, b2, c2) = pickle.loads(pickle.dumps((g, (a, b, c))))
+    assert g2.joined(a2, b2)
+    assert not g2.joined(a2, c2)
+    assert set(g2.get_siblings(a2)) == {a2, b2}
+    assert list(g2.get_siblings(c2)) == [c2]
+    # joined() is list-identity, so unpickling must restore a shared list.
+    assert g2._mapping[ref(a2)] is g2._mapping[ref(b2)]
+    assert len(list(g2)) == 2
+
+
 def test_flatiter():
     x = np.arange(5)
     it = x.flat
