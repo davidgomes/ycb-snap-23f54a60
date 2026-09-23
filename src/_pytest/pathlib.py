@@ -341,6 +341,10 @@ def unique_path(path):
     """Returns a unique path in case-insensitive (but case-preserving) file
     systems such as Windows.
 
+    The returned path is lowercased on Windows, so it is only suitable for
+    comparing paths (for example as a dict key); it must not be used to
+    import modules, whose names are case-sensitive.
+
     This is needed only for ``py.path.local``; ``pathlib.Path`` handles this
     natively with ``resolve()``."""
     return type(path)(normcase(str(path.realpath())))

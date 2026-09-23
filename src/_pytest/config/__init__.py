@@ -406,20 +406,18 @@ class PytestPluginManager(PluginManager):
         else:
             directory = path
 
-        directory = unique_path(directory)
-
         # XXX these days we may rather want to use config.rootdir
         # and allow users to opt into looking into the rootdir parent
         # directories instead of requiring to specify confcutdir
         clist = []
-        for parent in directory.parts():
+        for parent in directory.realpath().parts():
             if self._confcutdir and self._confcutdir.relto(parent):
                 continue
             conftestpath = parent.join("conftest.py")
             if conftestpath.isfile():
                 mod = self._importconftest(conftestpath)
                 clist.append(mod)
-        self._dirpath2confmods[directory] = clist
+        self._dirpath2confmods[unique_path(directory)] = clist
         return clist
 
     def _rget_with_confmod(self, name, path):
@@ -432,13 +430,15 @@ class PytestPluginManager(PluginManager):
         raise KeyError(name)
 
     def _importconftest(self, conftestpath):
-        # Use realpath to avoid loading the same conftest twice
+        # Use a unique path as key to avoid loading the same conftest twice
         # with build systems that create build directories containing
-        # symlinks to actual files.
-        conftestpath = unique_path(conftestpath)
+        # symlinks to actual files, or when it is reached with different
+        # casing on case-insensitive file systems.
+        key = unique_path(conftestpath)
         try:
-            return self._conftestpath2mod[conftestpath]
+            return self._conftestpath2mod[key]
         except KeyError:
+            conftestpath = conftestpath.realpath()
             pkgpath = conftestpath.pypkgpath()
             if pkgpath is None:
                 _ensure_removed_sysmodule(conftestpath.purebasename)
@@ -454,8 +454,8 @@ class PytestPluginManager(PluginManager):
                 raise ConftestImportFailure(conftestpath, sys.exc_info())
 
             self._conftest_plugins.add(mod)
-            self._conftestpath2mod[conftestpath] = mod
-            dirpath = conftestpath.dirpath()
+            self._conftestpath2mod[key] = mod
+            dirpath = key.dirpath()
             if dirpath in self._dirpath2confmods:
                 for path, mods in self._dirpath2confmods.items():
                     if path and path.relto(dirpath) or path == dirpath:

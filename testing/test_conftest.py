@@ -143,11 +143,11 @@ def test_conftestcutdir(testdir):
     # but we can still import a conftest directly
     conftest._importconftest(conf)
     values = conftest._getconftestmodules(conf.dirpath())
-    assert values[0].__file__.startswith(str(unique_path(conf)))
+    assert values[0].__file__.startswith(str(conf.realpath()))
     # and all sub paths get updated properly
     values = conftest._getconftestmodules(p)
     assert len(values) == 1
-    assert values[0].__file__.startswith(str(unique_path(conf)))
+    assert values[0].__file__.startswith(str(conf.realpath()))
 
 
 def test_conftestcutdir_inplace_considered(testdir):
@@ -156,7 +156,7 @@ def test_conftestcutdir_inplace_considered(testdir):
     conftest_setinitial(conftest, [conf.dirpath()], confcutdir=conf.dirpath())
     values = conftest._getconftestmodules(conf.dirpath())
     assert len(values) == 1
-    assert values[0].__file__.startswith(str(unique_path(conf)))
+    assert values[0].__file__.startswith(str(conf.realpath()))
 
 
 @pytest.mark.parametrize("name", "test tests whatever .dotdir".split())
@@ -288,6 +288,16 @@ def test_conftest_badcase(testdir):
     testdir.makepyfile(**{"JenkinsRoot/%s" % k: v for k, v in source.items()})
 
     testdir.tmpdir.join("jenkinsroot/test").chdir()
+    result = testdir.runpytest()
+    assert result.ret == ExitCode.NO_TESTS_COLLECTED
+
+
+def test_conftest_uppercase(testdir):
+    """Check conftest.py whose qualified name contains uppercase characters (#5819)"""
+    source = {"__init__.py": "", "Foo/conftest.py": "", "Foo/__init__.py": ""}
+    testdir.makepyfile(**source)
+
+    testdir.tmpdir.chdir()
     result = testdir.runpytest()
     assert result.ret == ExitCode.NO_TESTS_COLLECTED
 
