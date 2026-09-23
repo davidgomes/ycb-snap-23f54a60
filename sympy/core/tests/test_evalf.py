@@ -511,3 +511,8 @@ def test_issue_10395():
     eq = x*Max(y, -1.1)
     assert nfloat(eq) == eq
     assert Max(y, 4).n() == Max(4.0, y)
+
+
+def test_issue_13076():
+    assert Mul(x, Max(0, y), evaluate=False).evalf() == x*Max(0, y)
+    assert Mul(Max(0, y), x, evaluate=False).evalf() == x*Max(0, y)
