@@ -32,6 +32,18 @@ def test_subs():
            2)), 1, 2))
 
 
+def test_ne_with_unknown_type():
+    class Foo(object):
+        pass
+
+    foo = Foo()
+    for o in [Point(1, 2), Segment((0, 0), (1, 1)), Line((0, 0), (1, 1)),
+              Circle((0, 0), 1)]:
+        assert o != foo
+        assert foo != o
+        assert not o == foo
+
+
 def test_transform():
     assert scale(1, 2, (3, 4)).tolist() == \
         [[1, 0, 0], [0, 2, 0], [0, -4, 1]]
