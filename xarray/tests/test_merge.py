@@ -253,3 +253,26 @@ class TestMergeMethod:
         with pytest.raises(xr.MergeError):
             ds3 = xr.Dataset({"a": ("y", [2, 3]), "y": [1, 2]})
             ds1.merge(ds3, compat="no_conflicts")
+
+    def test_merge_dataarray(self):
+        ds = xr.Dataset({"a": 0})
+        da = xr.DataArray(1, name="b")
+
+        expected = xr.merge([ds, da])
+        actual = ds.merge(da)
+        assert expected.identical(actual)
+
+        da = xr.DataArray([1, 2], dims="x", name="b", coords={"x": [0, 1]})
+        expected = xr.merge([ds, da])
+        actual = ds.merge(da)
+        assert expected.identical(actual)
+
+        ds = xr.Dataset({"a": 0, "b": 1})
+        da = xr.DataArray(2, name="b")
+        expected = xr.Dataset({"a": 0, "b": 2})
+        actual = ds.merge(da, overwrite_vars="b")
+        assert expected.identical(actual)
+
+        unnamed = xr.DataArray(1)
+        with raises_regex(ValueError, "without providing an explicit name"):
+            ds.merge(unnamed)

@@ -47,6 +47,8 @@ New Features
 
 Bug fixes
 ~~~~~~~~~
+- :py:meth:`Dataset.merge` now accepts a named :py:class:`DataArray`, matching
+  :py:func:`merge`.
 - Fix :py:meth:`xarray.combine_by_coords` to allow for combining incomplete
   hypercubes of Datasets (:issue:`3648`).  By `Ian Bolliger
   <https://github.com/bolliger32>`_.
