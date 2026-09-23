@@ -13,7 +13,7 @@ import requests
 import pytest
 from requests.auth import HTTPDigestAuth
 from requests.adapters import HTTPAdapter
-from requests.compat import str, cookielib, getproxies, urljoin, urlparse
+from requests.compat import str, cookielib, getproxies, urljoin, urlparse, builtin_str, is_py2
 from requests.cookies import cookiejar_from_dict
 from requests.exceptions import InvalidURL, MissingSchema
 from requests.structures import CaseInsensitiveDict
@@ -433,6 +433,23 @@ class RequestsTestCase(unittest.TestCase):
         prep = r.prepare()
         assert b'name="stuff"' in prep.body
         assert b'name="b\'stuff\'"' not in prep.body
+
+    def test_unicode_method_name(self):
+        # A unicode method must not infect the request line. httplib concatenates
+        # that line with a binary body (``msg += message_body``), which raises
+        # UnicodeDecodeError on Python 2 when the method is a unicode object.
+        files = {'file': ('test_requests.py', open(__file__, 'rb'))}
+        r = requests.Request(
+            method=u'POST',
+            url='http://httpbin.org/post',
+            files=files)
+        prep = r.prepare()
+        assert isinstance(prep.method, builtin_str)
+        assert prep.method == builtin_str('POST')
+        if is_py2:
+            # Same concatenation httplib performs in _send_output.
+            msg = prep.method + ' /post HTTP/1.1\r\n\r\n'
+            msg += prep.body
 
     def test_custom_content_type(self):
         r = requests.post(httpbin('post'),
