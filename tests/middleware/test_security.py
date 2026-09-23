@@ -223,6 +223,13 @@ class SecurityMiddlewareTest(SimpleTestCase):
         ret = self.process_request("get", "/some/url")
         self.assertIsNone(ret)
 
+    def test_referrer_policy_default(self):
+        """
+        The default SECURE_REFERRER_POLICY of "same-origin" adds a
+        "Referrer-Policy" header to the response.
+        """
+        self.assertEqual(self.process_response()['Referrer-Policy'], 'same-origin')
+
     @override_settings(SECURE_REFERRER_POLICY=None)
     def test_referrer_policy_off(self):
         """
