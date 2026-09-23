@@ -1124,6 +1124,17 @@ class TestSplitFormWidget(PostgreSQLWidgetTestCase):
             )
         )
 
+    def test_checkbox_get_context_attrs(self):
+        context = SplitArrayWidget(
+            forms.CheckboxInput(),
+            size=2,
+        ).get_context('name', [True, False])
+        self.assertEqual(context['widget']['value'], '[True, False]')
+        self.assertEqual(
+            [subwidget['attrs'] for subwidget in context['widget']['subwidgets']],
+            [{'checked': True}, {}]
+        )
+
     def test_value_omitted_from_data(self):
         widget = SplitArrayWidget(forms.TextInput(), size=2)
         self.assertIs(widget.value_omitted_from_data({}, {}, 'field'), True)
