@@ -1073,7 +1073,11 @@ class Query(BaseExpression):
                         ))
                 else:
                     resolved_values.append(sub_value)
-            value = tuple(resolved_values)
+            type_ = type(value)
+            if hasattr(type_, '_make'):  # namedtuple
+                value = type_(*resolved_values)
+            else:
+                value = type_(resolved_values)
         return value
 
     def solve_lookup_type(self, lookup):

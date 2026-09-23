@@ -1,3 +1,4 @@
+from collections import namedtuple
 from datetime import datetime
 
 from django.core.exceptions import FieldError
@@ -106,6 +107,22 @@ class TestQuery(SimpleTestCase):
         self.assertIsInstance(b_isnull, RelatedIsNull)
         self.assertIsInstance(b_isnull.lhs, SimpleCol)
         self.assertEqual(b_isnull.lhs.target, ObjectC._meta.get_field('objectb'))
+
+    def test_iterable_lookup_value(self):
+        query = Query(Item)
+        where = query.build_where(Q(name=['a', 'b']))
+        name_exact = where.children[0]
+        self.assertIsInstance(name_exact, Exact)
+        self.assertEqual(name_exact.rhs, "['a', 'b']")
+
+    def test_resolve_lookup_value_preserves_iterable_type(self):
+        query = Query(Item)
+        Point = namedtuple('Point', 'x y')
+        for value in (['a', 'b'], ('a', 'b'), Point('a', 'b')):
+            with self.subTest(value=value):
+                resolved = query.resolve_lookup_value(value, None, True, False)
+                self.assertIs(type(resolved), type(value))
+                self.assertEqual(resolved, value)
 
     def test_clone_select_related(self):
         query = Query(Item)
