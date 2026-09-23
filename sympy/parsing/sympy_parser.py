@@ -1119,6 +1119,48 @@ class EvaluateFalseTransformer(ast.NodeTransformer):
         'exp', 'ln', 'log', 'sqrt', 'cbrt',
     )
 
+    relational_operators = {
+        ast.NotEq: 'Ne',
+        ast.Lt: 'Lt',
+        ast.LtE: 'Le',
+        ast.Gt: 'Gt',
+        ast.GtE: 'Ge',
+        ast.Eq: 'Eq',
+    }
+
+    def visit_Compare(self, node):
+        def relational_call(op, left, right):
+            if op.__class__ not in self.relational_operators:
+                return None
+            return ast.Call(
+                func=ast.Name(id=self.relational_operators[op.__class__], ctx=ast.Load()),
+                args=[self.visit(left), self.visit(right)],
+                keywords=[ast.keyword(arg='evaluate', value=ast.NameConstant(value=False, ctx=ast.Load()))],
+                starargs=None,
+                kwargs=None
+            )
+
+        left = node.left
+        calls = []
+        for op, right in zip(node.ops, node.comparators):
+            call = relational_call(op, left, right)
+            if call is None:
+                # Membership and identity comparisons are left to Python.
+                return node
+            calls.append(call)
+            left = right
+
+        if len(calls) == 1:
+            return calls[0]
+
+        return ast.Call(
+            func=ast.Name(id='And', ctx=ast.Load()),
+            args=calls,
+            keywords=[ast.keyword(arg='evaluate', value=ast.NameConstant(value=False, ctx=ast.Load()))],
+            starargs=None,
+            kwargs=None
+        )
+
     def flatten(self, args, func):
         result = []
         for arg in args:
