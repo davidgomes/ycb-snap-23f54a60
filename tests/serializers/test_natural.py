@@ -8,13 +8,14 @@ from .models import (
     FKDataNaturalKey,
     NaturalKeyAnchor,
     NaturalKeyThing,
+    NaturalKeyWithFKDependency,
     NaturalPKWithDefault,
 )
 from .tests import register_tests
 
 
 class NaturalKeySerializerTests(TestCase):
-    pass
+    databases = {"default", "other"}
 
 
 def natural_key_serializer_test(self, format):
@@ -248,6 +249,30 @@ def fk_as_pk_natural_key_not_called(self, format):
         self.assertEqual(obj.object.pk, o1.pk)
 
 
+def natural_key_with_fk_dependency_other_database(self, format):
+    """
+    Natural keys that traverse a foreign key are resolved using the database
+    the objects are deserialized into.
+    """
+    author = NaturalKeyThing.objects.using("other").create(key="author")
+    book = NaturalKeyWithFKDependency.objects.using("other").create(
+        name="book", author=author
+    )
+    serialized_data = serializers.serialize(
+        format,
+        [author, book],
+        use_natural_primary_keys=True,
+        use_natural_foreign_keys=True,
+    )
+    deserialized_objects = list(
+        serializers.deserialize(format, serialized_data, using="other")
+    )
+    self.assertEqual(len(deserialized_objects), 2)
+    self.assertEqual(deserialized_objects[0].object.pk, author.pk)
+    self.assertEqual(deserialized_objects[1].object.pk, book.pk)
+    self.assertFalse(NaturalKeyThing.objects.exists())
+
+
 # Dynamically register tests for each serializer
 register_tests(
     NaturalKeySerializerTests,
@@ -281,4 +306,9 @@ register_tests(
     NaturalKeySerializerTests,
     "test_%s_fk_as_pk_natural_key_not_called",
     fk_as_pk_natural_key_not_called,
+)
+register_tests(
+    NaturalKeySerializerTests,
+    "test_%s_natural_key_with_fk_dependency_other_database",
+    natural_key_with_fk_dependency_other_database,
 )

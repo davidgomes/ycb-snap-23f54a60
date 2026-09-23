@@ -45,6 +45,26 @@ class NaturalKeyThing(models.Model):
         return self.key
 
 
+class NaturalKeyWithFKDependencyManager(models.Manager):
+    def get_by_natural_key(self, name, author):
+        return self.get(name=name, author__key=author)
+
+
+class NaturalKeyWithFKDependency(models.Model):
+    name = models.CharField(max_length=255)
+    author = models.ForeignKey("NaturalKeyThing", models.CASCADE)
+
+    objects = NaturalKeyWithFKDependencyManager()
+
+    class Meta:
+        unique_together = ["name", "author"]
+
+    def natural_key(self):
+        return (self.name,) + self.author.natural_key()
+
+    natural_key.dependencies = ["serializers.NaturalKeyThing"]
+
+
 class NaturalPKWithDefault(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100, unique=True)
