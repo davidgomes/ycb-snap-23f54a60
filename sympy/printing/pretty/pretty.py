@@ -6,7 +6,7 @@ from sympy.core import S
 from sympy.core.containers import Tuple
 from sympy.core.function import _coeff_isneg
 from sympy.core.mod import Mod
-from sympy.core.mul import Mul
+from sympy.core.mul import Mul, _keep_coeff
 from sympy.core.numbers import Rational
 from sympy.core.power import Pow
 from sympy.core.relational import Equality
@@ -819,9 +819,33 @@ class PrettyPrinter(Printer):
         return self._print(B.blocks)
 
     def _print_MatAdd(self, expr):
-        return self._print_seq(expr.args, None, None, ' + ')
+        from sympy import MatMul
+        s = None
+        for item in expr.args:
+            negative = False
+            if isinstance(item, MatMul):
+                c, m = item.as_coeff_mmul()
+                if c.is_number and c < 0:
+                    negative = True
+                    item = _keep_coeff(-c, m)
+            pform = self._print(item)
+            if s is None:
+                if negative:
+                    pform = prettyForm(*stringPict.next('-', pform))
+                s = pform
+            else:
+                s = prettyForm(*stringPict.next(s, ' - ' if negative else ' + '))
+                s = prettyForm(*stringPict.next(s, pform))
+
+        return s
 
     def _print_MatMul(self, expr):
+        c, m = expr.as_coeff_mmul()
+        if c.is_number and c < 0:
+            pform = self._print(_keep_coeff(-c, m))
+            return prettyForm(binding=prettyForm.NEG,
+                              *stringPict.next('-', pform))
+
         args = list(expr.args)
         from sympy import Add, MatAdd, HadamardProduct
         for i, a in enumerate(args):
