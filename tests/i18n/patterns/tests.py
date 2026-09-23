@@ -153,6 +153,14 @@ class URLTranslationTests(URLTestCaseBase):
         with translation.override('en'):
             self.assertEqual(translate_url('/en/nonexistent/', 'nl'), '/en/nonexistent/')
             self.assertEqual(translate_url('/en/users/', 'nl'), '/nl/gebruikers/')
+            self.assertEqual(
+                translate_url('/en/with-arguments/regular-argument/', 'nl'),
+                '/nl/with-arguments/regular-argument/',
+            )
+            self.assertEqual(
+                translate_url('/en/with-arguments/regular-argument/optional.html', 'nl'),
+                '/nl/with-arguments/regular-argument/optional.html',
+            )
             # Namespaced URL
             self.assertEqual(translate_url('/en/account/register/', 'nl'), '/nl/profiel/registreren/')
             # path() URL pattern
