@@ -58,6 +58,12 @@ def test_Vector():
     v6 = x*A.x + y*A.y + z*A.z
     assert v6.free_symbols(A) == {x,y,z}
 
+    #Test adding zero, e.g. via the builtin sum
+    assert A.x + 0 == A.x
+    assert 0 + A.x == A.x
+    assert sum([A.x, 0*A.x]) == A.x
+    assert sum([A.x, A.y]) == A.x + A.y
+
 
 def test_Vector_diffs():
     q1, q2, q3, q4 = dynamicsymbols('q1 q2 q3 q4')
