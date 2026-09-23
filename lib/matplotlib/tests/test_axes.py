@@ -2867,6 +2867,25 @@ def test_stackplot():
     ax.set_ylim((0, 70))
 
 
+def test_stackplot_cn_colors_do_not_change_cycler():
+    # CN aliases must be accepted, and supplying colors must not replace or
+    # advance the Axes prop cycle (issue #14221).
+    cycle_colors = [c['color'] for c in mpl.rcParams['axes.prop_cycle']]
+    fig, ax = plt.subplots()
+    colors = ['C2', 'C3', 'C4']
+    colls = ax.stackplot([1, 2, 3],
+                         np.array([[1, 1, 1], [1, 2, 3], [4, 3, 2]]),
+                         colors=colors)
+    assert ax._get_lines.get_next_color() == cycle_colors[0]
+    for coll, color in zip(colls, colors):
+        assert mcolors.same_color(coll.get_facecolor(), color)
+
+    fig, ax = plt.subplots()
+    ax.stackplot([1, 2, 3], [1, 1, 1], [1, 2, 3])
+    # Default coloring still consumes one cycle color per series.
+    assert ax._get_lines.get_next_color() == cycle_colors[2]
+
+
 @image_comparison(['stackplot_test_baseline'], remove_text=True)
 def test_stackplot_baseline():
     np.random.seed(0)
