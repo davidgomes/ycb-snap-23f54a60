@@ -96,6 +96,7 @@ Bugs fixed
 * #7562: autodoc: a typehint contains spaces is wrongly rendered under
   autodoc_typehints='description' mode
 * #7551: autodoc: failed to import nested class
+* #7755: py domain: the default value for positional only argument is not shown
 * #7362: autodoc: does not render correct signatures for built-in functions
 * #7654: autodoc: ``Optional[Union[foo, bar]]`` is presented as
   ``Union[foo, bar, None]``
