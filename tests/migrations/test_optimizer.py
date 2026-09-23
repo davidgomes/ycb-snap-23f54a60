@@ -119,6 +119,20 @@ class OptimizerTests(SimpleTestCase):
             ]
         )
 
+    def test_optimize_multiple_alter_foo_together(self):
+        self.assertOptimizesTo(
+            [
+                migrations.AlterUniqueTogether('Foo', set()),
+                migrations.AlterIndexTogether('Foo', set()),
+                migrations.AlterUniqueTogether('Foo', {('col',)}),
+                migrations.AlterIndexTogether('Foo', {('col',)}),
+            ],
+            [
+                migrations.AlterUniqueTogether('Foo', {('col',)}),
+                migrations.AlterIndexTogether('Foo', {('col',)}),
+            ],
+        )
+
     def test_create_model_and_remove_model_options(self):
         self.assertOptimizesTo(
             [
