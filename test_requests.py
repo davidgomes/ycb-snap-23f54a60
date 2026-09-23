@@ -516,6 +516,14 @@ class RequestsTestCase(unittest.TestCase):
 
         assert hasattr(resp, 'hook_working')
 
+    def test_session_none_header_is_not_sent(self):
+        s = requests.Session()
+        s.headers['Accept-Encoding'] = None
+        req = requests.Request('GET', 'http://example.com/')
+        prep = s.prepare_request(req)
+        assert 'Accept-Encoding' not in prep.headers
+        assert 'None' not in prep.headers.values()
+
     def test_prepared_from_session(self):
         class DummyAuth(requests.auth.AuthBase):
             def __call__(self, r):
