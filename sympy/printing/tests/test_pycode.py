@@ -6,7 +6,7 @@ from sympy.codegen.matrix_nodes import MatrixSolve
 from sympy.core import Expr, Mod, symbols, Eq, Le, Gt, zoo, oo, Rational, Pow
 from sympy.core.numbers import pi
 from sympy.core.singleton import S
-from sympy.functions import acos, KroneckerDelta, Piecewise, sign, sqrt
+from sympy.functions import acos, KroneckerDelta, Max, Min, Piecewise, sign, sqrt
 from sympy.logic import And, Or
 from sympy.matrices import SparseMatrix, MatrixSymbol, Identity
 from sympy.printing.pycode import (
@@ -57,6 +57,9 @@ def test_PythonCodePrinter():
 
     assert prntr.doprint((2,3)) == "(2, 3)"
     assert prntr.doprint([2,3]) == "[2, 3]"
+
+    assert prntr.doprint(Min(x, y, z)) == 'min(x, y, z)'
+    assert prntr.doprint(Max(x, y, z)) == 'max(x, y, z)'
 
 
 def test_PythonCodePrinter_standard():
