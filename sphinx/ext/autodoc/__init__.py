@@ -582,6 +582,14 @@ class Documenter:
 
             return False
 
+        def is_private_member_wanted(name: str) -> bool:
+            if self.options.private_members is ALL:
+                return True
+            elif self.options.private_members:
+                return name in self.options.private_members
+            else:
+                return False
+
         ret = []
 
         # search for members in source code too
@@ -649,14 +657,14 @@ class Documenter:
             elif (namespace, membername) in attr_docs:
                 if want_all and isprivate:
                     # ignore members whose name starts with _ by default
-                    keep = self.options.private_members
+                    keep = is_private_member_wanted(membername)
                 else:
                     # keep documented attributes
                     keep = True
                 isattr = True
             elif want_all and isprivate:
                 # ignore members whose name starts with _ by default
-                keep = self.options.private_members and \
+                keep = is_private_member_wanted(membername) and \
                     (has_doc or self.options.undoc_members)
             else:
                 if self.options.members is ALL and is_filtered_inherited_member(membername):
@@ -859,7 +867,7 @@ class ModuleDocumenter(Documenter):
         'show-inheritance': bool_option, 'synopsis': identity,
         'platform': identity, 'deprecated': bool_option,
         'member-order': member_order_option, 'exclude-members': members_set_option,
-        'private-members': bool_option, 'special-members': members_option,
+        'private-members': members_option, 'special-members': members_option,
         'imported-members': bool_option, 'ignore-module-all': bool_option
     }  # type: Dict[str, Callable]
 
@@ -1279,7 +1287,7 @@ class ClassDocumenter(DocstringSignatureMixin, ModuleLevelDocumenter):  # type: 
         'noindex': bool_option, 'inherited-members': inherited_members_option,
         'show-inheritance': bool_option, 'member-order': member_order_option,
         'exclude-members': members_set_option,
-        'private-members': bool_option, 'special-members': members_option,
+        'private-members': members_option, 'special-members': members_option,
     }  # type: Dict[str, Callable]
 
     _signature_class = None  # type: Any
