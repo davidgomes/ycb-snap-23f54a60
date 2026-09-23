@@ -20,6 +20,7 @@ from sklearn.datasets import load_diabetes
 from sklearn.impute import MissingIndicator
 from sklearn.impute import SimpleImputer, IterativeImputer, KNNImputer
 from sklearn.dummy import DummyRegressor
+from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.linear_model import BayesianRidge, ARDRegression, RidgeCV
 from sklearn.pipeline import Pipeline
 from sklearn.pipeline import make_union
@@ -1522,6 +1523,41 @@ def test_iterative_imputer_keep_empty_features(initial_strategy):
     assert_allclose(X_imputed[:, 1], 0)
     X_imputed = imputer.transform(X)
     assert_allclose(X_imputed[:, 1], 0)
+
+
+def test_iterative_imputer_constant_fill_value():
+    """Check that we propagate properly the parameter `fill_value`."""
+    X = np.array([[-1, 2, 3, -1], [4, -1, 5, -1], [6, 7, -1, -1], [8, 9, 0, -1]])
+
+    fill_value = 100
+    imputer = IterativeImputer(
+        missing_values=-1,
+        initial_strategy="constant",
+        fill_value=fill_value,
+        max_iter=0,
+    )
+    imputer.fit_transform(X)
+    assert_array_equal(imputer.initial_imputer_.statistics_, fill_value)
+
+
+def test_iterative_imputer_constant_fill_value_nan():
+    """Check that `fill_value=np.nan` can be used with an estimator supporting
+    missing values."""
+    rng = np.random.RandomState(0)
+    X = rng.rand(50, 4)
+    X[rng.rand(*X.shape) < 0.2] = np.nan
+
+    imputer = IterativeImputer(
+        estimator=HistGradientBoostingRegressor(max_iter=10),
+        initial_strategy="constant",
+        fill_value=np.nan,
+        max_iter=2,
+        random_state=0,
+    )
+    X_imputed = imputer.fit_transform(X)
+    assert X_imputed.shape == X.shape
+    assert not np.isnan(X_imputed).any()
+    assert not np.isnan(imputer.transform(X)).any()
 
 
 @pytest.mark.parametrize("keep_empty_features", [True, False])
