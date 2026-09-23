@@ -327,3 +327,16 @@ def test_class_alias(app):
         '',
         '   alias of :class:`target.classes.Foo`',
     ]
+
+
+@pytest.mark.sphinx('html', testroot='ext-autodoc')
+def test_class_alias_having_doccomment(app):
+    actual = do_autodoc(app, 'class', 'target.classes.OtherAlias')
+    assert list(actual) == [
+        '',
+        '.. py:attribute:: OtherAlias',
+        '   :module: target.classes',
+        '',
+        '   docstring',
+        '',
+    ]
