@@ -627,6 +627,11 @@ def get_postprocessor(cls):
                 # manipulate them like non-commutative scalars.
                 return cls._from_args(nonmatrices + [mat_class(*matrices).doit(deep=False)])
 
+        if mat_class == MatAdd:
+            # Do not pass Add.identity (S.Zero) into MatAdd. When every
+            # summand is a ZeroMatrix, rm_id would keep that scalar and the
+            # sum would collapse to 0 instead of a ZeroMatrix.
+            return mat_class(*matrices).doit(deep=False)
         return mat_class(cls._from_args(nonmatrices), *matrices).doit(deep=False)
     return _postprocessor
 
