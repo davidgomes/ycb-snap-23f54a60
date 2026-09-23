@@ -41,6 +41,18 @@ def test_huber_equals_lr_for_high_epsilon():
     assert_almost_equal(huber.intercept_, lr.intercept_, 2)
 
 
+def test_huber_bool():
+    # Boolean predictors are converted to float, as in LinearRegression.
+    X, y = make_regression(
+        n_samples=200, n_features=2, noise=4.0, random_state=0)
+    X_bool = X > 0
+    X_bool_as_float = np.asarray(X_bool, dtype=float)
+    huber_bool = HuberRegressor().fit(X_bool, y)
+    huber_float = HuberRegressor().fit(X_bool_as_float, y)
+    assert_array_almost_equal(huber_bool.coef_, huber_float.coef_)
+    assert_almost_equal(huber_bool.intercept_, huber_float.intercept_)
+
+
 def test_huber_max_iter():
     X, y = make_regression_with_outliers()
     huber = HuberRegressor(max_iter=1)
