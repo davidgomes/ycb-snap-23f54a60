@@ -154,7 +154,9 @@ Logging
 Management Commands
 ~~~~~~~~~~~~~~~~~~~
 
-* ...
+* The :djadmin:`runserver` command now supports the ``-X`` options of the
+  Python interpreter (only on CPython). They are passed to the reloaded
+  process by the autoreloader.
 
 Migrations
 ~~~~~~~~~~
