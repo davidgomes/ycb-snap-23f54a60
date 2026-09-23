@@ -1,5 +1,6 @@
 import copy
 import datetime
+import itertools
 import json
 import uuid
 
@@ -2120,7 +2121,22 @@ Password: <input type="password" name="password" required></li>
 
         form = DateTimeForm({})
         self.assertEqual(form.errors, {})
-        self.assertEqual(form.cleaned_data, {'dt': now})
+        self.assertEqual(form.cleaned_data, {'dt': now.replace(microsecond=0)})
+        self.assertEqual(form.cleaned_data['dt'], form['dt'].initial)
+
+    def test_datetime_clean_initial_callable_disabled_evaluated_once(self):
+        seconds = itertools.count()
+
+        class DateTimeForm(forms.Form):
+            dt = DateTimeField(
+                initial=lambda: datetime.datetime(2006, 10, 25, 14, 30, next(seconds)),
+                disabled=True,
+            )
+
+        form = DateTimeForm({})
+        self.assertEqual(form.errors, {})
+        self.assertEqual(form.cleaned_data, {'dt': datetime.datetime(2006, 10, 25, 14, 30, 0)})
+        self.assertEqual(form['dt'].initial, form.cleaned_data['dt'])
 
     def test_datetime_changed_data_callable_with_microseconds(self):
         class DateTimeForm(forms.Form):
