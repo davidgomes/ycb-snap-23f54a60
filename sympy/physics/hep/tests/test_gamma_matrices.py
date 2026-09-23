@@ -261,6 +261,17 @@ def test_kahane_simplify1():
     r = kahane_simplify(t)
     assert r.equals(-2*G(sigma)*G(rho)*G(nu))
 
+    # Leading free indices must keep their order:
+    t = (G(mu)*G(-mu)*G(rho)*G(sigma))
+    r = kahane_simplify(t)
+    assert r.equals(4*G(rho)*G(sigma))
+    t = (G(rho)*G(sigma)*G(mu)*G(-mu))
+    r = kahane_simplify(t)
+    assert r.equals(4*G(rho)*G(sigma))
+    t = (G(rho)*G(sigma)*G(nu)*G(mu)*G(-mu))
+    r = kahane_simplify(t)
+    assert r.equals(4*G(rho)*G(sigma)*G(nu))
+
 
 def test_gamma_matrix_class():
     i, j, k = tensor_indices('i,j,k', LorentzIndex)
