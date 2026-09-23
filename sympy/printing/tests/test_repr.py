@@ -318,3 +318,31 @@ def test_diffgeom():
     assert srepr(rect) == "CoordSystem('rect', Patch('P', Manifold('M', 2)), ('rect_0', 'rect_1'))"
     b = BaseScalarField(rect, 0)
     assert srepr(b) == "BaseScalarField(CoordSystem('rect', Patch('P', Manifold('M', 2)), ('rect_0', 'rect_1')), Integer(0))"
+
+
+def test_dict():
+    d = {}
+    assert srepr(d) == "{}"
+    assert eval(srepr(d), ENV) == d
+    d = {x: y}
+    assert srepr(d) == "{Symbol('x'): Symbol('y')}"
+    assert eval(srepr(d), ENV) == d
+    z = symbols('z')
+    d = {x: y, y: z}
+    assert srepr(d) in (
+        "{Symbol('x'): Symbol('y'), Symbol('y'): Symbol('z')}",
+        "{Symbol('y'): Symbol('z'), Symbol('x'): Symbol('y')}",
+    )
+    assert eval(srepr(d), ENV) == d
+    d = {x: {y: z}}
+    assert srepr(d) == "{Symbol('x'): {Symbol('y'): Symbol('z')}}"
+    assert eval(srepr(d), ENV) == d
+
+
+def test_set():
+    s = set()
+    assert srepr(s) == "set()"
+    assert eval(srepr(s), ENV) == s
+    s = {x, y}
+    assert srepr(s) in ("{Symbol('x'), Symbol('y')}", "{Symbol('y'), Symbol('x')}")
+    assert eval(srepr(s), ENV) == s
