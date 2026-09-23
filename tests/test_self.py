@@ -1239,6 +1239,35 @@ class TestRunTC:
             code=0,
         )
 
+    @staticmethod
+    @pytest.mark.parametrize(
+        "ignore_flag",
+        [
+            "--ignore=.a",
+            "--ignore-paths=.a",
+            "--ignore-patterns=^\\.a",
+        ],
+    )
+    def test_recursive_ignore(ignore_flag: str, tmp_path: Path) -> None:
+        """Recursive discovery must honor ignore, ignore-paths, and ignore-patterns."""
+        (tmp_path / "bar.py").write_text("import re\n", encoding="utf-8")
+        ignored = tmp_path / ".a"
+        ignored.mkdir()
+        (ignored / "foo.py").write_text("import re\n", encoding="utf-8")
+        output = StringIO()
+        with pytest.raises(SystemExit):
+            Run(
+                _add_rcfile_default_pylintrc(
+                    ["--recursive=y", ignore_flag, str(tmp_path)]
+                ),
+                reporter=TextReporter(output),
+            )
+        report = output.getvalue()
+        assert "foo.py" not in report
+        # ``--ignore-paths=.a`` is a regex, so it also matches ``bar.py``.
+        if not ignore_flag.startswith("--ignore-paths"):
+            assert "bar.py" in report
+
     def test_recursive_current_dir(self):
         with _test_sys_path():
             # pytest is including directory HERE/regrtest_data to sys.path which causes
