@@ -695,6 +695,11 @@ class CodeGen(object):
         arg_list = []
 
         # setup input argument list
+
+        # helper to get dimensions for data for array-like args
+        def dimensions(s):
+            return [(S.Zero, dim - 1) for dim in s.shape]
+
         array_symbols = {}
         for array in expressions.atoms(Indexed) | local_expressions.atoms(Indexed):
             array_symbols[array.base.label] = array
@@ -703,11 +708,8 @@ class CodeGen(object):
 
         for symbol in sorted(symbols, key=str):
             if symbol in array_symbols:
-                dims = []
                 array = array_symbols[symbol]
-                for dim in array.shape:
-                    dims.append((S.Zero, dim - 1))
-                metadata = {'dimensions': dims}
+                metadata = {'dimensions': dimensions(array)}
             else:
                 metadata = {}
 
@@ -719,9 +721,15 @@ class CodeGen(object):
         if argument_sequence is not None:
             # if the user has supplied IndexedBase instances, we'll accept that
             new_sequence = []
+            # Shape is stored on IndexedBase, but the routine argument name is
+            # the label. Remember dimensions before that replacement so an
+            # unused array argument is still declared as an array.
+            array_metadata = {}
             for arg in argument_sequence:
                 if isinstance(arg, IndexedBase):
                     new_sequence.append(arg.label)
+                    if arg.shape is not None:
+                        array_metadata[arg.label] = {'dimensions': dimensions(arg)}
                 else:
                     new_sequence.append(arg)
             argument_sequence = new_sequence
@@ -739,7 +747,15 @@ class CodeGen(object):
                 try:
                     new_args.append(name_arg_dict[symbol])
                 except KeyError:
-                    new_args.append(InputArgument(symbol))
+                    # Argument was requested but does not occur in expr.
+                    # MatrixSymbol still carries its shape here. IndexedBase
+                    # was reduced to its label above; its shape is in
+                    # array_metadata.
+                    if isinstance(symbol, MatrixSymbol):
+                        metadata = {'dimensions': dimensions(symbol)}
+                    else:
+                        metadata = array_metadata.get(symbol, {})
+                    new_args.append(InputArgument(symbol, **metadata))
             arg_list = new_args
 
         return Routine(name, arg_list, return_val, local_vars, global_vars)
