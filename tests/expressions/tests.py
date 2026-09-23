@@ -21,6 +21,7 @@ from django.db.models.sql import constants
 from django.db.models.sql.datastructures import Join
 from django.test import SimpleTestCase, TestCase, skipUnlessDBFeature
 from django.test.utils import Approximate, isolate_apps
+from django.utils.functional import SimpleLazyObject
 
 from .models import (
     UUID, UUIDPK, Company, Employee, Experiment, Number, RemoteEmployee,
@@ -524,6 +525,22 @@ class BasicExpressionsTests(TestCase):
         UUID.objects.create(uuid_fk=u)
         qs = UUIDPK.objects.filter(id__in=Subquery(UUID.objects.values('uuid_fk__id')))
         self.assertCountEqual(qs, [u])
+
+    def test_nested_subquery_annotation_filter_by_lazy_object(self):
+        # Filtering a nested subquery annotation by a SimpleLazyObject wrapping
+        # a model instance used to crash in get_prep_value() with
+        # TypeError: int() argument must be a string, a bytes-like object or a
+        # number, not 'SimpleLazyObject'.
+        employee = SimpleLazyObject(lambda: Employee.objects.create(
+            firstname='Lazy', lastname='Person', salary=1,
+        ))
+        owner = (
+            Company.objects.filter(ceo=OuterRef('pk'))
+            .annotate(owner=Subquery(Company.objects.values('point_of_contact')))
+            .values('owner')
+        )
+        qs = Employee.objects.annotate(owner=Subquery(owner)).filter(owner=employee)
+        self.assertIn('owner', str(qs.query))
 
     def test_nested_subquery(self):
         inner = Company.objects.filter(point_of_contact=OuterRef('pk'))

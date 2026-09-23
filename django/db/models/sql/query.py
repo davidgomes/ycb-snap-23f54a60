@@ -233,7 +233,12 @@ class Query(BaseExpression):
     @property
     def output_field(self):
         if len(self.select) == 1:
-            return self.select[0].field
+            select = self.select[0]
+            # ForeignKey.get_col() sets output_field to the target field (for
+            # example an AutoField). Prefer the source field so lookups against
+            # a subquery annotation still resolve related objects, including
+            # SimpleLazyObject wrappers.
+            return getattr(select, 'target', None) or select.field
         elif len(self.annotation_select) == 1:
             return next(iter(self.annotation_select.values())).output_field
 
