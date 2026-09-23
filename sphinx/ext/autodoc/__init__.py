@@ -726,6 +726,9 @@ class Documenter:
                 # hack for ClassDocumenter to inject docstring via ObjectMember
                 doc = obj.docstring
 
+            if (namespace, membername) in attr_docs and not doc:
+                doc = '\n'.join(attr_docs[(namespace, membername)])
+
             has_doc = bool(doc)
 
             metadata = extract_metadata(doc)
