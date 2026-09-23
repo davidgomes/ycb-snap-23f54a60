@@ -494,6 +494,32 @@ def test_shuffle_stratifiedkfold():
     check_cv_coverage(kf0, X_40, y, groups=None, expected_n_splits=5)
 
 
+def test_stratified_kfold_shuffle_each_class():
+    # shuffle=True must permute samples inside each class. Reusing one seed
+    # per class only reorders folds and always pairs the i-th sample of
+    # class 0 with the i-th sample of class 1.
+    X = np.arange(20)
+    y = np.array([0] * 10 + [1] * 10)
+
+    unshuffled = [
+        tuple(np.sort(test))
+        for _, test in StratifiedKFold(10, shuffle=False).split(X, y)
+    ]
+    assert unshuffled == [(i, i + 10) for i in range(10)]
+
+    def pairs(seed):
+        cv = StratifiedKFold(10, shuffle=True, random_state=seed)
+        return [tuple(np.sort(test)) for _, test in cv.split(X, y)]
+
+    shuffled_0 = pairs(0)
+    shuffled_1 = pairs(1)
+    assert shuffled_0 != [(i, i + 10) for i in range(10)]
+    assert set(shuffled_0) != set(shuffled_1)
+    # Each test fold still holds one sample from each class.
+    for a, b in shuffled_0:
+        assert a < 10 <= b
+
+
 def test_kfold_can_detect_dependent_samples_on_digits():  # see #2372
     # The digits samples are dependent: they are apparently grouped by authors
     # although we don't have any information on the groups segment locations

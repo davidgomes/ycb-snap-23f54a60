@@ -620,7 +620,14 @@ class StratifiedKFold(_BaseKFold):
         super().__init__(n_splits, shuffle, random_state)
 
     def _make_test_folds(self, X, y=None):
-        rng = self.random_state
+        # A single RandomState must be shared across classes. Passing an
+        # integer seed into each per-class KFold rebuilds the same generator,
+        # so every class receives the identical permutation and only the
+        # order of folds changes.
+        if self.shuffle:
+            rng = check_random_state(self.random_state)
+        else:
+            rng = self.random_state
         y = np.asarray(y)
         type_of_target_y = type_of_target(y)
         allowed_target_types = ('binary', 'multiclass')
