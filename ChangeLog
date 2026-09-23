@@ -13,6 +13,11 @@ Release date: TBA
 
   Closes #1548
 
+* Fix ``unused-import`` false positive for imported modules referenced in
+  attribute lookups in type comments.
+
+  Closes #4603
+
 * astroid has been upgraded to 2.6.0
 
 * Fix false positive ``useless-type-doc`` on ignored argument using ``pylint.extensions.docparams``

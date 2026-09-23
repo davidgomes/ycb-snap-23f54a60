@@ -1826,6 +1826,13 @@ class VariablesChecker(BaseChecker):
             self._type_annotation_names.append(type_annotation.name)
             return
 
+        # Attribute lookups such as ``abc.ABC`` or ``foo.bar.Baz`` only use the
+        # root name. Recurse so a module imported solely for a type comment is
+        # treated as used. Follow-up to #3112 / #4603.
+        if isinstance(type_annotation, astroid.Attribute):
+            self._store_type_annotation_node(type_annotation.expr)
+            return
+
         if not isinstance(type_annotation, astroid.Subscript):
             return
 
