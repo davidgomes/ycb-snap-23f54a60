@@ -41,10 +41,13 @@ def test_binary_symbols():
 def test_as_set():
     x = Symbol('x')
     y = Symbol('y')
-    # Contains is a BooleanFunction whose value depends on an arg's
-    # containment in a Set -- rewriting as a Set is not yet implemented
+    assert Contains(x, FiniteSet(y)).as_set() == FiniteSet(y)
+    assert Contains(x, S.Integers).as_set() == S.Integers
+    assert Contains(x, S.Reals).as_set() == S.Reals
+    assert Contains(x, Interval(0, 1)).as_set() == Interval(0, 1)
+    # rewriting in terms of a non-symbolic element is not implemented
     raises(NotImplementedError, lambda:
-           Contains(x, FiniteSet(y)).as_set())
+           Contains(x + 1, Interval(0, 1)).as_set())
 
 def test_type_error():
     # Pass in a parameter not of type "set"

@@ -79,6 +79,8 @@ def test_piecewise1():
     assert pwise.subs(x, pi) == 0
     assert pwise.subs(x, 2) == 1
     assert pwise.subs(x, 7) == 0
+    assert Piecewise((6, Contains(x, S.Reals)), (7, True)
+        ) == Piecewise((6, Contains(x, S.Reals)), (7, True))
 
     # Test subs
     p = Piecewise((-1, x < -1), (x**2, x < 0), (log(x), x >= 0))

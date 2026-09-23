@@ -45,4 +45,21 @@ class Contains(BooleanFunction):
             isinstance(i, (Eq, Ne))])
 
     def as_set(self):
+        """
+        Rewrite the Contains as a Set of the values of its (symbolic)
+        element that satisfy it.
+
+        Examples
+        ========
+
+        >>> from sympy import Contains, Interval, S, Symbol
+        >>> x = Symbol('x')
+        >>> Contains(x, S.Reals).as_set()
+        Reals
+        >>> Contains(x, Interval(0, 1)).as_set()
+        Interval(0, 1)
+        """
+        x, s = self.args
+        if x.is_Symbol:
+            return s
         raise NotImplementedError()
