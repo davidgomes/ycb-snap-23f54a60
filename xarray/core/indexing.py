@@ -1532,7 +1532,12 @@ class PandasMultiIndexingAdapter(PandasIndexingAdapter):
 
     def __array__(self, dtype: DTypeLike = None) -> np.ndarray:
         if self.level is not None:
-            return self.array.get_level_values(self.level).values
+            # pandas stores MultiIndex levels as int64 (and may widen other
+            # dtypes). level_coords_dtype records the original coordinate
+            # dtype, so cast back when materializing values (GH#7393).
+            if dtype is None:
+                dtype = self.dtype
+            return np.asarray(self.array.get_level_values(self.level).values, dtype=dtype)
         else:
             return super().__array__(dtype)
 

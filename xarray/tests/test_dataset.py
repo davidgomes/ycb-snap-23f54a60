@@ -3467,6 +3467,13 @@ class TestDataset:
         assert_identical(expected, actual)
         assert list(actual.xindexes) == ["z", "y", "x"]
 
+    def test_stack_preserves_int32_coord_dtype(self) -> None:
+        # pandas MultiIndex levels are int64; stacking must not widen coords
+        ds = Dataset(coords={"a": np.array([0], dtype="i4")})
+        stacked = ds.stack(b=("a",))
+        assert stacked["a"].values.dtype == ds["a"].values.dtype
+        assert stacked["a"].dtype == np.dtype("int32")
+
     @pytest.mark.parametrize(
         "create_index,expected_keys",
         [
