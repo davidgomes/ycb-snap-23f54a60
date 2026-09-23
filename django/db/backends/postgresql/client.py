@@ -30,6 +30,15 @@ class DatabaseClient(BaseDatabaseClient):
         subprocess_env = os.environ.copy()
         if passwd:
             subprocess_env['PGPASSWORD'] = str(passwd)
+        for param, env_var in (
+            ('sslmode', 'PGSSLMODE'),
+            ('sslrootcert', 'PGSSLROOTCERT'),
+            ('sslcert', 'PGSSLCERT'),
+            ('sslkey', 'PGSSLKEY'),
+        ):
+            value = conn_params.get(param)
+            if value:
+                subprocess_env[env_var] = str(value)
         try:
             # Allow SIGINT to pass to psql to abort queries.
             signal.signal(signal.SIGINT, signal.SIG_IGN)
