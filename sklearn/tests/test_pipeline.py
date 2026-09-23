@@ -1620,6 +1620,33 @@ def test_feature_union_set_output():
     assert_array_equal(X_trans.index, X_test.index)
 
 
+def test_feature_union_set_output_aggregating_transformer():
+    """Check FeatureUnion with pandas output and a transformer that changes the
+    number of rows.
+
+    Non-regression test for gh-25730.
+    """
+    pd = pytest.importorskip("pandas")
+
+    class SumByGroup(TransformerMixin, BaseEstimator):
+        def fit(self, X, y=None):
+            return self
+
+        def transform(self, X):
+            return X[["value"]].groupby(X["group"]).sum()
+
+        def get_feature_names_out(self, input_features=None):
+            return np.asarray(["value"], dtype=object)
+
+    X = pd.DataFrame({"value": [1, 2, 3, 4, 5], "group": ["a", "a", "b", "b", "c"]})
+    union = make_union(SumByGroup()).set_output(transform="pandas")
+    X_trans = union.fit_transform(X)
+
+    assert isinstance(X_trans, pd.DataFrame)
+    assert_array_equal(X_trans.index, ["a", "b", "c"])
+    assert_array_equal(X_trans["sumbygroup__value"], [3, 7, 5])
+
+
 def test_feature_union_getitem():
     """Check FeatureUnion.__getitem__ returns expected results."""
     scalar = StandardScaler()
