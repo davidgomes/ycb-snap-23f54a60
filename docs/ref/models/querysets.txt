@@ -1310,6 +1310,19 @@ less ambiguous than storing a filtered result in the related manager's cache:
     ...     Prefetch('pizzas', queryset=queryset))
     >>> vegetarian_pizzas = restaurants[0].pizzas.all()
 
+You can also limit the number of prefetched objects per related instance by
+slicing the ``QuerySet``, for example to prefetch at most three pizzas for each
+restaurant:
+
+    >>> Restaurant.objects.prefetch_related(
+    ...     Prefetch('pizzas', queryset=Pizza.objects.order_by('name')[:3], to_attr='top_pizzas'))
+
+Slicing is only supported on databases that support window functions.
+
+.. versionchanged:: 4.2
+
+    Support for sliced querysets was added.
+
 Custom prefetching also works with single related relations like
 forward ``ForeignKey`` or ``OneToOneField``. Generally you'll want to use
 :meth:`select_related()` for these relations, but there are a number of cases
