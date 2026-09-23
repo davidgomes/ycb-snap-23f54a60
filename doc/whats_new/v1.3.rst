@@ -113,6 +113,14 @@ Changelog
 - |Fix| :class:`feature_extraction.FeatureHasher` raises an informative error
   when the input is a list of strings. :pr:`25094` by `Thomas Fan`_.
 
+:mod:`sklearn.impute`
+.....................
+
+- |Enhancement| Added the parameter `fill_value` to
+  :class:`impute.IterativeImputer`. It is used when `initial_strategy="constant"`,
+  and ``np.nan`` is accepted so estimators with native missing-value support can
+  be used. :pr:`25232` by :user:`Thijs van Weezel <thijs-vanweezel>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 

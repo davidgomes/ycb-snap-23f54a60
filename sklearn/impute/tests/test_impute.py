@@ -1524,6 +1524,60 @@ def test_iterative_imputer_keep_empty_features(initial_strategy):
     assert_allclose(X_imputed[:, 1], 0)
 
 
+def test_iterative_imputer_constant_fill_value():
+    """Check that `fill_value` is forwarded to the initial imputer."""
+    X = np.array([[-1, 2, 3, -1], [4, -1, 5, -1], [6, 7, -1, -1], [8, 9, 0, -1]])
+
+    fill_value = 100
+    imputer = IterativeImputer(
+        missing_values=-1,
+        initial_strategy="constant",
+        fill_value=fill_value,
+        max_iter=0,
+    )
+    X_imputed = imputer.fit_transform(X)
+    assert_array_equal(imputer.initial_imputer_.statistics_, fill_value)
+    assert_array_equal(X_imputed[X == -1], fill_value)
+    assert_array_equal(X_imputed[X != -1], X[X != -1])
+
+
+def test_iterative_imputer_nan_fill_value():
+    """NaN is a valid constant initialization for estimators that accept it."""
+    from sklearn.ensemble import HistGradientBoostingRegressor
+
+    rng = np.random.RandomState(0)
+    X = rng.randn(40, 3)
+    # Keep every column partially observed so the iterative step has rows to fit.
+    X[::4, 0] = np.nan
+    X[1::4, 1] = np.nan
+    X[2::5, 2] = np.nan
+    observed = ~np.isnan(X)
+
+    imputer = IterativeImputer(
+        estimator=HistGradientBoostingRegressor(
+            max_iter=5, min_samples_leaf=1, random_state=0
+        ),
+        initial_strategy="constant",
+        fill_value=np.nan,
+        max_iter=1,
+        random_state=0,
+    )
+    X_imputed = imputer.fit_transform(X)
+
+    assert X_imputed.shape == X.shape
+    assert_array_equal(np.isnan(imputer.initial_imputer_.statistics_), True)
+    assert_array_equal(X_imputed[observed], X[observed])
+    assert not np.isnan(X_imputed).any()
+
+    # With no iterative rounds, missing entries stay NaN.
+    initial_only = IterativeImputer(
+        initial_strategy="constant", fill_value=np.nan, max_iter=0
+    )
+    X_initial = initial_only.fit_transform(X)
+    assert_array_equal(np.isnan(X_initial), ~observed)
+    assert_array_equal(X_initial[observed], X[observed])
+
+
 @pytest.mark.parametrize("keep_empty_features", [True, False])
 def test_knn_imputer_keep_empty_features(keep_empty_features):
     """Check the behaviour of `keep_empty_features` for `KNNImputer`."""
