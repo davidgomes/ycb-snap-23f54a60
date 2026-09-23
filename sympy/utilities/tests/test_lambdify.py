@@ -10,7 +10,7 @@ from sympy import (
     true, false, And, Or, Not, ITE, Min, Max, floor, diff, IndexedBase, Sum,
     DotProduct, Eq, Dummy, sinc, erf, erfc, factorial, gamma, loggamma,
     digamma, RisingFactorial, besselj, bessely, besseli, besselk, S, beta,
-    betainc, betainc_regularized, fresnelc, fresnels)
+    betainc, betainc_regularized, fresnelc, fresnels, Mod)
 from sympy.codegen.cfunctions import expm1, log1p, exp2, log2, log10, hypot
 from sympy.codegen.numpy_nodes import logaddexp, logaddexp2
 from sympy.codegen.scipy_nodes import cosm1
@@ -1248,6 +1248,12 @@ def test_issue_16930():
     f = lambda x:  S.GoldenRatio * x**2
     f_ = lambdify(x, f(x), modules='scipy')
     assert f_(1) == scipy.constants.golden_ratio
+
+def test_Mod_with_empty_modules():
+    for expr in [-Mod(x, y), 2*Mod(x, y), -2*Mod(x, y), -x/Mod(x, y)]:
+        f = lambdify([x, y], expr)
+        g = lambdify([x, y], expr, modules=[])
+        assert f(3, 7) == g(3, 7) == expr.subs({x: 3, y: 7})
 
 def test_issue_17898():
     if not scipy:
