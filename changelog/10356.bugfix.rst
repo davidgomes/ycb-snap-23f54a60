@@ -1,0 +1,1 @@
+Fixed class marks being dropped when a test class inherits from multiple marked base classes. Marks are now collected from every class along the MRO.
