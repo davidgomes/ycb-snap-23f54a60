@@ -275,8 +275,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     def set_output(self, *, transform=None):
         """Set the output container when `"transform"` and `"fit_transform"` are called.
 
-        Calling `set_output` will set the output of all estimators in `transformers`
-        and `transformers_`.
+        Calling `set_output` will set the output of all estimators in `transformers`,
+        `transformers_`, and `remainder` if it is an estimator.
 
         Parameters
         ----------
@@ -302,6 +302,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         )
         for trans in transformers:
             _safe_set_output(trans, transform=transform)
+
+        if self.remainder not in {"passthrough", "drop"}:
+            _safe_set_output(self.remainder, transform=transform)
 
         return self
 
