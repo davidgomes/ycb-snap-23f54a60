@@ -225,6 +225,13 @@ def fix_svg_relative_paths(self: SphinxTranslator, filepath: str) -> None:
     href_name = '{http://www.w3.org/1999/xlink}href'
     modified = False
 
+    docname = self.builder.env.path2doc(self.document['source'])
+    if docname is None:
+        return
+    # relative links are written relative to the page embedding the SVG
+    page_uri = urlsplit(self.builder.get_target_uri(docname)).path
+    page_dir = path.join(self.builder.outdir, posixpath.dirname(page_uri))
+
     for element in chain(
         root.findall('.//svg:image[@xlink:href]', ns),
         root.findall('.//svg:a[@xlink:href]', ns),
@@ -234,11 +241,8 @@ def fix_svg_relative_paths(self: SphinxTranslator, filepath: str) -> None:
             # not a relative link
             continue
 
-        old_path = path.join(self.builder.outdir, url)
-        new_path = path.relpath(
-            old_path,
-            start=path.join(self.builder.outdir, self.builder.imgpath),
-        )
+        old_path = path.join(page_dir, url)
+        new_path = path.relpath(old_path, start=path.dirname(filepath))
         modified_url = urlunsplit((scheme, hostname, new_path, query, fragment))
 
         element.set(href_name, modified_url)

@@ -12,3 +12,11 @@ class Baz(Bar):
 
 class Qux(Foo):
     pass
+
+
+class Alice:
+    pass
+
+
+class Bob(Alice):
+    pass

@@ -170,6 +170,16 @@ def test_inheritance_diagram_svg_html(app, status, warning):
 
     assert re.search(pattern, content, re.M)
 
+    # links in the SVG are relative to the SVG file, not the embedding page (refs: #10570)
+    for page in ('index.html', 'subdir/index.html'):
+        page_content = (app.outdir / page).read_text(encoding='utf8')
+        svg = re.search('<object data="([^"]+)"[^>]*>\n'
+                        '<p class="warning">Inheritance diagram of test.Bob</p>',
+                        page_content).group(1)
+        svg_content = (app.outdir / page).parent.joinpath(svg).read_text(encoding='utf8')
+        assert 'href="../subdir/index.html#test.Alice"' in svg_content
+        assert 'href="../subdir/other.html#test.Bob"' in svg_content
+
 
 @pytest.mark.sphinx('latex', testroot='ext-inheritance_diagram')
 @pytest.mark.usefixtures('if_graphviz_found')
