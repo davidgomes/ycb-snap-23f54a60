@@ -326,7 +326,7 @@ class SessionTestsMixin:
 
     @ignore_warnings(category=RemovedInDjango40Warning)
     def test_default_hashing_algorithm_legacy_decode(self):
-        with self.settings(DEFAULT_HASHING_ALGORITHM='sha1'):
+        with override_settings(DEFAULT_HASHING_ALGORITHM='sha1'):
             data = {'a test key': 'a test value'}
             encoded = self.session.encode(data)
             self.assertEqual(self.session._legacy_decode(encoded), data)
