@@ -1,0 +1,10 @@
+``hexbin`` *mincnt* is inclusive when *C* is given
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Previously, *mincnt* was inclusive when *C* was not given and exclusive when
+*C* was given, so ``mincnt=1`` dropped cells that contained exactly one point
+only in the latter case. *mincnt* is now inclusive in both cases.
+
+When *C* is given and *mincnt* is left unset, cells still need at least one
+point before *reduce_C_function* is called. Set *mincnt* to 0 to pass empty
+cells through to the reduction function.

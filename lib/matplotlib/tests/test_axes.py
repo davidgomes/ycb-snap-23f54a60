@@ -950,6 +950,13 @@ def test_hexbin_empty():
     ax.hexbin([], [], bins='log')
 
 
+def test_hexbin_empty_C_skips_reducer():
+    # Default mincnt must not hand empty cells to reducers such as np.max.
+    fig, ax = plt.subplots()
+    ax.hexbin([], [], C=[], reduce_C_function=np.max)
+    plt.close(fig)
+
+
 def test_hexbin_pickable():
     # From #1973: Test that picking a hexbin collection works
     fig, ax = plt.subplots()
@@ -997,6 +1004,87 @@ def test_hexbin_log_clim():
     fig, ax = plt.subplots()
     h = ax.hexbin(x, y, bins='log', vmin=2, vmax=100)
     assert h.get_clim() == (2, 100)
+
+
+@check_figures_equal(extensions=['png'])
+def test_hexbin_mincnt_behavior_upon_C_parameter(fig_test, fig_ref):
+    # see: gh:12926
+    datapoints = [
+        # list of (x, y)
+        (0, 0),
+        (0, 0),
+        (6, 0),
+        (0, 6),
+    ]
+    X, Y = zip(*datapoints)
+    extent = [-10., 10, -10., 10]
+    gridsize = (7, 7)
+
+    ax_test = fig_test.subplots()
+    ax_ref = fig_ref.subplots()
+
+    # without C parameter
+    ax_ref.hexbin(
+        X, Y,
+        extent=extent,
+        gridsize=gridsize,
+        mincnt=1,
+    )
+    ax_ref.set_facecolor("green")  # for contrast of background
+
+    # with C parameter
+    ax_test.hexbin(
+        X, Y,
+        C=[1] * len(X),
+        reduce_C_function=lambda v: sum(v),
+        mincnt=1,
+        extent=extent,
+        gridsize=gridsize,
+    )
+    ax_test.set_facecolor("green")
+
+
+def test_hexbin_mincnt_with_C_matches_counts():
+    # gh-12926: an explicit mincnt is inclusive with and without C.
+    x = np.array([0.0, 0.0, 6.0, 0.0])
+    y = np.array([0.0, 0.0, 0.0, 6.0])
+    c = np.ones_like(x)
+    extent = [-10.0, 10.0, -10.0, 10.0]
+    gridsize = (7, 7)
+
+    def cells(mincnt, with_c):
+        fig, ax = plt.subplots()
+        kwargs = {}
+        if with_c:
+            kwargs.update(C=c, reduce_C_function=np.sum)
+        if mincnt is not None:
+            kwargs["mincnt"] = mincnt
+        hb = ax.hexbin(x, y, extent=extent, gridsize=gridsize, **kwargs)
+        array = np.asarray(hb.get_array())
+        offsets = np.asarray(hb.get_offsets())
+        plt.close(fig)
+        return array, offsets
+
+    for mincnt in (1, 2):
+        array_c, offsets_c = cells(mincnt, True)
+        array_n, offsets_n = cells(mincnt, False)
+        assert_array_equal(array_c, array_n)
+        assert_array_equal(offsets_c, offsets_n)
+        # The sample has one cell with two points and two singletons.
+        assert len(array_c) == (3 if mincnt == 1 else 1)
+
+    # Unset mincnt still skips empty cells when C is given.
+    seen = []
+
+    def _reduce(vals):
+        seen.append(len(vals))
+        return float(np.sum(vals))
+
+    fig, ax = plt.subplots()
+    ax.hexbin(x, y, C=c, reduce_C_function=_reduce,
+              extent=extent, gridsize=gridsize)
+    plt.close(fig)
+    assert sorted(seen) == [1, 1, 2]
 
 
 def test_inverted_limits():
