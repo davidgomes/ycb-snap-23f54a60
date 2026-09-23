@@ -35,6 +35,7 @@ from sphinx.util.requests import is_ssl_error
 
 logger = logging.getLogger(__name__)
 
+uri_re = re.compile('[a-z][a-z0-9+.-]*:|//', re.IGNORECASE)
 
 DEFAULT_REQUEST_HEADERS = {
     'Accept': 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.8',
@@ -213,7 +214,18 @@ class CheckExternalLinksBuilder(Builder):
             if len(uri) == 0 or uri.startswith(('#', 'mailto:', 'ftp:')):
                 return 'unchecked', '', 0
             elif not uri.startswith(('http:', 'https:')):
-                return 'local', '', 0
+                if uri_re.match(uri):
+                    # non supported URI schemes (ex. tel:) or protocol-relative URLs
+                    return 'unchecked', '', 0
+                for rex in self.to_ignore:
+                    if rex.match(uri):
+                        return 'ignored', '', 0
+                localpath = unquote(uri.split('#', 1)[0])
+                srcpath = path.join(self.srcdir, path.dirname(docname), localpath)
+                if path.exists(srcpath):
+                    return 'working', '', 0
+                else:
+                    return 'broken', __('local file not found'), 0
             elif uri in self.good:
                 return 'working', 'old', 0
             elif uri in self.broken:

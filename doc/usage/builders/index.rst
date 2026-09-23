@@ -430,7 +430,8 @@ name is ``rinoh``. Refer to the `rinohtype manual`_ for details.
 
    This builder scans all documents for external links, tries to open them with
    ``requests``, and writes an overview which ones are broken and redirected to
-   standard output and to :file:`output.txt` in the output directory.
+   standard output and to :file:`output.txt` in the output directory.  Local
+   links are checked against files relative to the source document.
 
    .. autoattribute:: name
 
@@ -441,6 +442,10 @@ name is ``rinoh``. Refer to the `rinohtype manual`_ for details.
    .. versionchanged:: 1.5
 
       Since Sphinx-1.5, the linkcheck builder comes to use requests module.
+
+   .. versionchanged:: 3.2
+
+      Since Sphinx-3.2, the linkcheck builder also checks local links.
 
 .. module:: sphinx.builders.xml
 .. class:: XMLBuilder
