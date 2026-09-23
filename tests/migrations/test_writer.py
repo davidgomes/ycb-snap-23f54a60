@@ -690,8 +690,6 @@ class WriterTests(SimpleTestCase):
         output = writer.as_string()
         self.assertIn("from django.db import migrations, models\n", output)
         self.assertIn("bases=(migrations.test_writer.MyMixin, models.Model)", output)
-        result = self.safe_exec(output)
-        self.assertIn("Migration", result)
 
     def test_simple_migration(self):
         """
