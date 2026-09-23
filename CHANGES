@@ -30,6 +30,9 @@ Bugs fixed
 * #7866: autosummary: Failed to extract correct summary line when docstring
   contains a hyperlink target
 * #7715: LaTeX: ``numfig_secnum_depth > 1`` leads to wrong figure links
+* #4403: napoleon: decorated ``__init__`` (and other special or private
+  methods) are not documented even if ``napoleon_include_init_with_doc`` is
+  enabled
 * #7846: html theme: XML-invalid files were generated
 * #7869: :rst:role:`abbr` role without an explanation will show the explanation
   from the previous abbr role
