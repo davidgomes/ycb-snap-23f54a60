@@ -788,6 +788,38 @@ class Grouper:
     def __init__(self, init=()):
         self._mapping = {weakref.ref(x): [weakref.ref(x)] for x in init}
 
+    def __getstate__(self):
+        # Drop dead weakrefs so they are not pickled as None.
+        self.clean()
+        # Convert weak refs to strong ones.  Reuse one list per group so
+        # unpickling restores the shared-list invariant used by joined().
+        groups = {}
+        mapping = {}
+        for key, group in self._mapping.items():
+            obj = key()
+            if obj is None:
+                continue
+            strong = groups.get(id(group))
+            if strong is None:
+                strong = groups[id(group)] = [
+                    item for ref in group if (item := ref()) is not None]
+            mapping[obj] = strong
+        return {**vars(self), "_mapping": mapping}
+
+    def __setstate__(self, state):
+        mapping = state.pop("_mapping")
+        vars(self).update(state)
+        # Convert strong refs back to weak ones, again sharing one list
+        # per group.
+        groups = {}
+        new_mapping = {}
+        for key, group in mapping.items():
+            weak_group = groups.get(id(group))
+            if weak_group is None:
+                weak_group = groups[id(group)] = [*map(weakref.ref, group)]
+            new_mapping[weakref.ref(key)] = weak_group
+        self._mapping = new_mapping
+
     def __contains__(self, item):
         return weakref.ref(item) in self._mapping
 

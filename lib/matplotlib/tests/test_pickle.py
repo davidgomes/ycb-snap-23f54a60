@@ -44,6 +44,25 @@ def test_simple():
     pickle.dump(fig, BytesIO(), pickle.HIGHEST_PROTOCOL)
 
 
+def test_pickle_align_labels():
+    fig = plt.figure()
+    ax1 = fig.add_subplot(211)
+    ax2 = fig.add_subplot(212)
+    ax1.plot([0, 1, 2, 3, 4], [40000, 4300, 4500, 4700, 4800])
+    ax1.set_ylabel('speed')
+    ax2.plot([0, 1, 2, 3, 4], [10, 11, 12, 13, 14])
+    ax2.set_ylabel('acc')
+    fig.align_labels()
+
+    loaded = pickle.loads(pickle.dumps(fig))
+    assert loaded._align_label_groups['y'].joined(loaded.axes[0],
+                                                   loaded.axes[1])
+
+    # Removing an Axes leaves a dead weakref in the grouper.
+    fig.delaxes(ax1)
+    pickle.loads(pickle.dumps(fig))
+
+
 def _generate_complete_test_figure(fig_ref):
     fig_ref.set_size_inches((10, 6))
     plt.figure(fig_ref)
@@ -58,6 +77,7 @@ def _generate_complete_test_figure(fig_ref):
     # Ensure lists also pickle correctly.
     plt.subplot(3, 3, 1)
     plt.plot(list(range(10)))
+    plt.ylabel("hello")
 
     plt.subplot(3, 3, 2)
     plt.contourf(data, hatches=['//', 'ooo'])
@@ -68,6 +88,7 @@ def _generate_complete_test_figure(fig_ref):
 
     plt.subplot(3, 3, 4)
     plt.imshow(data)
+    plt.ylabel("hello\nworld!")
 
     plt.subplot(3, 3, 5)
     plt.pcolor(data)
@@ -88,6 +109,8 @@ def _generate_complete_test_figure(fig_ref):
 
     plt.subplot(3, 3, 9)
     plt.errorbar(x, x * -0.5, xerr=0.2, yerr=0.4)
+
+    fig_ref.align_ylabels()  # Test handling of _align_label_groups Groupers.
 
 
 @mpl.style.context("default")

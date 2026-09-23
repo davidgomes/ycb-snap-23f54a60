@@ -1,3 +1,4 @@
+import gc
 import itertools
 import pickle
 
@@ -595,6 +596,57 @@ def test_grouper_private():
     base_set = mapping[ref(objs[0])]
     for o in objs[1:]:
         assert mapping[ref(o)] is base_set
+
+
+class _PickleDummy:
+    # Module-level so instances can be pickled.
+    def __init__(self, s):
+        self.s = s
+
+
+class _PickleBag:
+    # Owns the grouped objects strongly.  A Grouper only keeps weakrefs, so
+    # pickling the grouper by itself cannot resurrect its members.
+    def __init__(self, objs, grouper):
+        self.objs = objs
+        self.grouper = grouper
+
+
+def test_grouper_pickle():
+    objs = [_PickleDummy(s) for s in "abc"]
+    g = cbook.Grouper()
+    g.join(objs[0], objs[1])
+    g.join(objs[2])
+    bag = pickle.loads(pickle.dumps(_PickleBag(objs, g)))
+
+    groups = list(bag.grouper)
+    assert len(groups) == 2
+    by_len = {len(group): group for group in groups}
+    assert {obj.s for obj in by_len[1]} == {"c"}
+    assert {obj.s for obj in by_len[2]} == {"a", "b"}
+    left, right = by_len[2]
+    assert bag.grouper.joined(left, right)
+    assert not bag.grouper.joined(by_len[1][0], left)
+    assert set(bag.grouper.get_siblings(left)) == {left, right}
+    # joined() identifies groups by shared list identity.
+    assert bag.grouper._mapping[ref(left)] is bag.grouper._mapping[ref(right)]
+    assert {obj.s for obj in bag.objs} == {"a", "b", "c"}
+
+
+def test_grouper_pickle_dead_weakref():
+    a, b = _PickleDummy("a"), _PickleDummy("b")
+    g = cbook.Grouper()
+    g.join(a, b)
+    dead = ref(b)
+    del b
+    gc.collect()
+    assert dead() is None
+
+    bag = pickle.loads(pickle.dumps(_PickleBag([a], g)))
+    groups = list(bag.grouper)
+    assert len(groups) == 1
+    assert len(groups[0]) == 1
+    assert groups[0][0].s == "a"
 
 
 def test_flatiter():
