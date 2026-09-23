@@ -270,6 +270,8 @@ def test_upretty_greek():
     assert upretty( Symbol('alpha^+_1') ) == 'α⁺₁'
     assert upretty( Symbol('beta') ) == 'β'
     assert upretty(Symbol('lambda')) == 'λ'
+    assert upretty(Symbol('ω0')) == 'ω₀'
+    assert upretty(Symbol('ω1')) == 'ω₁'
 
 
 def test_upretty_multiindex():
