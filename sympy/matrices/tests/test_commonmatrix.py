@@ -200,6 +200,16 @@ def test_col_insert():
         l = [0, 0, 0]
         l.insert(i, 4)
         assert flatten(zeros_Shaping(3).col_insert(i, c4).row(0).tolist()) == l
+    # columns after the insertion point must keep their original rows
+    M = eye_Shaping(6)
+    V = 2 * ones(6, 2)
+    assert M.col_insert(3, V) == Matrix([
+        [1, 0, 0, 2, 2, 0, 0, 0],
+        [0, 1, 0, 2, 2, 0, 0, 0],
+        [0, 0, 1, 2, 2, 0, 0, 0],
+        [0, 0, 0, 2, 2, 1, 0, 0],
+        [0, 0, 0, 2, 2, 0, 1, 0],
+        [0, 0, 0, 2, 2, 0, 0, 1]])
 
 def test_extract():
     m = ShapingOnlyMatrix(4, 3, lambda i, j: i*3 + j)
