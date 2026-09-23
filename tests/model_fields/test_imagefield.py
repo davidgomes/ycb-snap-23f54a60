@@ -5,6 +5,7 @@ from unittest import skipIf
 from django.core.exceptions import ImproperlyConfigured
 from django.core.files import File
 from django.core.files.images import ImageFile
+from django.db.models import signals
 from django.test import TestCase
 from django.test.testcases import SerializeMixin
 
@@ -204,6 +205,36 @@ class ImageFieldTests(ImageFieldTestMixin, TestCase):
             qs = list(self.PersonModel.objects.defer("mugshot"))
         with self.assertNumQueries(0):
             self.assertEqual(qs[0].name, "Joe")
+
+    def test_post_init_not_connected_without_dimension_fields(self):
+        """
+        ImageField does not connect a post_init handler when neither
+        width_field nor height_field is set. The handler would return
+        immediately, but dispatch still costs time on every instantiation.
+        """
+        sync_receivers, _async_receivers = signals.post_init._live_receivers(Person)
+        self.assertNotIn(
+            Person._meta.get_field("mugshot").update_dimension_fields,
+            sync_receivers,
+        )
+
+    def test_post_init_connected_with_dimension_fields(self):
+        sync_receivers, _async_receivers = signals.post_init._live_receivers(
+            PersonWithHeightAndWidth
+        )
+        self.assertIn(
+            PersonWithHeightAndWidth._meta.get_field(
+                "mugshot"
+            ).update_dimension_fields,
+            sync_receivers,
+        )
+        height_receivers, _async_receivers = signals.post_init._live_receivers(
+            PersonWithHeight
+        )
+        self.assertIn(
+            PersonWithHeight._meta.get_field("mugshot").update_dimension_fields,
+            height_receivers,
+        )
 
 
 @skipIf(Image is None, "Pillow is required to test ImageField")
