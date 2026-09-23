@@ -266,6 +266,11 @@ def test_parse_annotation():
                           [pending_xref, "int"],
                           [desc_sig_punctuation, "]"]))
 
+    # None type makes an object-reference (not a class reference)
+    doctree = _parse_annotation("None")
+    assert_node(doctree, ([pending_xref, "None"],))
+    assert_node(doctree[0], pending_xref, refdomain="py", reftype="obj", reftarget="None")
+
 
 def test_pyfunction_signature(app):
     text = ".. py:function:: hello(name: str) -> str"
