@@ -4,6 +4,14 @@ from django.test import SimpleTestCase, override_settings
 from django.test.utils import isolate_apps
 
 
+class MyBigAutoField(models.BigAutoField):
+    pass
+
+
+class MySmallAutoField(models.SmallAutoField):
+    pass
+
+
 @isolate_apps('model_options')
 class TestDefaultPK(SimpleTestCase):
     @override_settings(DEFAULT_AUTO_FIELD='django.db.models.NonexistentAutoField')
@@ -99,3 +107,21 @@ class TestDefaultPK(SimpleTestCase):
 
         m2m_pk = M2MModel._meta.get_field('m2m').remote_field.through._meta.pk
         self.assertIsInstance(m2m_pk, models.SmallAutoField)
+
+    @override_settings(
+        DEFAULT_AUTO_FIELD='model_options.test_default_pk.MyBigAutoField',
+    )
+    def test_default_auto_field_setting_bigautofield_subclass(self):
+        class Model(models.Model):
+            pass
+
+        self.assertIsInstance(Model._meta.pk, MyBigAutoField)
+
+    @override_settings(
+        DEFAULT_AUTO_FIELD='model_options.test_default_pk.MySmallAutoField',
+    )
+    def test_default_auto_field_setting_smallautofield_subclass(self):
+        class Model(models.Model):
+            pass
+
+        self.assertIsInstance(Model._meta.pk, MySmallAutoField)
