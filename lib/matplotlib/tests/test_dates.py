@@ -613,6 +613,21 @@ def test_concise_formatter_show_offset(t_delta, expected):
     assert formatter.get_offset() == expected
 
 
+def test_concise_formatter_show_offset_no_january():
+    d1 = datetime.datetime(2021, 2, 15)
+    d2 = d1 + datetime.timedelta(days=200)
+
+    fig, ax = plt.subplots()
+    locator = mdates.AutoDateLocator()
+    formatter = mdates.ConciseDateFormatter(locator)
+    ax.xaxis.set_major_locator(locator)
+    ax.xaxis.set_major_formatter(formatter)
+
+    ax.plot([d1, d2], [0, 0])
+    fig.draw_without_rendering()
+    assert formatter.get_offset() == '2021'
+
+
 def test_offset_changes():
     fig, ax = plt.subplots()
 
