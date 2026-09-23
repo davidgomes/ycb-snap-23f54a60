@@ -2,6 +2,7 @@ import datetime
 import re
 from unittest import mock
 
+from django import forms
 from django.contrib.auth.forms import (
     AdminPasswordChangeForm, AuthenticationForm, PasswordChangeForm,
     PasswordResetForm, ReadOnlyPasswordHashField, ReadOnlyPasswordHashWidget,
@@ -1022,7 +1023,21 @@ class ReadOnlyPasswordHashTest(SimpleTestCase):
 
     def test_readonly_field_has_changed(self):
         field = ReadOnlyPasswordHashField()
+        self.assertIs(field.disabled, True)
         self.assertFalse(field.has_changed('aaa', 'bbb'))
+
+    def test_disabled_ignores_tampered_value(self):
+        class PasswordForm(forms.Form):
+            password = ReadOnlyPasswordHashField()
+
+        initial = 'pbkdf2_sha256$100000$salt$hash'
+        form = PasswordForm(
+            data={'password': 'tampered'},
+            initial={'password': initial},
+        )
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data['password'], initial)
+        self.assertEqual(form['password'].value(), initial)
 
 
 class AdminPasswordChangeFormTest(TestDataMixin, TestCase):

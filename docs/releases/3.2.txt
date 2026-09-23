@@ -86,6 +86,12 @@ Minor features
 * The default iteration count for the PBKDF2 password hasher is increased from
   216,000 to 260,000.
 
+* :class:`~django.contrib.auth.forms.ReadOnlyPasswordHashField` now sets
+  ``disabled=True`` by default, so a submitted password hash is ignored in
+  favor of the field's initial value. Custom user change forms no longer need
+  a ``clean_password()`` method for this. ``UserChangeForm.clean_password()``
+  is removed.
+
 * The default variant for the Argon2 password hasher is changed to Argon2id.
   ``memory_cost`` and ``parallelism`` are increased to 102,400 and 8
   respectively to match the ``argon2-cffi`` defaults.
