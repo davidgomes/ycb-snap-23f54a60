@@ -184,6 +184,18 @@ class FunctionalTests(SimpleTestCase):
         with self.assertRaisesMessage(TypeError, msg):
             Foo().cp
 
+    def test_lazy_add(self):
+        lazy_4 = lazy(lambda: 4, int)
+        lazy_5 = lazy(lambda: 5, int)
+        self.assertEqual(lazy_4() + lazy_5(), 9)
+
+    def test_lazy_add_str(self):
+        lazy_a = lazy(lambda: 'a', str)
+        lazy_b = lazy(lambda: 'b', str)
+        self.assertEqual(lazy_a() + lazy_b(), 'ab')
+        self.assertEqual('x' + lazy_a(), 'xa')
+        self.assertEqual(lazy_a() + 'x', 'ax')
+
     def test_lazy_equality(self):
         """
         == and != work correctly for Promises.
