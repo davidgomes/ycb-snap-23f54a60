@@ -748,6 +748,8 @@ class Query(BaseExpression):
                     cur_model = source.related_model
                 else:
                     cur_model = source.remote_field.model
+                # only()/defer() masks are keyed by the concrete model.
+                cur_model = cur_model._meta.concrete_model
                 opts = cur_model._meta
                 # Even if we're "just passing through" this model, we must add
                 # both the current model's pk and the related reference field
