@@ -569,6 +569,9 @@ class Model(metaclass=ModelBase):
         return getattr(self, meta.pk.attname)
 
     def _set_pk_val(self, value):
+        for parent_link in self._meta.parents.values():
+            if parent_link and parent_link != self._meta.pk:
+                setattr(self, parent_link.target_field.attname, value)
         return setattr(self, self._meta.pk.attname, value)
 
     pk = property(_get_pk_val, _set_pk_val)
@@ -806,7 +809,15 @@ class Model(metaclass=ModelBase):
             # Make sure the link fields are synced between parent and self.
             if (field and getattr(self, parent._meta.pk.attname) is None and
                     getattr(self, field.attname) is not None):
-                setattr(self, parent._meta.pk.attname, getattr(self, field.attname))
+                # An existing instance whose parent primary key was explicitly
+                # cleared (for example child.pk_field = None) must insert new
+                # rows. Copying the still-populated parent link back onto that
+                # primary key would overwrite the original object instead.
+                pk_attname = parent._meta.pk.attname
+                if not self._state.adding and pk_attname in self.__dict__:
+                    setattr(self, field.attname, None)
+                else:
+                    setattr(self, pk_attname, getattr(self, field.attname))
             parent_inserted = self._save_parents(cls=parent, using=using, update_fields=update_fields)
             updated = self._save_table(
                 cls=parent, using=using, update_fields=update_fields,

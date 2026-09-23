@@ -558,3 +558,23 @@ class ModelInheritanceTest(TestCase):
         italian_restaurant.restaurant_ptr = None
         self.assertIsNone(italian_restaurant.pk)
         self.assertIsNone(italian_restaurant.id)
+
+    def test_reset_parent_pk_inserts_new_child(self):
+        """
+        Setting an inherited primary key to None on a child loaded through
+        the parent link inserts a new row instead of overwriting the original.
+        """
+        restaurant = Restaurant.objects.create(
+            name='Original',
+            address='944 W. Fullerton',
+            serves_hot_dogs=True,
+            serves_pizza=False,
+        )
+        place = Place.objects.get(pk=restaurant.pk)
+        child = place.restaurant
+        child.id = None
+        child.serves_hot_dogs = False
+        child.save()
+        self.assertEqual(Restaurant.objects.count(), 2)
+        original = Restaurant.objects.get(pk=restaurant.pk)
+        self.assertIs(original.serves_hot_dogs, True)
