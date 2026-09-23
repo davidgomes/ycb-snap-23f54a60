@@ -1587,6 +1587,10 @@ class ManageRunserver(SimpleTestCase):
         call_command(self.cmd, addrport="7000")
         self.assertServerSettings("127.0.0.1", "7000")
 
+        # "0" is a shortcut for "0.0.0.0" (all interfaces).
+        call_command(self.cmd, addrport="0:8000")
+        self.assertServerSettings("0.0.0.0", "8000")
+
     @unittest.skipUnless(socket.has_ipv6, "platform doesn't support IPv6")
     def test_runner_addrport_ipv6(self):
         call_command(self.cmd, addrport="", use_ipv6=True)

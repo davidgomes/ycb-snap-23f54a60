@@ -105,6 +105,10 @@ class Command(BaseCommand):
                     self._raw_ipv6 = True
                 elif self.use_ipv6 and not _fqdn:
                     raise CommandError('"%s" is not a valid IPv6 address.' % self.addr)
+            # "0" is a documented shortcut for "0.0.0.0". Expand it so the
+            # startup message and the bound address stay consistent.
+            if self.addr == "0":
+                self.addr = "0.0.0.0"
         if not self.addr:
             self.addr = self.default_addr_ipv6 if self.use_ipv6 else self.default_addr
             self._raw_ipv6 = self.use_ipv6
