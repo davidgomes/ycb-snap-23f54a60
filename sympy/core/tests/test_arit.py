@@ -1624,6 +1624,11 @@ def test_Mod():
     i = Symbol('i', integer=True)
     assert (3*i*x) % (2*i*y) == i*Mod(3*x, 2*y)
     assert Mod(4*i, 4) == 0
+    assert Mod(3*i, 2) == Mod(i, 2)
+    assert Mod(-3*i, 2) == Mod(i, 2)
+    assert Mod(3*x, 2) != Mod(x, 2)
+    j = Symbol('j', integer=True, positive=True)
+    assert Mod(8*i/j, 4) == 4*Mod(2*i/j, 1)
 
     # issue 8677
     n = Symbol('n', integer=True, positive=True)
