@@ -263,7 +263,16 @@ class ModelFormMetaclass(DeclarativeFieldsMetaclass):
                 base_formfield_callback = b.Meta.formfield_callback
                 break
 
-        formfield_callback = attrs.pop("formfield_callback", base_formfield_callback)
+        formfield_callback = attrs.pop("formfield_callback", None)
+        if formfield_callback is None:
+            # Prefer a callback declared on this form's Meta over one inherited
+            # from a base form. modelform_factory copies the parent Meta, so a
+            # callback defined there is reused when the factory is not given one.
+            meta = attrs.get("Meta")
+            if meta is not None and hasattr(meta, "formfield_callback"):
+                formfield_callback = meta.formfield_callback
+        if formfield_callback is None:
+            formfield_callback = base_formfield_callback
 
         new_class = super().__new__(mcs, name, bases, attrs)
 
@@ -636,7 +645,9 @@ def modelform_factory(
     class_name = model.__name__ + "Form"
 
     # Class attributes for the new form class.
-    form_class_attrs = {"Meta": Meta, "formfield_callback": formfield_callback}
+    form_class_attrs = {"Meta": Meta}
+    if formfield_callback is not None:
+        form_class_attrs["formfield_callback"] = formfield_callback
 
     if getattr(Meta, "fields", None) is None and getattr(Meta, "exclude", None) is None:
         raise ImproperlyConfigured(

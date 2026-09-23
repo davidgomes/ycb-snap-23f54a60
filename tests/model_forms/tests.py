@@ -3474,6 +3474,35 @@ class FormFieldCallbackTests(SimpleTestCase):
                 formfield_callback="not a function or callable",
             )
 
+    def test_callback_in_meta(self):
+        """
+        formfield_callback defined on the base form's Meta is used when
+        modelform_factory is called without an explicit callback.
+        """
+        callback_args = []
+
+        def callback(db_field, **kwargs):
+            callback_args.append(db_field)
+            formfield = db_field.formfield(**kwargs)
+            if formfield:
+                formfield.label = "from-callback"
+            return formfield
+
+        class BaseForm(forms.ModelForm):
+            class Meta:
+                model = Person
+                formfield_callback = staticmethod(callback)
+                fields = "__all__"
+
+        Form = modelform_factory(Person, form=BaseForm)
+        id_field, name_field = Person._meta.fields
+        # Once while defining BaseForm, once while defining Form.
+        self.assertEqual(
+            callback_args, [id_field, name_field, id_field, name_field]
+        )
+        self.assertEqual(Form.base_fields["name"].label, "from-callback")
+        self.assertEqual(BaseForm.base_fields["name"].label, "from-callback")
+
     def test_inherit_after_custom_callback(self):
         def callback(db_field, **kwargs):
             if isinstance(db_field, models.CharField):
