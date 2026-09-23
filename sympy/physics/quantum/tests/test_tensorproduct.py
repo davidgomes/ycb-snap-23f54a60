@@ -47,6 +47,14 @@ def test_tensor_product_commutator():
 
 def test_tensor_product_simp():
     assert tensor_product_simp(TP(A, B)*TP(B, C)) == TP(A*B, B*C)
+    # tests for Pow-expressions
+    assert tensor_product_simp(TP(A, B)**x) == TP(A**x, B**x)
+    assert tensor_product_simp(x*TP(A, B)**2) == x*TP(A**2, B**2)
+    assert tensor_product_simp(x*(TP(A, B)**2)*TP(C, A)) == \
+        x*TP(A**2*C, B**2*A)
+    assert tensor_product_simp(TP(A, B) - TP(C, A)**x) == \
+        TP(A, B) - TP(C**x, A**x)
+    assert tensor_product_simp(TP(1, 1)*TP(1, 1)) == TP(1, 1)
 
 
 def test_issue_5923():

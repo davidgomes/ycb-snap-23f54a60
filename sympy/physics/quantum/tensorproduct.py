@@ -315,9 +315,12 @@ def tensor_product_simp_Mul(e):
     if not isinstance(e, Mul):
         return e
     c_part, nc_part = e.args_cnc()
+    nc_part = [tensor_product_simp_Pow(nc) for nc in nc_part]
     n_nc = len(nc_part)
-    if n_nc == 0 or n_nc == 1:
+    if n_nc == 0:
         return e
+    elif n_nc == 1:
+        return Mul(*c_part) * nc_part[0]
     elif e.has(TensorProduct):
         current = nc_part[0]
         if not isinstance(current, TensorProduct):
@@ -343,6 +346,13 @@ def tensor_product_simp_Mul(e):
         return Mul(*c_part) * TensorProduct(*new_args)
     else:
         return e
+
+
+def tensor_product_simp_Pow(e):
+    """Evaluates ``Pow`` expressions whose base is ``TensorProduct``"""
+    if isinstance(e, Pow) and isinstance(e.base, TensorProduct):
+        return TensorProduct(*[b**e.exp for b in e.base.args])
+    return e
 
 
 def tensor_product_simp(e, **hints):
@@ -376,13 +386,13 @@ def tensor_product_simp(e, **hints):
     commutators and anticommutators as well:
 
     >>> tensor_product_simp(e**2)
-    (A*C)x(B*D)**2
+    ((A*C)**2)x((B*D)**2)
 
     """
     if isinstance(e, Add):
         return Add(*[tensor_product_simp(arg) for arg in e.args])
     elif isinstance(e, Pow):
-        return tensor_product_simp(e.base) ** e.exp
+        return tensor_product_simp_Pow(tensor_product_simp(e.base) ** e.exp)
     elif isinstance(e, Mul):
         return tensor_product_simp_Mul(e)
     elif isinstance(e, Commutator):
