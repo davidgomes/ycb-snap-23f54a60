@@ -6,7 +6,7 @@ from operator import attrgetter
 
 from django.core.exceptions import EmptyResultSet, FieldError
 from django.db import DEFAULT_DB_ALIAS, connection
-from django.db.models import Count, F, Q
+from django.db.models import Count, Exists, F, OuterRef, Q
 from django.db.models.sql.constants import LOUTER
 from django.db.models.sql.where import NothingNode, WhereNode
 from django.test import SimpleTestCase, TestCase, skipUnlessDBFeature
@@ -2809,6 +2809,25 @@ class ExcludeTests(TestCase):
 
     def test_exclude_with_circular_fk_relation(self):
         self.assertEqual(ObjectB.objects.exclude(objecta__objectb__name=F('name')).count(), 0)
+
+    def test_subquery_exclude_outerref(self):
+        inner_querysets = {
+            'exclude': Responsibility.objects.exclude(jobs=OuterRef('job')),
+            'negated Q': Responsibility.objects.filter(~Q(jobs=OuterRef('job'))),
+        }
+        for label, inner_qs in inner_querysets.items():
+            with self.subTest(label):
+                qs = JobResponsibilities.objects.annotate(
+                    has_other=Exists(inner_qs),
+                ).filter(has_other=True)
+                self.assertEqual(qs.count(), 2)
+        Responsibility.objects.get(description='Playing golf').delete()
+        for label, inner_qs in inner_querysets.items():
+            with self.subTest(label):
+                qs = JobResponsibilities.objects.annotate(
+                    has_other=Exists(inner_qs),
+                ).filter(has_other=True)
+                self.assertIs(qs.exists(), False)
 
 
 class ExcludeTest17600(TestCase):
