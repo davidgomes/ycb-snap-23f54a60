@@ -1474,12 +1474,14 @@ class FormsFormsetTestCase(SimpleTestCase):
         self.assertEqual(len(formset), 2)
         self.assertNotIn("DELETE", formset.forms[0].fields)
         self.assertNotIn("DELETE", formset.forms[1].fields)
+        self.assertNotIn("DELETE", formset.empty_form.fields)
 
         formset = ChoiceFormFormset(initial=[{"choice": "Zero", "votes": "1"}])
         self.assertEqual(len(formset), 3)
         self.assertIn("DELETE", formset.forms[0].fields)
         self.assertNotIn("DELETE", formset.forms[1].fields)
         self.assertNotIn("DELETE", formset.forms[2].fields)
+        self.assertNotIn("DELETE", formset.empty_form.fields)
 
         formset = ChoiceFormFormset(
             data={
