@@ -58,7 +58,7 @@ class StrCategoryConverter(units.ConversionInterface):
             is_numlike = all(units.ConversionInterface.is_numlike(v)
                              and not isinstance(v, (str, bytes))
                              for v in values)
-        if is_numlike:
+        if values.size and is_numlike:
             _api.warn_deprecated(
                 "3.5", message="Support for passing numbers through unit "
                 "converters is deprecated since %(since)s and support will be "
