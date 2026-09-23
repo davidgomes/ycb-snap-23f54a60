@@ -8,6 +8,7 @@ from django.apps import apps
 from django.core import management
 from django.core.checks import Tags
 from django.core.management import BaseCommand, CommandError, find_commands
+from django.core.management.base import OutputWrapper
 from django.core.management.utils import (
     find_command, get_random_secret_key, is_ignored_path,
     normalize_path_patterns, popen_wrapper,
@@ -31,6 +32,21 @@ from .management.commands import dance
     ],
 )
 class CommandTests(SimpleTestCase):
+    def test_outputwrapper_flush(self):
+        flushed = []
+
+        class Stream(StringIO):
+            def flush(self):
+                flushed.append(True)
+                super().flush()
+
+        out = Stream()
+        wrapper = OutputWrapper(out)
+        wrapper.write('Applying myapp.0002...', ending='')
+        wrapper.flush()
+        self.assertEqual(out.getvalue(), 'Applying myapp.0002...')
+        self.assertEqual(flushed, [True])
+
     def test_command(self):
         out = StringIO()
         management.call_command('dance', stdout=out)

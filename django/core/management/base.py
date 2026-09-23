@@ -150,6 +150,13 @@ class OutputWrapper(TextIOBase):
         style_func = style_func or self.style_func
         self._out.write(style_func(msg))
 
+    def flush(self):
+        # TextIOBase.flush() is a no-op, so __getattr__ never forwards flush()
+        # to the wrapped stream. Call it explicitly so progress lines (for
+        # example migrate's "Applying ...") appear before the command finishes.
+        if hasattr(self._out, 'flush'):
+            self._out.flush()
+
 
 class BaseCommand:
     """
