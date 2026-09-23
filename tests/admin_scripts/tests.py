@@ -1065,6 +1065,30 @@ class ManageSettingsWithSettingsErrors(AdminScriptTestCase):
         self.assertNoOutput(err)
 
 
+class ManageSkipChecks(AdminScriptTestCase):
+    def setUp(self):
+        super().setUp()
+        self.write_settings(
+            'settings.py',
+            apps=['django.contrib.staticfiles', 'user_commands'],
+            sdict={
+                # (staticfiles.E001) The STATICFILES_DIRS setting is not a
+                # tuple or list.
+                'STATICFILES_DIRS': '"foo"',
+            },
+        )
+
+    def test_system_check_error_halts_command(self):
+        out, err = self.run_manage(['set_option', '--set', 'foo'])
+        self.assertNoOutput(out)
+        self.assertOutput(err, 'staticfiles.E001')
+
+    def test_skip_checks(self):
+        out, err = self.run_manage(['set_option', '--skip-checks', '--set', 'foo'])
+        self.assertNoOutput(err)
+        self.assertEqual(out.strip(), 'Set foo')
+
+
 class ManageCheck(AdminScriptTestCase):
     def test_nonexistent_app(self):
         """check reports an error on a nonexistent app in INSTALLED_APPS."""
