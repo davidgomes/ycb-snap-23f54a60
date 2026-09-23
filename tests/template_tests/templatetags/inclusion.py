@@ -128,6 +128,11 @@ inclusion_two_params_from_template.anything = "Expected inclusion_two_params_fro
 
 
 @register.inclusion_tag('inclusion.html')
+def inclusion_keyword_only_default(*, kwarg=42):
+    return {"result": "inclusion_keyword_only_default - Expected result: %s" % kwarg}
+
+
+@register.inclusion_tag('inclusion.html')
 def inclusion_one_default(one, two='hi'):
     """Expected inclusion_one_default __doc__"""
     return {"result": "inclusion_one_default - Expected result: %s, %s" % (one, two)}
