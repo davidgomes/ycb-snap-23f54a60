@@ -638,7 +638,15 @@ class MakeMigrationsTests(MigrationTestBase):
                 with self.settings(DATABASE_ROUTERS=['migrations.routers.TestRouter']):
                     with mock.patch.object(TestRouter, 'allow_migrate', return_value=False) as allow_migrate:
                         call_command('makemigrations', 'migrations', verbosity=0)
-                allow_migrate.assert_called_with('other', 'migrations', model_name='UnicodeModel')
+                allow_migrate.assert_any_call('other', 'migrations', model_name='UnicodeModel')
+                # allow_migrate() is called with the correct arguments.
+                self.assertGreater(len(allow_migrate.mock_calls), 0)
+                for mock_call in allow_migrate.mock_calls:
+                    _, call_args, call_kwargs = mock_call
+                    connection_alias, app_name = call_args
+                    self.assertIn(connection_alias, ['default', 'other'])
+                    # Raises an error if invalid app_name/model_name occurs.
+                    apps.get_app_config(app_name).get_model(call_kwargs['model_name'])
                 self.assertEqual(ensure_schema.call_count, 4)
 
     def test_failing_migration(self):
