@@ -2912,6 +2912,31 @@ Good luck picking a username that doesn&#x27;t already exist.</p>
         self.assertIsNot(field2.fields, field.fields)
         self.assertIsNot(field2.fields[0].choices, field.fields[0].choices)
 
+    def test_field_deep_copy_error_messages(self):
+        class CustomCharField(CharField):
+            def __init__(self, **kwargs):
+                kwargs['error_messages'] = {'invalid': 'Form custom error message.'}
+                super().__init__(**kwargs)
+
+        field = CustomCharField()
+        field_copy = copy.deepcopy(field)
+        self.assertIsInstance(field_copy, CustomCharField)
+        self.assertIsNot(field_copy.error_messages, field.error_messages)
+
+    def test_form_instances_do_not_share_error_messages(self):
+        class NameForm(Form):
+            name = CharField()
+
+        form1 = NameForm({})
+        form2 = NameForm({})
+        form1.fields['name'].error_messages['required'] = 'Custom required.'
+        self.assertEqual(form1.errors, {'name': ['Custom required.']})
+        self.assertEqual(form2.errors, {'name': ['This field is required.']})
+        self.assertEqual(
+            NameForm.base_fields['name'].error_messages['required'],
+            'This field is required.',
+        )
+
     def test_multivalue_initial_data(self):
         """
         #23674 -- invalid initial data should not break form.changed_data()
