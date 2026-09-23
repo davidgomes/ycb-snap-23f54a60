@@ -202,7 +202,11 @@ class ModelBase(type):
                 continue
             # Locate OneToOneField instances.
             for field in base._meta.local_fields:
-                if isinstance(field, OneToOneField):
+                # Only an explicit parent link is the multi-table inheritance
+                # pointer. Another OneToOneField to the same parent is an
+                # ordinary relation and must not replace the parent link,
+                # regardless of declaration order.
+                if isinstance(field, OneToOneField) and field.remote_field.parent_link:
                     related = resolve_relation(new_class, field.remote_field.model)
                     parent_links[make_model_tuple(related)] = field
 
