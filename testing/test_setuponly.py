@@ -201,6 +201,21 @@ def test_show_fixtures_with_parameter_ids_function(testdir, mode):
     result.stdout.fnmatch_lines(["*SETUP    F foobar?FOO?", "*SETUP    F foobar?BAR?"])
 
 
+def test_show_fixtures_with_bytes_params(testdir, mode):
+    p = testdir.makepyfile(
+        """
+        import pytest
+        @pytest.mark.parametrize("data", [b"Hello World"])
+        def test_data(data):
+            pass
+    """
+    )
+
+    result = testdir.runpytest(mode, "-W", "error::BytesWarning", p)
+    assert result.ret == 0
+    result.stdout.fnmatch_lines(["*SETUP    F data?b'Hello World'?"])
+
+
 def test_dynamic_fixture_request(testdir):
     p = testdir.makepyfile(
         """
