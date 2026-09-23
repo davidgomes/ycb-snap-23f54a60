@@ -170,6 +170,8 @@ Bug fixes
   dask compute (:issue:`3237`). By `Ulrich Herter <https://github.com/ulijh>`_.
 - Plots in 2 dimensions (pcolormesh, contour) now allow to specify levels as numpy
   array (:issue:`3284`). By `Mathias Hauser <https://github.com/mathause>`_.
+- Fixed :py:meth:`~xarray.DataArray.quantile` to honor the ``keep_attrs`` flag
+  (:issue:`3304`).
 
 .. _whats-new.0.12.3:
 
