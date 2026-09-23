@@ -1,5 +1,6 @@
 import unittest
 from datetime import datetime
+from unittest import mock
 
 from django.test import SimpleTestCase, ignore_warnings
 from django.utils.datastructures import MultiValueDict
@@ -316,9 +317,23 @@ class HttpDateProcessingTests(unittest.TestCase):
         parsed = parse_http_date('Sun, 06 Nov 1994 08:49:37 GMT')
         self.assertEqual(datetime.utcfromtimestamp(parsed), datetime(1994, 11, 6, 8, 49, 37))
 
-    def test_parsing_rfc850(self):
+    @mock.patch('django.utils.http.datetime.datetime')
+    def test_parsing_rfc850(self, mocked_datetime):
+        mocked_datetime.side_effect = lambda *args, **kwargs: datetime(*args, **kwargs)
+        mocked_datetime.utcnow.return_value = datetime(2019, 1, 1)
         parsed = parse_http_date('Sunday, 06-Nov-94 08:49:37 GMT')
         self.assertEqual(datetime.utcfromtimestamp(parsed), datetime(1994, 11, 6, 8, 49, 37))
+
+    @mock.patch('django.utils.http.datetime.datetime')
+    def test_parsing_two_digit_year_future_window(self, mocked_datetime):
+        mocked_datetime.side_effect = lambda *args, **kwargs: datetime(*args, **kwargs)
+        mocked_datetime.utcnow.return_value = datetime(2020, 1, 1)
+        # 70 is 50 years ahead of 2020, so it stays in the current century.
+        parsed = parse_http_date('Sunday, 06-Nov-70 08:49:37 GMT')
+        self.assertEqual(datetime.utcfromtimestamp(parsed), datetime(2070, 11, 6, 8, 49, 37))
+        # 71 appears more than 50 years in the future, so it maps to the past.
+        parsed = parse_http_date('Sunday, 06-Nov-71 08:49:37 GMT')
+        self.assertEqual(datetime.utcfromtimestamp(parsed), datetime(1971, 11, 6, 8, 49, 37))
 
     def test_parsing_asctime(self):
         parsed = parse_http_date('Sun Nov  6 08:49:37 1994')
