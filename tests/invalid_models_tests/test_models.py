@@ -3,7 +3,6 @@ import unittest
 from django.conf import settings
 from django.core.checks import Error, Warning
 from django.core.checks.model_checks import _check_lazy_references
-from django.core.exceptions import ImproperlyConfigured
 from django.db import connection, connections, models
 from django.db.models.functions import Lower
 from django.db.models.signals import post_init
@@ -1006,14 +1005,58 @@ class OtherModelTests(SimpleTestCase):
 
         self.assertEqual(ShippingMethod.check(), [])
 
-    def test_missing_parent_link(self):
-        msg = 'Add parent_link=True to invalid_models_tests.ParkingLot.parent.'
-        with self.assertRaisesMessage(ImproperlyConfigured, msg):
-            class Place(models.Model):
-                pass
+    def test_onetoone_with_parent_model(self):
+        class Place(models.Model):
+            pass
 
-            class ParkingLot(Place):
-                parent = models.OneToOneField(Place, models.CASCADE)
+        class ParkingLot(Place):
+            other_place = models.OneToOneField(Place, models.CASCADE, related_name='other_parking')
+
+        self.assertEqual(ParkingLot.check(), [])
+        self.assertEqual(ParkingLot._meta.pk.name, 'place_ptr')
+        self.assertIs(ParkingLot._meta.parents[Place], ParkingLot._meta.get_field('place_ptr'))
+
+    def test_onetoone_with_explicit_parent_link_parent_model(self):
+        class Place(models.Model):
+            pass
+
+        class ParkingLot(Place):
+            place = models.OneToOneField(Place, models.CASCADE, parent_link=True, primary_key=True)
+            other_place = models.OneToOneField(Place, models.CASCADE, related_name='other_parking')
+
+        self.assertEqual(ParkingLot.check(), [])
+        self.assertIs(ParkingLot._meta.parents[Place], ParkingLot._meta.get_field('place'))
+
+    def test_explicit_parent_link_before_other_onetoone(self):
+        # The parent link is recognized by parent_link=True, independent of
+        # declaration order. A later OneToOneField to the same parent must not
+        # replace it.
+        class Document(models.Model):
+            pass
+
+        class Picking(Document):
+            document_ptr = models.OneToOneField(
+                Document, models.CASCADE, parent_link=True, related_name='+',
+            )
+            origin = models.OneToOneField(Document, models.PROTECT, related_name='picking')
+
+        self.assertEqual(Picking.check(), [])
+        self.assertEqual(Picking._meta.pk.name, 'document_ptr')
+        self.assertIs(Picking._meta.parents[Document], Picking._meta.get_field('document_ptr'))
+
+    def test_explicit_parent_link_after_other_onetoone(self):
+        class Document(models.Model):
+            pass
+
+        class Picking(Document):
+            origin = models.OneToOneField(Document, models.PROTECT, related_name='picking')
+            document_ptr = models.OneToOneField(
+                Document, models.CASCADE, parent_link=True, related_name='+',
+            )
+
+        self.assertEqual(Picking.check(), [])
+        self.assertEqual(Picking._meta.pk.name, 'document_ptr')
+        self.assertIs(Picking._meta.parents[Document], Picking._meta.get_field('document_ptr'))
 
     def test_m2m_table_name_clash(self):
         class Foo(models.Model):
