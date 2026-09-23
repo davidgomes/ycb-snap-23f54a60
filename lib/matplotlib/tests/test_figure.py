@@ -680,6 +680,23 @@ def test_axes_removal():
                       ScalarFormatter)
 
 
+@pytest.mark.parametrize('clear_meth', ['clear', 'clf'])
+def test_figure_clear_deparents_artists(clear_meth):
+    fig = plt.figure()
+    ax = fig.add_subplot()
+    line, = ax.plot([1, 2])
+    text = fig.text(.5, .5, "foo")
+    patch = fig.add_artist(mpl.patches.Rectangle((0, 0), .1, .1))
+    img = fig.figimage([[1]])
+    leg = fig.legend([line], ["line"])
+    suptitle = fig.suptitle("title")
+    getattr(fig, clear_meth)()
+    assert line.axes is None
+    assert line.figure is None
+    for art in [text, patch, img, leg, suptitle]:
+        assert art.figure is None
+
+
 def test_removed_axis():
     # Simple smoke test to make sure removing a shared axis works
     fig, axs = plt.subplots(2, sharex=True)
