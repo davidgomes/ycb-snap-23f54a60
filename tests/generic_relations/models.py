@@ -9,6 +9,8 @@ The canonical example is tags (although this example implementation is *far*
 from complete).
 """
 
+import uuid
+
 from django.contrib.contenttypes.fields import (
     GenericForeignKey, GenericRelation,
 )
@@ -145,4 +147,16 @@ class ProxyRelatedModel(ConcreteRelatedModel):
 class AllowsNullGFK(models.Model):
     content_type = models.ForeignKey(ContentType, models.SET_NULL, null=True)
     object_id = models.PositiveIntegerField(null=True)
+    content_object = GenericForeignKey()
+
+
+class UUIDPKModel(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=50)
+
+
+class CharGFK(models.Model):
+    """GFK whose object id is a CharField, as required for UUID primary keys."""
+    content_type = models.ForeignKey(ContentType, models.CASCADE)
+    object_id = models.CharField(max_length=255)
     content_object = GenericForeignKey()

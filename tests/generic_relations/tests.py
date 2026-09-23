@@ -5,10 +5,10 @@ from django.db.models import Q
 from django.test import SimpleTestCase, TestCase
 
 from .models import (
-    AllowsNullGFK, Animal, Carrot, Comparison, ConcreteRelatedModel,
+    AllowsNullGFK, Animal, Carrot, CharGFK, Comparison, ConcreteRelatedModel,
     ForConcreteModelModel, ForProxyModelModel, Gecko, ManualPK, Mineral,
-    ProxyRelatedModel, Rock, TaggedItem, ValuableRock, ValuableTaggedItem,
-    Vegetable,
+    ProxyRelatedModel, Rock, TaggedItem, UUIDPKModel, ValuableRock,
+    ValuableTaggedItem, Vegetable,
 )
 
 
@@ -545,6 +545,27 @@ class GenericRelationsTests(TestCase):
         self.assertSequenceEqual(platypus.tags.all(), [furry_tag, weird_tag])
         platypus.tags.remove(weird_tag)
         self.assertSequenceEqual(platypus.tags.all(), [furry_tag])
+
+
+class UUIDGenericForeignKeyTests(TestCase):
+    def test_prefetch_related_uuid_pk(self):
+        target = UUIDPKModel.objects.create(name='foo')
+        link = CharGFK.objects.create(content_object=target)
+        with self.assertNumQueries(2):
+            fetched = CharGFK.objects.prefetch_related('content_object').get(pk=link.pk)
+        self.assertEqual(fetched.content_object, target)
+
+    def test_prefetch_related_uuid_pk_multiple(self):
+        first = UUIDPKModel.objects.create(name='first')
+        second = UUIDPKModel.objects.create(name='second')
+        CharGFK.objects.create(content_object=first)
+        CharGFK.objects.create(content_object=second)
+        with self.assertNumQueries(2):
+            links = list(CharGFK.objects.prefetch_related('content_object'))
+        self.assertCountEqual(
+            [link.content_object for link in links],
+            [first, second],
+        )
 
 
 class ProxyRelatedModelTest(TestCase):
