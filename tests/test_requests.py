@@ -2486,8 +2486,10 @@ class TestPreparingURLs(object):
         (
             b"http://*.google.com",
             b"http://*",
+            b"http://.example.com",
             u"http://*.google.com",
             u"http://*",
+            u"http://.example.com",
             u"http://☃.net/"
         )
     )
