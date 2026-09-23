@@ -15,7 +15,7 @@ from django.test import SimpleTestCase, TestCase, skipUnlessDBFeature
 from django.test.utils import CaptureQueriesContext
 
 from .models import (
-    FK1, Annotation, Article, Author, BaseA, Book, CategoryItem,
+    FK1, Annotation, Article, Author, BaseA, BaseUser, Book, CategoryItem,
     CategoryRelationship, Celebrity, Channel, Chapter, Child, ChildObjectA,
     Classroom, CommonMixedCaseForeignKeys, Company, Cover, CustomPk,
     CustomPkTag, DateTimePK, Detail, DumbCategory, Eaten, Employment,
@@ -1327,6 +1327,26 @@ class Queries4Tests(TestCase):
     def test_combine_or_filter_reuse(self):
         combined = Author.objects.filter(name='a1') | Author.objects.filter(name='a3')
         self.assertEqual(combined.get(name='a1'), self.a1)
+
+    def test_combine_or_filter_conflicting_aliases(self):
+        # The rhs aliases don't conflict with aliases created while combining
+        # (#33319).
+        note = Note.objects.create(note='n3', misc='baz')
+        annotation = Annotation.objects.create(name='a1', tag=self.t1)
+        annotation.notes.add(note)
+        base_user = BaseUser.objects.create(annotation=annotation)
+        Task.objects.create(
+            title='task', owner=base_user, creator=base_user, note=note,
+        )
+        qs1 = annotation.baseuser_set.all()
+        qs2 = BaseUser.objects.filter(
+            Q(owner__note__in=annotation.notes.all()) |
+            Q(creator__note__in=annotation.notes.all())
+        )
+        self.assertSequenceEqual(qs1, [base_user])
+        self.assertSequenceEqual(qs2, [base_user])
+        self.assertCountEqual(qs2 | qs1, qs1)
+        self.assertCountEqual(qs1 | qs2, qs1)
 
     def test_join_reuse_order(self):
         # Join aliases are reused in order. This shouldn't raise AssertionError
