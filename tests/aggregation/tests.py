@@ -6,8 +6,9 @@ from unittest import skipIf
 from django.core.exceptions import FieldError
 from django.db import connection
 from django.db.models import (
-    Avg, Case, Count, DecimalField, DurationField, Exists, F, FloatField, Func,
-    IntegerField, Max, Min, OuterRef, Subquery, Sum, Value, When,
+    Avg, Case, Count, DecimalField, DurationField, Exists, ExpressionWrapper, F,
+    FloatField, Func, IntegerField, Max, Min, OuterRef, Subquery, Sum, Value,
+    When,
 )
 from django.db.models.functions import Coalesce
 from django.test import TestCase
@@ -410,6 +411,22 @@ class AggregateTestCase(TestCase):
             with self.subTest(aggregate=aggregate.__name__):
                 books = Book.objects.aggregate(ratings=aggregate('rating', distinct=True))
                 self.assertEqual(books['ratings'], expected_result)
+
+    def test_expression_wrapper_constant_not_in_group_by(self):
+        """
+        A constant wrapped in ExpressionWrapper is omitted from GROUP BY,
+        matching an unwrapped Value().
+        """
+        qs = Book.objects.annotate(
+            expr_res=ExpressionWrapper(Value(3), output_field=IntegerField()),
+        ).values('expr_res', 'publisher').annotate(sum=Sum('pages'))
+        sql = str(qs.query)
+        group_by = sql.split('GROUP BY', 1)[1]
+        self.assertNotIn('3', group_by)
+        self.assertEqual(
+            [(row['expr_res'], row['sum']) for row in qs.order_by('publisher')],
+            [(3, row['sum']) for row in Book.objects.values('publisher').annotate(sum=Sum('pages')).order_by('publisher')],
+        )
 
     def test_non_grouped_annotation_not_in_group_by(self):
         """
