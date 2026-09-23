@@ -38,6 +38,9 @@ Bug fixes
 ~~~~~~~~~
 - Don't allow passing ``axis`` to :py:meth:`Dataset.reduce` methods (:issue:`3510`, :pull:`4940`).
   By `Justus Magin <https://github.com/keewis>`_.
+- Decode unsigned integer values as signed if the attribute ``_Unsigned = "false"``
+  is set, as done by THREDDS / netCDF-c for signed bytes served over OPeNDAP.
+  This fixes reading such variables with ``engine="pydap"`` (:issue:`4954`, :pull:`4966`).
 
 Documentation
 ~~~~~~~~~~~~~
