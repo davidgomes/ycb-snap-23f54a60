@@ -437,7 +437,7 @@ if metric=’precomputed’.
     n_samples = X.shape[0]
     _validate_size(min_samples, n_samples, 'min_samples')
     if min_samples <= 1:
-        min_samples = max(2, min_samples * n_samples)
+        min_samples = max(2, int(min_samples * n_samples))
 
     # Start all points as 'unprocessed' ##
     reachability_ = np.empty(n_samples)

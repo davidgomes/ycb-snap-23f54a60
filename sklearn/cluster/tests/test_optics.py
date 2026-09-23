@@ -286,6 +286,16 @@ def test_min_cluster_size(min_cluster_size):
     assert_array_equal(clust.labels_, clust_frac.labels_)
 
 
+def test_min_samples_float():
+    # float min_samples is converted to an integer number of neighbors
+    redX = X[::2]
+    min_samples = 9
+    clust = OPTICS(min_samples=min_samples).fit(redX)
+    clust_frac = OPTICS(min_samples=min_samples / redX.shape[0]).fit(redX)
+    assert_array_equal(clust.core_distances_, clust_frac.core_distances_)
+    assert_array_equal(clust.labels_, clust_frac.labels_)
+
+
 @pytest.mark.parametrize('min_cluster_size', [0, -1, 1.1, 2.2])
 def test_min_cluster_size_invalid(min_cluster_size):
     clust = OPTICS(min_cluster_size=min_cluster_size)
