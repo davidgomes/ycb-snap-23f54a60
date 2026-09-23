@@ -27,7 +27,8 @@ from pathlib import Path
 import pytest
 
 from pylint.checkers import similar
-from pylint.lint import PyLinter
+from pylint.lint import PyLinter, Run
+from pylint.reporters.text import TextReporter
 from pylint.testutils import GenericTestReporter as Reporter
 
 INPUT = Path(__file__).parent / ".." / "input"
@@ -502,3 +503,69 @@ def test_get_map_data() -> None:
         # There doesn't seem to be a faster way of doing this, yet.
         lines = (linespec.text for linespec in lineset_obj.stripped_lines)
         assert tuple(expected_lines) == tuple(lines)
+
+
+def test_set_duplicate_lines_to_zero() -> None:
+    output = StringIO()
+    with redirect_stdout(output), pytest.raises(SystemExit) as ex:
+        similar.Run(["--duplicates=0", SIMILAR1, SIMILAR2])
+    assert ex.value.code == 0
+    assert output.getvalue() == ""
+
+
+def test_checker_close_skips_when_min_similarity_lines_is_zero(monkeypatch) -> None:
+    linter = PyLinter(reporter=Reporter())
+    checker = similar.SimilarChecker(linter)
+    linter.register_checker(checker)
+    checker.set_option("min-similarity-lines", 0)
+    assert checker.min_lines == 0
+    linter.open()
+    checker.open()
+
+    def fail_if_called():
+        raise AssertionError(
+            "similarity check should be disabled when min-similarity-lines is 0"
+        )
+
+    monkeypatch.setattr(checker, "_compute_sims", fail_if_called)
+    checker.close()
+    assert linter.reporter.messages == []
+
+
+def test_min_similarity_lines_option_disables_duplicate_code(tmp_path: Path) -> None:
+    code = "def foo():\n    return 1\n\ndef bar():\n    return 1\n"
+    file_a = tmp_path / "a.py"
+    file_b = tmp_path / "b.py"
+    file_a.write_text(code, encoding="utf-8")
+    file_b.write_text(code, encoding="utf-8")
+
+    disabled = StringIO()
+    Run(
+        [
+            str(file_a),
+            str(file_b),
+            "--disable=all",
+            "--enable=duplicate-code",
+            "--min-similarity-lines=0",
+            "--score=n",
+        ],
+        reporter=TextReporter(disabled),
+        exit=False,
+    )
+    assert "duplicate-code" not in disabled.getvalue()
+    assert "R0801" not in disabled.getvalue()
+
+    enabled = StringIO()
+    Run(
+        [
+            str(file_a),
+            str(file_b),
+            "--disable=all",
+            "--enable=duplicate-code",
+            "--min-similarity-lines=1",
+            "--score=n",
+        ],
+        reporter=TextReporter(enabled),
+        exit=False,
+    )
+    assert "duplicate-code" in enabled.getvalue()

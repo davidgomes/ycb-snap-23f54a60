@@ -71,3 +71,7 @@ Other Changes
   Closes #4907
 
 * Extended ``consider-using-in`` check to work for attribute access.
+
+* Setting ``min-similarity-lines`` to ``0`` now disables the duplicate code check.
+
+  Closes #4901
