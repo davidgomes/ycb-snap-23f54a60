@@ -507,6 +507,13 @@ class ResolverTests(SimpleTestCase):
         thread.join()
         self.assertNotEqual(resolver._reverse_dict, {})
 
+    @override_settings(ROOT_URLCONF='urlpatterns_reverse.urls')
+    def test_resolver_cache_default__root_urlconf(self):
+        # resolver for a default URLconf (passing no argument) and for the
+        # settings.ROOT_URLCONF is the same cached object.
+        self.assertIs(get_resolver(), get_resolver('urlpatterns_reverse.urls'))
+        self.assertIsNot(get_resolver(), get_resolver('urlpatterns_reverse.namespace_urls'))
+
 
 @override_settings(ROOT_URLCONF='urlpatterns_reverse.reverse_lazy_urls')
 class ReverseLazyTest(TestCase):
