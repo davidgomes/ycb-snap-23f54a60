@@ -36,6 +36,8 @@ import os
 import pickle
 import sys
 
+import appdirs
+
 from pylint.config.configuration_mixin import ConfigurationMixIn
 from pylint.config.find_default_config_files import find_default_config_files
 from pylint.config.man_help_formatter import _ManHelpFormatter
@@ -63,7 +65,15 @@ if "PYLINTHOME" in os.environ:
 elif USER_HOME == "~":
     PYLINT_HOME = ".pylint.d"
 else:
-    PYLINT_HOME = os.path.join(USER_HOME, ".pylint.d")
+    PYLINT_HOME = appdirs.user_cache_dir("pylint")
+
+    old_home = os.path.join(USER_HOME, ".pylint.d")
+    if os.path.exists(old_home):
+        print(
+            f"PYLINTHOME is now '{PYLINT_HOME}' but obsolescent '{old_home}' is found; "
+            "you can safely remove the latter",
+            file=sys.stderr,
+        )
 
 
 def _get_pdata_path(base_name, recurs):
@@ -83,7 +93,7 @@ def load_results(base):
 def save_results(results, base):
     if not os.path.exists(PYLINT_HOME):
         try:
-            os.mkdir(PYLINT_HOME)
+            os.makedirs(PYLINT_HOME)
         except OSError:
             print("Unable to create directory %s" % PYLINT_HOME, file=sys.stderr)
     data_file = _get_pdata_path(base, 1)
@@ -110,8 +120,9 @@ ENV_HELP = (
 The following environment variables are used:
     * PYLINTHOME
     Path to the directory where persistent data for the run will be stored. If
-not found, it defaults to ~/.pylint.d/ or .pylint.d (in the current working
-directory).
+not found, it defaults to the user cache directory (e.g. ~/.cache/pylint on
+Linux, honouring XDG_CACHE_HOME) or .pylint.d (in the current working
+directory) if the home directory cannot be determined.
     * PYLINTRC
     Path to the configuration file. See the documentation for the method used
 to search for configuration file.

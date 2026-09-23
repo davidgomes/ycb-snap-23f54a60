@@ -93,10 +93,13 @@ localized using the following rules:
 
 * value of the PYLINTHOME environment variable if set
 
-* ".pylint.d" subdirectory of the user's home directory if it is found
-	(not always findable on Windows platforms)
+* the user's cache directory as determined by ``appdirs`` if the user's
+	home directory is found, e.g. "~/.cache/pylint" on Linux (following the
+	XDG Base Directory Specification, so ``XDG_CACHE_HOME`` is honoured),
+	"~/Library/Caches/pylint" on macOS or
+	"C:\\Users\\<username>\\AppData\\Local\\pylint\\pylint\\Cache" on Windows
 
-* ".pylint.d" directory in the current directory
+* ".pylint.d" directory in the current directory otherwise
 
 3.3 How do I find the option name (for pylintrc) corresponding to a specific command line option?
 --------------------------------------------------------------------------------------------------------
