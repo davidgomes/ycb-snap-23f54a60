@@ -187,6 +187,14 @@ def test_glossary_warning(app, status, warning):
     assert ("case4.rst:3: WARNING: duplicate term description of term-case4, "
             "other instance in case4" in warning.getvalue())
 
+    # terms differing only in case are not duplicates
+    text = (".. glossary::\n"
+            "\n"
+            "   MySQL\n"
+            "   mysql\n")
+    restructuredtext.parse(app, text, "case5")
+    assert "duplicate term description of mysql" not in warning.getvalue()
+
 
 def test_glossary_comment(app):
     text = (".. glossary::\n"
