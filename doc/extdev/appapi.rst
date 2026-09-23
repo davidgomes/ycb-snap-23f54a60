@@ -175,6 +175,8 @@ type for that event:
          6. source-read(app, docname, source)
          7. run source parsers: text -> docutils.document
             - parsers can be added with the app.add_source_parser() API
+            - event.source-read(app, docname, source) is also emitted
+              for each file read by the include directive
          8. apply transforms based on priority: docutils.document -> docutils.document
             - event.doctree-read(app, doctree) is called in the middle of transforms,
               transforms come before/after this event depending on their priority.
@@ -258,7 +260,17 @@ Here is a more detailed list of these events.
    LaTeX, you can use a regular expression to replace ``$...$`` by
    ``:math:`...```.
 
+   This event is also emitted for reStructuredText files read by the
+   :dudir:`include` directive, with the content of the included file as
+   *source*.  In that case, *docname* is the document name of the included
+   file, or its path relative to the source directory if it is not a source
+   file.  Note that the handler may therefore be called several times for the
+   same document or file.
+
    .. versionadded:: 0.5
+
+   .. versionchanged:: 7.2
+      Emitted for files read by the :dudir:`include` directive.
 
 .. event:: object-description-transform (app, domain, objtype, contentnode)
 
