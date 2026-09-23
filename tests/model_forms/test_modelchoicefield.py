@@ -2,7 +2,7 @@ import datetime
 
 from django import forms
 from django.core.exceptions import ValidationError
-from django.forms.models import ModelChoiceIterator
+from django.forms.models import ModelChoiceIterator, ModelChoiceIteratorValue
 from django.forms.widgets import CheckboxSelectMultiple
 from django.template import Context, Template
 from django.test import TestCase
@@ -138,6 +138,15 @@ class ModelChoiceFieldTests(TestCase):
         f = forms.ModelChoiceField(Category.objects.all(), empty_label='--------')
         Category.objects.all().delete()
         self.assertIs(bool(f.choices), True)
+
+    def test_choice_value_hash(self):
+        value_1 = ModelChoiceIteratorValue(self.c1.pk, self.c1)
+        value_2 = ModelChoiceIteratorValue(self.c2.pk, self.c2)
+        self.assertEqual(hash(value_1), hash(ModelChoiceIteratorValue(self.c1.pk, None)))
+        self.assertEqual(hash(value_1), hash(self.c1.pk))
+        self.assertNotEqual(hash(value_1), hash(value_2))
+        self.assertIn(value_1, {self.c1.pk: 'first'})
+        self.assertEqual({self.c1.pk: 'first'}[value_1], 'first')
 
     def test_choices_radio_blank(self):
         choices = [
