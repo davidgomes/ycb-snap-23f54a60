@@ -963,6 +963,12 @@ class MigrationAutodetector:
                             preserve_default = False
                     else:
                         field = new_field
+                    # Changing a non-relational field (for example a UUIDField)
+                    # into a relation must depend on the related model so the
+                    # migration graph can resolve it.
+                    dependencies = []
+                    if getattr(field, "remote_field", None) and getattr(field.remote_field, "model", None):
+                        dependencies.extend(self._get_dependencies_for_foreign_key(field))
                     self.add_operation(
                         app_label,
                         operations.AlterField(
@@ -970,7 +976,8 @@ class MigrationAutodetector:
                             name=field_name,
                             field=field,
                             preserve_default=preserve_default,
-                        )
+                        ),
+                        dependencies=dependencies,
                     )
                 else:
                     # We cannot alter between m2m and concrete fields

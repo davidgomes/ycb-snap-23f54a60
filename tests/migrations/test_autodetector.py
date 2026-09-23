@@ -1,5 +1,6 @@
 import functools
 import re
+import uuid
 from unittest import mock
 
 from django.apps import apps
@@ -725,6 +726,31 @@ class AutodetectorTests(TestCase):
         self.assertNumberMigrations(changes, 'testapp', 1)
         self.assertOperationTypes(changes, 'testapp', 0, ["AlterField"])
         self.assertOperationAttributes(changes, "testapp", 0, 0, name="name", preserve_default=True)
+
+    def test_alter_field_to_foreign_key_dependency(self):
+        """Changing a UUIDField into a ForeignKey depends on the related model."""
+        before = [
+            ModelState('testapp1', 'App1', [
+                ('id', models.UUIDField(primary_key=True, default=uuid.uuid4)),
+                ('another_app', models.UUIDField(null=True, blank=True)),
+            ]),
+            ModelState('testapp2', 'App2', [
+                ('id', models.UUIDField(primary_key=True, default=uuid.uuid4)),
+            ]),
+        ]
+        after = [
+            ModelState('testapp1', 'App1', [
+                ('id', models.UUIDField(primary_key=True, default=uuid.uuid4)),
+                ('another_app', models.ForeignKey('testapp2.App2', models.SET_NULL, null=True, blank=True)),
+            ]),
+            ModelState('testapp2', 'App2', [
+                ('id', models.UUIDField(primary_key=True, default=uuid.uuid4)),
+            ]),
+        ]
+        changes = self.get_changes(before, after)
+        self.assertNumberMigrations(changes, 'testapp1', 1)
+        self.assertOperationTypes(changes, 'testapp1', 0, ['AlterField'])
+        self.assertMigrationDependencies(changes, 'testapp1', 0, [('testapp2', '__first__')])
 
     def test_supports_functools_partial(self):
         def _content_file_name(instance, filename, key, **kwargs):
