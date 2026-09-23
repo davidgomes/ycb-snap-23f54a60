@@ -1225,6 +1225,38 @@ subclass::
         For example, you could override the default implementation of the
         ``Paginator.count`` property.
 
+    For more complex customization, you can use
+    :meth:`.AutocompleteJsonView.serialize_result`:
+
+    .. method:: AutocompleteJsonView.serialize_result(obj, to_field_name)
+
+        .. versionadded:: 4.0
+
+        Override this method on an ``AutocompleteJsonView`` subclass to
+        customize the data returned for each result. ``obj`` is the model
+        instance and ``to_field_name`` is the name of the field used as the
+        result's ``id``. It must return a dictionary; the default is
+        ``{'id': str(getattr(obj, to_field_name)), 'text': str(obj)}``.
+
+        For example, to add the ``notes`` field of the related objects to the
+        results, subclass
+        ``django.contrib.admin.views.autocomplete.AutocompleteJsonView`` and
+        use it in ``AdminSite.autocomplete_view()``::
+
+            from django.contrib import admin
+            from django.contrib.admin.views.autocomplete import AutocompleteJsonView
+
+            class CustomAutocompleteJsonView(AutocompleteJsonView):
+                def serialize_result(self, obj, to_field_name):
+                    return {
+                        **super().serialize_result(obj, to_field_name),
+                        'notes': obj.notes,
+                    }
+
+            class MyAdminSite(admin.AdminSite):
+                def autocomplete_view(self, request):
+                    return CustomAutocompleteJsonView.as_view(admin_site=self)(request)
+
 .. attribute:: ModelAdmin.raw_id_fields
 
     By default, Django's admin uses a select-box interface (<select>) for
