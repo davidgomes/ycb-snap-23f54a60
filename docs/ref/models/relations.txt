@@ -76,6 +76,9 @@ Related objects reference
         intermediate instance(s).
 
     .. method:: create(through_defaults=None, **kwargs)
+    .. method:: acreate(through_defaults=None, **kwargs)
+
+        *Asynchronous version*: ``acreate``
 
         Creates a new object, saves it and puts it in the related object set.
         Returns the newly created object::

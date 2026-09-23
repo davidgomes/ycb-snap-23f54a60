@@ -495,6 +495,32 @@ class GenericRelationsTests(TestCase):
         self.assertFalse(created)
         self.assertEqual(tag.content_object.id, diamond.id)
 
+    async def test_generic_async_acreate(self):
+        await self.bacon.tags.acreate(tag="orange")
+        self.assertEqual(await self.bacon.tags.acount(), 3)
+
+    async def test_generic_async_aget_or_create(self):
+        orange, created = await self.bacon.tags.aget_or_create(tag="orange")
+        self.assertIs(created, True)
+        self.assertEqual(await self.bacon.tags.acount(), 3)
+        orange, created = await self.bacon.tags.aget_or_create(tag="orange")
+        self.assertIs(created, False)
+        self.assertEqual(await self.bacon.tags.acount(), 3)
+
+    async def test_generic_async_aupdate_or_create(self):
+        orange, created = await self.bacon.tags.aupdate_or_create(
+            id=self.fatty.id, defaults={"tag": "orange"}
+        )
+        self.assertIs(created, False)
+        self.assertEqual(orange.tag, "orange")
+        self.assertEqual(await self.bacon.tags.acount(), 2)
+        orange, created = await self.bacon.tags.aupdate_or_create(tag="orange")
+        self.assertIs(created, False)
+        self.assertEqual(await self.bacon.tags.acount(), 2)
+        blue, created = await self.bacon.tags.aupdate_or_create(tag="blue")
+        self.assertIs(created, True)
+        self.assertEqual(await self.bacon.tags.acount(), 3)
+
     def test_query_content_type(self):
         msg = "Field 'content_object' does not generate an automatic reverse relation"
         with self.assertRaisesMessage(FieldError, msg):
