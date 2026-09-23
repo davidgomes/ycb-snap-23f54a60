@@ -2995,6 +2995,19 @@ class TestDataset:
         assert isinstance(actual.variables["x"], Variable)
         assert actual.xindexes["y"].equals(expected.xindexes["y"])
 
+    def test_swap_dims_does_not_modify_original(self) -> None:
+        # https://github.com/pydata/xarray/issues/6931
+        original = Dataset({"x": ("z", [1, 2, 3]), "y": ("z", list("abc"))})
+        # a non-index data variable backed by an IndexVariable
+        original = original.swap_dims(z="x").rename_dims(x="z").reset_index("x")
+        original = original.reset_coords()
+        assert isinstance(original.variables["x"], IndexVariable)
+        expected = original.copy(deep=True)
+
+        original.swap_dims(z="x")
+        assert_identical(expected, original)
+        assert original.variables["x"].dims == ("z",)
+
     def test_expand_dims_error(self) -> None:
         original = Dataset(
             {

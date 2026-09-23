@@ -2281,6 +2281,15 @@ class TestIndexVariable(VariableSubclassobjects):
         v = IndexVariable(["x"], midx, {"foo": "bar"})
         assert v.to_index().names == ("x_level_0", "x_level_1")
 
+    def test_to_index_variable_copy(self) -> None:
+        # to_index_variable should return a copy
+        # https://github.com/pydata/xarray/issues/6931
+        a = IndexVariable("x", ["a"])
+        b = a.to_index_variable()
+        assert a is not b
+        b.dims = ("y",)
+        assert a.dims == ("x",)
+
     def test_data(self):
         x = IndexVariable("x", np.arange(3.0))
         assert isinstance(x._data, PandasIndexingAdapter)

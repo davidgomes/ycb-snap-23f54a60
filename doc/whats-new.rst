@@ -49,6 +49,9 @@ Bug fixes
 - Make FacetGrid.set_titles send kwargs correctly using `handle.udpate(kwargs)`.
   (:issue:`6839`, :pull:`6843`)
   By `Oliver Lopez <https://github.com/lopezvoliver>`_.
+- :py:meth:`Dataset.swap_dims` and :py:meth:`DataArray.swap_dims` no longer
+  modify the dimensions of the original object's index variables in-place
+  (:issue:`6931`, :pull:`6938`).
 
 Documentation
 ~~~~~~~~~~~~~
