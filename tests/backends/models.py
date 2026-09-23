@@ -130,6 +130,14 @@ class CircularB(models.Model):
         return (self.key,)
 
 
+class SQLKeywordsModel(models.Model):
+    id = models.AutoField(primary_key=True, db_column='select')
+    reporter = models.ForeignKey(Reporter, models.CASCADE, db_column='where')
+
+    class Meta:
+        db_table = 'order'
+
+
 class RawData(models.Model):
     raw_data = models.BinaryField()
 
