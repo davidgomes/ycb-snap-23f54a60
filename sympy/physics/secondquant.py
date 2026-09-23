@@ -478,7 +478,9 @@ class CreateBoson(BosonicOperator, Creator):
         return "CreateBoson(%s)" % self.state
 
     def _latex(self, printer):
-        return "b^\\dagger_{%s}" % self.state.name
+        # Brace the dagger so a following power is not a second superscript
+        # (b^\dagger_{0}^{2} does not render; {b^\dagger_{0}}^{2} does).
+        return "{b^\\dagger_{%s}}" % self.state.name
 
 B = AnnihilateBoson
 Bd = CreateBoson
@@ -939,7 +941,8 @@ class CreateFermion(FermionicOperator, Creator):
         return "CreateFermion(%s)" % self.state
 
     def _latex(self, printer):
-        return "a^\\dagger_{%s}" % self.state.name
+        # Brace the dagger so a following power is not a second superscript.
+        return "{a^\\dagger_{%s}}" % self.state.name
 
 Fd = CreateFermion
 F = AnnihilateFermion
