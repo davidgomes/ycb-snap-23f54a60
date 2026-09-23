@@ -62,6 +62,7 @@ Bug fixes
   By `Michael Niklas <https://github.com/headtr1ck>`_.
 - Fix static typing of :py:meth:`xr.polyval` (:issue:`7312`, :pull:`7315`).
   By `Michael Niklas <https://github.com/headtr1ck>`_.
+- Fix multiple reads on fsspec S3 files by resetting file pointer to 0 when reading file streams (:issue:`6813`, :pull:`7304`).
 
 Documentation
 ~~~~~~~~~~~~~
