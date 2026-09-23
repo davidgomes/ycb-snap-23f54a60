@@ -1,5 +1,6 @@
 from sympy.core.numbers import (I, Rational, pi)
 from sympy.core.relational import (GreaterThan, LessThan, StrictGreaterThan, StrictLessThan)
+from sympy.core.function import Function
 from sympy.core.symbol import (Dummy, Symbol, Wild, symbols)
 from sympy.core.sympify import sympify  # can't import as S yet
 from sympy.core.symbol import uniquely_named_symbol, _symbol, Str
@@ -275,6 +276,11 @@ def test_symbols():
 
     assert symbols('x:3,y:2') == (x0, x1, x2, y0, y1)
     assert symbols(('x:3', 'y:2')) == ((x0, x1, x2), (y0, y1))
+
+    # cls must be forwarded when names is a nested sequence
+    q, u = symbols(('q:2', 'u:2'), cls=Function)
+    assert q == (Function('q0'), Function('q1'))
+    assert u == (Function('u0'), Function('u1'))
 
     a = Symbol('a')
     b = Symbol('b')
