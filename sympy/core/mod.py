@@ -139,6 +139,12 @@ class Mod(Function):
                 net = prod_mod1*prod_mod
                 return prod_non_mod*cls(net, q)
 
+            # reducing integer coefficients is only valid for integer products
+            if q.is_Integer and q is not S.One and all(
+                    a.is_integer for a in p.args):
+                non_mod_l = [i % q if i.is_Integer else i for i in non_mod_l]
+                p = Mul(*(non_mod_l + mod_l))
+
         # XXX other possibilities?
 
         # extract gcd; any further simplification should be done by the user
