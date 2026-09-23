@@ -24,6 +24,9 @@ Features added
 Bugs fixed
 ----------
 
+* #4258: napoleon: decorated ``__init__`` and other special methods with
+  docstrings were omitted when ``napoleon_include_init_with_doc`` or
+  ``napoleon_include_special_with_doc`` was enabled
 * #7886: autodoc: TypeError is raised on mocking generic-typed classes
 * #7839: autosummary: cannot handle umlauts in function names
 * #7865: autosummary: Failed to extract summary line when abbreviations found
