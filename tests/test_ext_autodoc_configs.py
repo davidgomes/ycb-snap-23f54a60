@@ -865,6 +865,21 @@ def test_autodoc_typehints_description_no_undoc(app):
             '      Tuple[int, int]\n'
             in context)
 
+    (app.srcdir / 'index.rst').write_text(
+        '.. autofunction:: target.typehints.tuple_args\n'
+        '\n'
+        '   :param x: arg\n'
+        '   :returns: another tuple\n'
+    )
+    app.build()
+    context = (app.outdir / 'index.txt').read_text()
+    assert ('   Returns:\n'
+            '      another tuple\n'
+            '\n'
+            '   Return type:\n'
+            '      Tuple[int, int]\n'
+            in context)
+
 
 @pytest.mark.sphinx('text', testroot='ext-autodoc',
                     confoverrides={'autodoc_typehints': "description"})

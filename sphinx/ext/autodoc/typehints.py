@@ -149,7 +149,7 @@ def augment_descriptions_with_types(
         elif parts[0] == 'type':
             name = ' '.join(parts[1:])
             has_type.add(name)
-        elif parts[0] == 'return':
+        elif parts[0] in ('return', 'returns'):
             has_description.add('return')
         elif parts[0] == 'rtype':
             has_type.add('return')
