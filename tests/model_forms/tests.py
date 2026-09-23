@@ -2900,6 +2900,11 @@ class StrictAssignmentTests(SimpleTestCase):
 
 
 class ModelToDictTests(TestCase):
+    def test_empty_fields_list(self):
+        """An empty fields list means no fields were requested."""
+        item = ColourfulItem.objects.create(name='test')
+        self.assertEqual(model_to_dict(item, fields=[]), {})
+
     def test_many_to_many(self):
         """Data for a ManyToManyField is a list rather than a lazy QuerySet."""
         blue = Colour.objects.create(name='blue')
