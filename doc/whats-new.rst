@@ -44,6 +44,8 @@ Bug fixes
   By `Max Jones <https://github.com/maxrjones>`_.
 - Rely on the array backend for string formatting. (:pull:`6823`).
   By `Jimmy Westling <https://github.com/illviljan>`_.
+- :py:meth:`Dataset.swap_dims` and :py:meth:`DataArray.swap_dims` no longer modify
+  the dimensions of variables in the original object (:pull:`6938`).
 - Fix incompatibility with numpy 1.20 (:issue:`6818`, :pull:`6821`)
   By `Michael Niklas <https://github.com/headtr1ck>`_.
 - Make FacetGrid.set_titles send kwargs correctly using `handle.udpate(kwargs)`.
