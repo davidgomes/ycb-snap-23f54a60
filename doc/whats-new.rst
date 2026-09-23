@@ -54,6 +54,8 @@ Deprecations
 Bug fixes
 ~~~~~~~~~
 
+- Fixed ``IndexError`` from :py:func:`where` when ``keep_attrs=True`` and the
+  second argument is a scalar (:issue:`6460`).
 - Set ``skipna=None`` for all ``quantile`` methods (e.g. :py:meth:`Dataset.quantile`) and
   ensure it skips missing values for float dtypes (consistent with other methods). This should
   not change the behavior (:pull:`6303`).

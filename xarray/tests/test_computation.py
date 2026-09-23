@@ -1928,6 +1928,16 @@ def test_where_attrs() -> None:
     expected = xr.DataArray([1, 0], dims="x", attrs={"attr": "x"})
     assert_identical(expected, actual)
 
+    # scalars have no attrs; keep_attrs=True must not index past the end
+    actual = xr.where(cond, 1, 0, keep_attrs=True)
+    expected = xr.DataArray([1, 0], dims="x")
+    assert_identical(expected, actual)
+
+    with xr.set_options(keep_attrs=True):
+        actual = xr.where(xr.DataArray([1, 2, 3]) > 0, 1, 0)
+    expected = xr.DataArray([1, 1, 1])
+    assert_identical(expected, actual)
+
 
 @pytest.mark.parametrize("use_dask", [True, False])
 @pytest.mark.parametrize("use_datetime", [True, False])
