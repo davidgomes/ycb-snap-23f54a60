@@ -6,7 +6,7 @@ import builtins
 import types
 
 from sympy.assumptions import Q
-from sympy.core import Symbol, Function, Float, Rational, Integer, I, Mul, Pow, Eq
+from sympy.core import Symbol, Function, Float, Rational, Integer, I, Mul, Pow, Eq, Lt, Le, Gt, Ge, Ne
 from sympy.functions import exp, factorial, factorial2, sin, Min, Max
 from sympy.logic import And
 from sympy.series import Limit
@@ -359,3 +359,19 @@ def test_issue_22822():
     raises(ValueError, lambda: parse_expr('x', {'': 1}))
     data = {'some_parameter': None}
     assert parse_expr('some_parameter is None', data) is True
+
+
+def test_issue_24288():
+    inputs = {
+        "1 < 2": Lt(1, 2, evaluate=False),
+        "1 <= 2": Le(1, 2, evaluate=False),
+        "1 > 2": Gt(1, 2, evaluate=False),
+        "1 >= 2": Ge(1, 2, evaluate=False),
+        "1 != 2": Ne(1, 2, evaluate=False),
+        "1 == 2": Eq(1, 2, evaluate=False),
+    }
+    for text, result in inputs.items():
+        assert parse_expr(text, evaluate=False) == result
+    assert parse_expr('1 + 1 < 2*2', evaluate=False) == Lt(
+        parse_expr('1 + 1', evaluate=False),
+        parse_expr('2*2', evaluate=False), evaluate=False)
