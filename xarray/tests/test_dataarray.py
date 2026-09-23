@@ -2310,6 +2310,15 @@ class TestDataArray:
                 )
                 np.testing.assert_allclose(actual.values, expected)
 
+    def test_quantile_keep_attrs(self):
+        da = DataArray([0, 0], dims="x", attrs={"units": "K"})
+
+        actual = da.quantile(0.9, dim="x")
+        assert actual.attrs == OrderedDict()
+
+        actual = da.quantile(0.9, dim="x", keep_attrs=True)
+        assert actual.attrs == OrderedDict([("units", "K")])
+
     def test_reduce_keep_attrs(self):
         # Test dropped attrs
         vm = self.va.mean()
