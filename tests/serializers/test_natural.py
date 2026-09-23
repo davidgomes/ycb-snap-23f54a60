@@ -8,13 +8,15 @@ from .models import (
     FKDataNaturalKey,
     NaturalKeyAnchor,
     NaturalKeyThing,
+    NaturalKeyWithFKDependency,
     NaturalPKWithDefault,
+    Person,
 )
 from .tests import register_tests
 
 
 class NaturalKeySerializerTests(TestCase):
-    pass
+    databases = {"default", "other"}
 
 
 def natural_key_serializer_test(self, format):
@@ -248,6 +250,37 @@ def fk_as_pk_natural_key_not_called(self, format):
         self.assertEqual(obj.object.pk, o1.pk)
 
 
+def natural_key_fk_dependency_other_db_test(self, format):
+    """
+    Natural keys that depend on a foreign key are resolved against the
+    database being deserialized into.
+    """
+    person = Person.objects.using("other").create(name="Jane")
+    book = NaturalKeyWithFKDependency.objects.using("other").create(
+        name="Book", author=person
+    )
+    self.assertIs(Person.objects.exists(), False)
+    string_data = serializers.serialize(
+        format,
+        [person, book],
+        use_natural_foreign_keys=True,
+        use_natural_primary_keys=True,
+    )
+    deserialized_objects = list(
+        serializers.deserialize(format, string_data, using="other")
+    )
+    self.assertEqual(len(deserialized_objects), 2)
+    self.assertEqual(deserialized_objects[0].object.pk, person.pk)
+    self.assertEqual(deserialized_objects[1].object.pk, book.pk)
+    NaturalKeyWithFKDependency.objects.using("other").delete()
+    Person.objects.using("other").delete()
+    for obj in serializers.deserialize(format, string_data, using="other"):
+        obj.save(using="other")
+    new_book = NaturalKeyWithFKDependency.objects.using("other").get()
+    self.assertEqual(new_book.name, "Book")
+    self.assertEqual(new_book.author.name, "Jane")
+
+
 # Dynamically register tests for each serializer
 register_tests(
     NaturalKeySerializerTests,
@@ -281,4 +314,9 @@ register_tests(
     NaturalKeySerializerTests,
     "test_%s_fk_as_pk_natural_key_not_called",
     fk_as_pk_natural_key_not_called,
+)
+register_tests(
+    NaturalKeySerializerTests,
+    "test_%s_natural_key_fk_dependency_other_db",
+    natural_key_fk_dependency_other_db_test,
 )
