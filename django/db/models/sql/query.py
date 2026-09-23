@@ -198,6 +198,10 @@ class Query(BaseExpression):
     select_for_update_of = ()
     select_for_no_key_update = False
     select_related = False
+    # Whether the query has an explicit list of selected fields (values() /
+    # values_list()). Annotation masks are not a reliable signal: alias()
+    # after annotate() materializes a mask without selecting those columns.
+    has_select_fields = False
     # Arbitrary limit for select_related to prevents infinite recursion.
     max_depth = 5
     # Holds the selects defined by a call to values() or values_list()
@@ -262,12 +266,6 @@ class Query(BaseExpression):
             return getattr(select, "target", None) or select.field
         elif len(self.annotation_select) == 1:
             return next(iter(self.annotation_select.values())).output_field
-
-    @property
-    def has_select_fields(self):
-        return bool(
-            self.select or self.annotation_select_mask or self.extra_select_mask
-        )
 
     @cached_property
     def base_table(self):
@@ -2384,6 +2382,7 @@ class Query(BaseExpression):
         self.select_related = False
         self.clear_deferred_loading()
         self.clear_select_fields()
+        self.has_select_fields = True
 
         if fields:
             field_names = []
