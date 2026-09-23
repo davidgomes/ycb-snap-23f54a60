@@ -118,6 +118,21 @@ class GenericIPAddrUnpackUniqueTest(models.Model):
     generic_v4unpack_ip = models.GenericIPAddressField(null=True, blank=True, unique=True, unpack_ipv4=True)
 
 
+class ArchivedArticleManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(archived=False)
+
+
+class ArchivedArticle(models.Model):
+    title = models.CharField(max_length=100)
+    archived = models.BooleanField(default=False)
+    objects = ArchivedArticleManager()
+
+
+class FavoriteArticle(models.Model):
+    article = models.ForeignKey(ArchivedArticle, models.CASCADE)
+
+
 # A model can't have multiple AutoFields
 # Refs #12467.
 assertion_error = None

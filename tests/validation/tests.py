@@ -5,8 +5,8 @@ from django.utils.functional import lazy
 
 from . import ValidationAssertions
 from .models import (
-    Article, Author, GenericIPAddressTestModel, GenericIPAddrUnpackUniqueTest,
-    ModelToValidate,
+    ArchivedArticle, Article, Author, FavoriteArticle, GenericIPAddressTestModel,
+    GenericIPAddrUnpackUniqueTest, ModelToValidate,
 )
 
 
@@ -40,6 +40,13 @@ class BaseModelValidationTests(ValidationAssertions, TestCase):
         parent = ModelToValidate.objects.create(number=10, name='Some Name')
         mtv = ModelToValidate(number=10, name='Some Name', parent_id=parent.pk)
         self.assertIsNone(mtv.full_clean())
+
+    def test_FK_validates_using_base_manager(self):
+        # The default manager hides archived articles. Validation must still
+        # accept them because it uses the base manager.
+        article = ArchivedArticle._base_manager.create(title='Hidden', archived=True)
+        favorite = FavoriteArticle(article=article)
+        self.assertIsNone(favorite.full_clean())
 
     def test_limited_FK_raises_error(self):
         # The limit_choices_to on the parent field says that a parent object's
@@ -80,6 +87,17 @@ class ArticleForm(forms.ModelForm):
     class Meta:
         model = Article
         exclude = ['author']
+
+
+class FavoriteArticleForm(forms.ModelForm):
+    class Meta:
+        model = FavoriteArticle
+        fields = '__all__'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Allow archived articles, which the default manager excludes.
+        self.fields['article'].queryset = ArchivedArticle._base_manager.all()
 
 
 class ModelFormsTests(TestCase):
@@ -125,6 +143,11 @@ class ModelFormsTests(TestCase):
         article = Article(author_id=self.author.id)
         form = ArticleForm(data, instance=article)
         self.assertEqual(list(form.errors), ['pub_date'])
+
+    def test_foreign_key_validates_using_base_manager(self):
+        article = ArchivedArticle._base_manager.create(title='Hidden', archived=True)
+        form = FavoriteArticleForm(data={'article': article.pk})
+        self.assertIs(form.is_valid(), True)
 
 
 class GenericIPAddressFieldTests(ValidationAssertions, TestCase):
