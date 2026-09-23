@@ -1,4 +1,5 @@
 from django.apps import apps
+from django.core.files.storage import FileSystemStorage, default_storage
 from django.db import models
 from django.test import SimpleTestCase, override_settings
 from django.test.utils import isolate_lru_cache
@@ -175,6 +176,25 @@ class FieldDeconstructionTests(SimpleTestCase):
         self.assertEqual(path, "django.db.models.FileField")
         self.assertEqual(args, [])
         self.assertEqual(kwargs, {"upload_to": "foo/bar", "max_length": 200})
+
+    def test_file_field_callable_storage_returning_default(self):
+        def get_storage():
+            return default_storage
+
+        field = models.FileField(upload_to="foo/bar", storage=get_storage)
+        name, path, args, kwargs = field.deconstruct()
+        self.assertEqual(path, "django.db.models.FileField")
+        self.assertEqual(args, [])
+        self.assertEqual(kwargs, {"upload_to": "foo/bar", "storage": get_storage})
+
+        other_storage = FileSystemStorage(location="/media/other")
+
+        def get_other_storage():
+            return other_storage
+
+        field = models.FileField(upload_to="foo/bar", storage=get_other_storage)
+        name, path, args, kwargs = field.deconstruct()
+        self.assertEqual(kwargs["storage"], get_other_storage)
 
     def test_file_path_field(self):
         field = models.FilePathField(match=r".*\.txt$")
