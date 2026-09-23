@@ -61,6 +61,21 @@ class BasicExpressionsTests(TestCase):
         )
         self.assertEqual(companies['result'], 2395)
 
+    def test_constant_expression_wrapper_group_by(self):
+        queryset = Company.objects.annotate(
+            expr_res=ExpressionWrapper(Value(3), output_field=IntegerField()),
+        ).values('expr_res', 'name').annotate(total=Sum('num_employees'))
+        sql = str(queryset.query)
+        group_by = sql.split('GROUP BY', 1)[1]
+        self.assertNotIn('3', group_by)
+        self.assertIn('name', group_by)
+        # The wrapped constant is still selected.
+        self.assertIn('3', sql.split('GROUP BY', 1)[0])
+        self.assertEqual(
+            {row['expr_res'] for row in queryset},
+            {3},
+        )
+
     def test_annotate_values_filter(self):
         companies = Company.objects.annotate(
             foo=RawSQL('%s', ['value']),
@@ -1828,3 +1843,13 @@ class CombinableTests(SimpleTestCase):
     def test_reversed_or(self):
         with self.assertRaisesMessage(NotImplementedError, self.bitwise_msg):
             object() | Combinable()
+
+
+class ExpressionWrapperTests(SimpleTestCase):
+    def test_empty_group_by(self):
+        expr = ExpressionWrapper(Value(3), output_field=IntegerField())
+        self.assertEqual(expr.get_group_by_cols(alias=None), [])
+
+    def test_non_empty_group_by(self):
+        expr = ExpressionWrapper(Lower(Value('f')), output_field=IntegerField())
+        self.assertEqual(expr.get_group_by_cols(alias=None), [expr.expression])
