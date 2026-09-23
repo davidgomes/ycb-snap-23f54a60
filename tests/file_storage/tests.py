@@ -898,6 +898,16 @@ class FieldCallableFileStorageTests(SimpleTestCase):
         obj = FileField(storage=get_storage)
         self.assertEqual(obj.storage, storage)
         self.assertEqual(obj.storage.location, storage.location)
+        _, _, _, kwargs = obj.deconstruct()
+        self.assertIs(kwargs['storage'], get_storage)
+
+    def test_deconstruct_callable_class_storage(self):
+        class GetStorage(FileSystemStorage):
+            pass
+
+        obj = FileField(storage=GetStorage)
+        _, _, _, kwargs = obj.deconstruct()
+        self.assertIs(kwargs['storage'], GetStorage)
 
     def test_callable_class_storage_file_field(self):
         class GetStorage(FileSystemStorage):
