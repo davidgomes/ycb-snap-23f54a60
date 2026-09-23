@@ -80,6 +80,22 @@ class BasicFieldTests(SimpleTestCase):
         f = Foo._meta.get_field('a')
         self.assertEqual(str(f), 'model_fields.Foo.a')
 
+    def test_hash_unchanged_after_contribute_to_class(self):
+        """Field.__hash__() stays stable when the field is assigned to a model."""
+        field = models.CharField(max_length=200)
+        field_hash = hash(field)
+        mapping = {field: 1}
+
+        class Book(models.Model):
+            title = field
+
+            class Meta:
+                app_label = 'model_fields'
+
+        self.assertEqual(hash(field), field_hash)
+        self.assertIn(field, mapping)
+        self.assertEqual(mapping[field], 1)
+
     def test_field_ordering(self):
         """Fields are ordered based on their creation."""
         f1 = models.Field()
