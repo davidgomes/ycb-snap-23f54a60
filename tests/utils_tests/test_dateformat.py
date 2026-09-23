@@ -103,6 +103,8 @@ class DateFormatTests(SimpleTestCase):
         self.assertEqual(dateformat.format(my_birthday, 'W'), '27')
         self.assertEqual(dateformat.format(my_birthday, 'y'), '79')
         self.assertEqual(dateformat.format(my_birthday, 'Y'), '1979')
+        self.assertEqual(dateformat.format(datetime(1, 1, 1), 'Y'), '0001')
+        self.assertEqual(dateformat.format(datetime(999, 1, 1), 'Y'), '0999')
         self.assertEqual(dateformat.format(my_birthday, 'z'), '189')
 
     def test_dateformat(self):
