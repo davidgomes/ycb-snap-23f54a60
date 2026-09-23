@@ -691,6 +691,33 @@ class WriterTests(SimpleTestCase):
             ("('models.Model', {'from django.db import models'})", set()),
         )
 
+    def test_serialize_expressions(self):
+        expressions = [
+            (models.Value('a'), "models.Value('a')"),
+            (models.OuterRef('a'), "models.OuterRef('a')"),
+            (models.Func(models.F('a')), "models.Func(models.F('a'))"),
+            (
+                models.ExpressionWrapper(models.F('a'), output_field=models.IntegerField()),
+                "models.ExpressionWrapper(models.F('a'), output_field=models.IntegerField())",
+            ),
+            (
+                models.Case(models.When(a=1, then=models.Value(2)), default=models.Value(3)),
+                "models.Case(models.When(a=1, then=models.Value(2)), default=models.Value(3))",
+            ),
+            (
+                models.OrderBy(models.F('a'), descending=True),
+                "models.OrderBy(models.F('a'), descending=True)",
+            ),
+            (models.RowRange(start=-1, end=1), "models.RowRange(end=1, start=-1)"),
+            (models.ValueRange(start=None, end=0), "models.ValueRange(end=0, start=None)"),
+        ]
+        for expression, expected in expressions:
+            with self.subTest(expression=expression):
+                self.assertSerializedResultEqual(
+                    expression, (expected, {'from django.db import models'}),
+                )
+                self.assertSerializedEqual(expression)
+
     def test_simple_migration(self):
         """
         Tests serializing a simple migration.
