@@ -32,6 +32,8 @@ Bug fixes
 ~~~~~~~~~
 
 - :py:func:`merge` with ``combine_attrs='override'`` makes a copy of the attrs (:issue:`4627`).
+- :py:attr:`DataArray.loc` now works with dimensions whose names collide with
+  :py:meth:`DataArray.sel` parameters, such as ``method`` (:issue:`4695`).
 
 Documentation
 ~~~~~~~~~~~~~
