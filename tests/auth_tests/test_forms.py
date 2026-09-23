@@ -2,6 +2,7 @@ import datetime
 import re
 from unittest import mock
 
+from django import forms
 from django.contrib.auth.forms import (
     AdminPasswordChangeForm, AuthenticationForm, PasswordChangeForm,
     PasswordResetForm, ReadOnlyPasswordHashField, ReadOnlyPasswordHashWidget,
@@ -763,6 +764,24 @@ class UserChangeFormTest(TestDataMixin, TestCase):
         self.assertEqual(form.cleaned_data['username'], 'testclient')
         self.assertEqual(form.cleaned_data['date_of_birth'], datetime.date(1998, 2, 24))
 
+    def test_password_field_ignores_submitted_value(self):
+        class CustomUserChangeForm(forms.ModelForm):
+            password = ReadOnlyPasswordHashField()
+
+            class Meta:
+                model = User
+                fields = ('username', 'password')
+
+        user = User.objects.get(username='testclient')
+        original_password = user.password
+        data = {'username': 'testclient', 'password': 'tampered'}
+        form = CustomUserChangeForm(data, instance=user)
+        self.assertIs(form.is_valid(), True)
+        self.assertEqual(form.cleaned_data['password'], original_password)
+        form.save()
+        user.refresh_from_db()
+        self.assertEqual(user.password, original_password)
+
     def test_password_excluded(self):
         class UserChangeFormWithoutPassword(UserChangeForm):
             password = None
@@ -1022,6 +1041,7 @@ class ReadOnlyPasswordHashTest(SimpleTestCase):
 
     def test_readonly_field_has_changed(self):
         field = ReadOnlyPasswordHashField()
+        self.assertIs(field.disabled, True)
         self.assertFalse(field.has_changed('aaa', 'bbb'))
 
 

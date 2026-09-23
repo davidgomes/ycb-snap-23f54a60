@@ -95,6 +95,11 @@ Minor features
   constrained environments. If this is the case, the existing hasher can be
   subclassed to override the defaults.
 
+* The default ``disabled`` argument of
+  ``django.contrib.auth.forms.ReadOnlyPasswordHashField`` is changed to
+  ``True``. Custom forms using this field no longer need to define a
+  ``clean_password()`` method to discard the submitted value.
+
 :mod:`django.contrib.contenttypes`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
