@@ -65,6 +65,9 @@ Bug fixes
   By `András Gunyhó <https://github.com/mgunyho>`_.
 - Avoid use of random numbers in `test_weighted.test_weighted_operations_nonequal_coords` (:issue:`6504`, :pull:`6961`).
   By `Luke Conibear <https://github.com/lukeconibear>`_.
+- Fix ``Dataset.set_index`` / ``Dataset.reset_index`` leaving ``_coord_names``
+  that no longer have variables, which broke ``DataVariables`` (including the
+  dataset repr) after dropping a multi-index (:issue:`7036`).
 - Raise a ``UserWarning`` when renaming a coordinate or a dimension creates a
   non-indexed dimension coordinate, and suggest the user creating an index
   either with ``swap_dims`` or ``set_index`` (:issue:`6607`, :pull:`6999`). By
