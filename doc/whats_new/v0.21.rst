@@ -33,6 +33,12 @@ Changelog
   ``tol`` required too strict types. :pr:`14092` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+:mod:`sklearn.utils`
+....................
+
+- |Fix| :func:`show_versions` now also reports the installed version of
+  ``joblib``, which is a dependency of scikit-learn since 0.21. :pr:`14141`.
+
 .. _changes_0_21_2:
 
 Version 0.21.2
