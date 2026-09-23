@@ -77,6 +77,14 @@ class ChildNullableParent(models.Model):
     parent = models.ForeignKey(Parent, models.CASCADE, null=True)
 
 
+class ParentStringPrimaryKey(models.Model):
+    name = models.CharField(primary_key=True, max_length=15)
+
+
+class ChildStringPrimaryKeyParent(models.Model):
+    parent = models.ForeignKey(ParentStringPrimaryKey, on_delete=models.CASCADE)
+
+
 class ToFieldChild(models.Model):
     parent = models.ForeignKey(Parent, models.CASCADE, to_field='name', related_name='to_field_children')
 
