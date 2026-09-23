@@ -70,6 +70,22 @@ def test_kmeans_results(representation, algo, dtype):
     assert kmeans.n_iter_ == expected_n_iter
 
 
+@pytest.mark.parametrize('algorithm', ['full', 'elkan'])
+def test_kmeans_n_jobs_consistency(algorithm):
+    # check that the results are the same for any value of n_jobs
+    X, _ = make_blobs(n_samples=1000, centers=10, random_state=2)
+
+    results = []
+    for n_jobs in (1, 2):
+        km = KMeans(n_clusters=10, n_init=4, random_state=2, n_jobs=n_jobs,
+                    algorithm=algorithm).fit(X)
+        results.append(km)
+
+    assert_array_equal(results[0].labels_, results[1].labels_)
+    assert_allclose(results[0].cluster_centers_, results[1].cluster_centers_)
+    assert results[0].inertia_ == pytest.approx(results[1].inertia_)
+
+
 @pytest.mark.parametrize('distribution', ['normal', 'blobs'])
 def test_elkan_results(distribution):
     # check that results are identical between lloyd and elkan algorithms
