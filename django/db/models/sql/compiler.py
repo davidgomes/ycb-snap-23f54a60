@@ -125,11 +125,13 @@ class SQLCompiler:
             cols = expr.get_group_by_cols()
             for col in cols:
                 expressions.append(col)
-        for expr, (sql, params, is_ref) in order_by:
-            # Skip References to the select clause, as all expressions in the
-            # select clause are already part of the group by.
-            if not is_ref:
-                expressions.extend(expr.get_group_by_cols())
+        # Skip ordering in the grouping phase if Meta.ordering is being used.
+        if not self._meta_ordering:
+            for expr, (sql, params, is_ref) in order_by:
+                # Skip References to the select clause, as all expressions in
+                # the select clause are already part of the group by.
+                if not is_ref:
+                    expressions.extend(expr.get_group_by_cols())
         having_group_by = self.having.get_group_by_cols() if self.having else ()
         for expr in having_group_by:
             expressions.append(expr)
