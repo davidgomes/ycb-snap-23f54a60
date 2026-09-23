@@ -776,6 +776,23 @@ class AutodetectorTests(TestCase):
             (value.func, value.args, value.keywords)
         )
 
+    def test_alter_uuid_field_to_fk_dependency_other_app(self):
+        book_uuid = ModelState('otherapp', 'Book', [
+            ('id', models.AutoField(primary_key=True)),
+            ('author', models.UUIDField(null=True)),
+        ])
+        author_uuid = ModelState('testapp', 'Author', [
+            ('id', models.UUIDField(primary_key=True)),
+        ])
+        book_fk = ModelState('otherapp', 'Book', [
+            ('id', models.AutoField(primary_key=True)),
+            ('author', models.ForeignKey('testapp.Author', models.SET_NULL, null=True)),
+        ])
+        changes = self.get_changes([author_uuid, book_uuid], [author_uuid, book_fk])
+        self.assertNumberMigrations(changes, 'otherapp', 1)
+        self.assertOperationTypes(changes, 'otherapp', 0, ['AlterField'])
+        self.assertMigrationDependencies(changes, 'otherapp', 0, [('testapp', '__first__')])
+
     @mock.patch('django.db.migrations.questioner.MigrationQuestioner.ask_not_null_alteration',
                 side_effect=AssertionError("Should not have prompted for not null addition"))
     def test_alter_field_to_not_null_with_default(self, mocked_ask_method):
