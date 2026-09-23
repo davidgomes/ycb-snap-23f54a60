@@ -310,6 +310,11 @@ PostgreSQL 12 and higher.
 Miscellaneous
 -------------
 
+* :option:`makemigrations --check` no longer writes migration files when
+  model changes without migrations are detected. It exits with a non-zero
+  status after reporting the changes, consistent with :option:`migrate --check`
+  and :option:`optimizemigration --check`.
+
 * The undocumented ``SimpleTemplateResponse.rendering_attrs`` and
   ``TemplateResponse.rendering_attrs`` are renamed to ``non_picklable_attrs``.
 
