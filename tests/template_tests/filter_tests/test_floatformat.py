@@ -73,6 +73,10 @@ class FunctionTests(SimpleTestCase):
         self.assertEqual(floatformat(1.5e-15, 20), "0.00000000000000150000")
         self.assertEqual(floatformat(1.5e-15, -20), "0.00000000000000150000")
         self.assertEqual(floatformat(1.00000000000000015, 16), "1.0000000000000002")
+        self.assertEqual(
+            floatformat(Decimal("42.12345678901234567890"), 20),
+            "42.12345678901234567890",
+        )
 
     def test_force_grouping(self):
         with translation.override("en"):
