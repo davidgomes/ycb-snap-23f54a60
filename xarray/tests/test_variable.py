@@ -1779,6 +1779,19 @@ class TestVariable(VariableSubclassobjects):
         v[dict(x=[True, False], y=[False, True, False])] = 1
         assert v[0, 1] == 1
 
+    def test_setitem_object_with_values_attribute(self):
+        # GH2905
+        class HasValues:
+            values = 5
+
+        obj = HasValues()
+        v = Variable(["x"], np.array([None, None], dtype=object))
+        v[0] = obj
+        assert v.values[0] is obj
+
+        v = Variable((), obj)
+        assert v.values[()] is obj
+
     def test_setitem_fancy(self):
         # assignment which should work as np.ndarray does
         def assert_assigned_2d(array, key_x, key_y, values):
