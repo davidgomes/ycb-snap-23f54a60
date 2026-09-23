@@ -912,13 +912,18 @@ class WriterTests(SimpleTestCase):
                             ),
                         ),
                     ),
+                    migrations.AddField(
+                        "mymodel",
+                        "myuuid",
+                        models.UUIDField(default=uuid.uuid4),
+                    ),
                 ]
             },
         )
         writer = MigrationWriter(migration)
         output = writer.as_string()
         self.assertIn(
-            "import datetime\nfrom django.db import migrations, models\n",
+            "import datetime\nimport uuid\nfrom django.db import migrations, models\n",
             output,
         )
 
