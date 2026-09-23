@@ -57,6 +57,8 @@ Deprecations
 Bug fixes
 ~~~~~~~~~
 
+- ``Dataset.coarsen().construct()`` keeps non-dimensional coordinates as
+  coordinates instead of demoting them to data variables.
 - Explicitly opening a file multiple times (e.g., after modifying it on disk)
   now reopens the file from scratch for h5netcdf and scipy netCDF backends,
   rather than reusing a cached version (:issue:`4240`, :issue:`4862`).

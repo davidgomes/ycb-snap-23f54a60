@@ -973,7 +973,10 @@ class Coarsen(CoarsenArithmetic, Generic[T_Xarray]):
             else:
                 reshaped[key] = var
 
-        should_be_coords = set(window_dim) & set(self.obj.coords)
+        # window_dim only names coarsened dimensions. Non-dimensional
+        # coordinates (and coordinates on dimensions that are not coarsened)
+        # must stay coordinates after the reshape.
+        should_be_coords = set(self.obj.coords) & set(reshaped.variables)
         result = reshaped.set_coords(should_be_coords)
         if isinstance(self.obj, DataArray):
             return self.obj._from_temp_dataset(result)

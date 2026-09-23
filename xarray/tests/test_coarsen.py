@@ -318,3 +318,13 @@ def test_coarsen_construct(dask: bool) -> None:
 
     with pytest.raises(ValueError):
         ds.coarsen(time=12).construct(time=("bar",))
+
+    # non-dimensional coordinates stay coordinates
+    da = xr.DataArray(np.arange(24), dims=["time"])
+    da = da.assign_coords(day=365 * da)
+    small = da.to_dataset(name="T")
+    actual = small.coarsen(time=12).construct(time=("year", "month"))
+    assert "day" in actual.coords
+    assert "day" not in actual.data_vars
+    assert actual.day.dims == ("year", "month")
+    np.testing.assert_array_equal(actual.day.values, (365 * da).values.reshape(2, 12))
