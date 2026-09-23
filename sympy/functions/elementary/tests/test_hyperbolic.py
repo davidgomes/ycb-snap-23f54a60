@@ -272,6 +272,10 @@ def test_coth():
 
     assert coth(k*pi*I) == -cot(k*pi)*I
 
+    assert coth(log(tan(2))) == coth(log(-tan(2)))
+    assert coth(1 + I*pi/2) == tanh(1)
+    assert coth(x + I*pi) == coth(x)
+
 
 def test_coth_series():
     x = Symbol('x')
