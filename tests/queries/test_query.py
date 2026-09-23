@@ -1,3 +1,4 @@
+from collections import namedtuple
 from datetime import datetime
 
 from django.core.exceptions import FieldError
@@ -15,6 +16,13 @@ from .models import Author, Item, ObjectC, Ranking
 
 
 class TestQuery(SimpleTestCase):
+    def test_resolve_lookup_value_named_tuple(self):
+        query = Query(Author)
+        bounds = namedtuple('Range', ['near', 'far'])(1, 2)
+        resolved = query.resolve_lookup_value(bounds, can_reuse=None, allow_joins=True)
+        self.assertEqual(resolved, bounds)
+        self.assertIsInstance(resolved, type(bounds))
+
     def test_simple_query(self):
         query = Query(Author)
         where = query.build_where(Q(num__gt=2))
