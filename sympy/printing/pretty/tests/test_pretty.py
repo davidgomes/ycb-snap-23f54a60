@@ -277,6 +277,8 @@ def test_upretty_multiindex():
     assert upretty( Symbol('Y00') ) == 'Y₀₀'
     assert upretty( Symbol('Y_00') ) == 'Y₀₀'
     assert upretty( Symbol('F^+-') ) == 'F⁺⁻'
+    assert upretty( Symbol('ω0') ) == 'ω₀'
+    assert upretty( Symbol('ω1') ) == 'ω₁'
 
 
 def test_upretty_sub_super():
