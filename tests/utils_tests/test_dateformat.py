@@ -102,6 +102,10 @@ class DateFormatTests(SimpleTestCase):
         self.assertEqual(dateformat.format(my_birthday, 'w'), '0')
         self.assertEqual(dateformat.format(my_birthday, 'W'), '27')
         self.assertEqual(dateformat.format(my_birthday, 'y'), '79')
+        # Years before 1000: last two digits, zero-padded (matches strftime %y).
+        self.assertEqual(dateformat.format(datetime(123, 4, 5), 'y'), '23')
+        self.assertEqual(dateformat.format(datetime(9, 4, 5), 'y'), '09')
+        self.assertEqual(dateformat.format(datetime(99, 4, 5), 'y'), '99')
         self.assertEqual(dateformat.format(my_birthday, 'Y'), '1979')
         self.assertEqual(dateformat.format(my_birthday, 'z'), '189')
 
