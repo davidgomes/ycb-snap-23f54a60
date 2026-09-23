@@ -2,6 +2,7 @@ import logging
 
 import pytest
 from _pytest.logging import caplog_records_key
+from _pytest.pytester import Testdir
 
 logger = logging.getLogger(__name__)
 sublogger = logging.getLogger(__name__ + ".baz")
@@ -48,6 +49,33 @@ def test_change_level_undo(testdir):
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(["*log from test1*", "*2 failed in *"])
     result.stdout.no_fnmatch_line("*log from test2*")
+
+
+def test_change_level_undos_handler_level(testdir: Testdir) -> None:
+    """Ensure that 'set_level' is undone after the end of the test (handler).
+
+    Issue #7569. Tests the handler level specifically.
+    """
+    testdir.makepyfile(
+        """
+        import logging
+
+        def test1(caplog):
+            assert caplog.handler.level == 0
+            caplog.set_level(41)
+            assert caplog.handler.level == 41
+
+        def test2(caplog):
+            assert caplog.handler.level == 0
+
+        def test3(caplog):
+            assert caplog.handler.level == 0
+            caplog.set_level(43)
+            assert caplog.handler.level == 43
+    """
+    )
+    result = testdir.runpytest()
+    result.assert_outcomes(passed=3)
 
 
 def test_with_statement(caplog):
