@@ -988,3 +988,17 @@ def test_text_math_antialiased_off_default_vs_manual(fig_test, fig_ref):
 
     mpl.rcParams['text.antialiased'] = False
     fig_ref.text(0.5, 0.5, r"OutsideMath $I\'m \sqrt{2}$")
+
+
+@check_figures_equal(extensions=["png"])
+def test_annotate_and_mutate_xy_array(fig_test, fig_ref):
+    # Mutating the array passed as xy must not move the annotation afterwards.
+    ax = fig_test.add_subplot()
+    ax.set(xlim=(-5, 5), ylim=(-3, 3))
+    xy = np.array([-4, 1])
+    ax.annotate("", xy=xy, xytext=(-1, 1), arrowprops=dict(arrowstyle="<->"))
+    xy[1] = 3
+
+    ax = fig_ref.add_subplot()
+    ax.set(xlim=(-5, 5), ylim=(-3, 3))
+    ax.annotate("", xy=(-4, 1), xytext=(-1, 1), arrowprops=dict(arrowstyle="<->"))
