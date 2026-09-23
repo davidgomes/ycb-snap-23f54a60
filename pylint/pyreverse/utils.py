@@ -20,6 +20,8 @@ import os
 import re
 import sys
 
+import astroid
+
 RCFILE = ".pyreverserc"
 
 
@@ -213,3 +215,34 @@ class LocalsVisitor(ASTWalker):
         if methods[1] is not None:
             return methods[1](node)
         return None
+
+
+def get_annotation(node):
+    """return the annotation of an attribute assigned from an annotated argument"""
+    if not isinstance(node, (astroid.AssignAttr, astroid.AssignName)):
+        return None
+    value = getattr(node.parent, "value", None)
+    if not isinstance(value, astroid.Name):
+        return None
+    func = node.frame()
+    if not isinstance(func, astroid.FunctionDef):
+        return None
+    args = func.args
+    for arg, annotation in zip(args.args or [], args.annotations or []):
+        if arg.name == value.name:
+            return annotation
+    for arg, annotation in zip(args.kwonlyargs or [], args.kwonlyargs_annotations or []):
+        if arg.name == value.name:
+            return annotation
+    return None
+
+
+def infer_node(node):
+    """return the set of inferred values for node, preferring its type annotation"""
+    annotation = get_annotation(node)
+    try:
+        if annotation is not None:
+            return set(annotation.infer())
+        return set(node.infer())
+    except astroid.InferenceError:
+        return set()
