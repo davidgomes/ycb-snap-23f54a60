@@ -674,6 +674,20 @@ def test_full_vs_elkan():
     assert homogeneity_score(km1.predict(X), km2.predict(X)) == 1.0
 
 
+@pytest.mark.parametrize('algorithm', ['full', 'elkan'])
+def test_k_means_n_jobs_consistency(algorithm):
+    # Check that the result does not depend on n_jobs (#9784)
+    X, _ = make_blobs(n_samples=1000, centers=10, n_features=2,
+                      random_state=2)
+    results = [KMeans(n_clusters=10, random_state=2, n_jobs=n_jobs,
+                      algorithm=algorithm).fit(X)
+               for n_jobs in [1, 2]]
+    assert results[0].inertia_ == results[1].inertia_
+    assert_array_equal(results[0].labels_, results[1].labels_)
+    assert_array_equal(results[0].cluster_centers_,
+                       results[1].cluster_centers_)
+
+
 def test_n_init():
     # Check that increasing the number of init increases the quality
     n_runs = 5
