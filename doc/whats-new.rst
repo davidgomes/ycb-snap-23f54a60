@@ -31,6 +31,9 @@ New Features
 Bug fixes
 ~~~~~~~~~
 
+- :py:func:`merge` with ``combine_attrs='override'`` now returns a copy of the
+  first object's attrs instead of a reference to them, so modifying the attrs
+  of the result no longer modifies the source (:pull:`4629`).
 
 Documentation
 ~~~~~~~~~~~~~
