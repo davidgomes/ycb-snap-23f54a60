@@ -540,6 +540,14 @@ def test_pipeline_slice():
     assert_raises(ValueError, lambda: pipe[::-1])
 
 
+def test_pipeline_len():
+    pipe = Pipeline([('transf1', Transf()),
+                     ('transf2', Transf()),
+                     ('clf', FitParamT())])
+    assert len(pipe) == 3
+    assert pipe[:len(pipe)].steps == pipe.steps
+
+
 def test_pipeline_index():
     transf = Transf()
     clf = FitParamT()
