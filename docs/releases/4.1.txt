@@ -210,7 +210,8 @@ Signals
 Templates
 ~~~~~~~~~
 
-* ...
+* :tfilter:`json_script` template filter now allows omitting HTML ID
+  attribute.
 
 Tests
 ~~~~~
