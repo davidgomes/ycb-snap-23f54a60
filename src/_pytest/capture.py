@@ -388,6 +388,10 @@ class FDCaptureBinary:
                 TemporaryFile(buffering=0),  # type: ignore[arg-type]
                 encoding="utf-8",
                 errors="replace",
+                # Disable universal newlines so ``\r`` is preserved.
+                # ``newline=None`` (the TextIOWrapper default) translates
+                # ``\r`` and ``\r\n`` to ``\n`` on read.
+                newline="",
                 write_through=True,
             )
             if targetfd in patchsysdict:
