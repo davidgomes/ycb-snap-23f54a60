@@ -18,6 +18,11 @@ Release date: TBA
 
   Closes #6965
 
+* Fixed ``ignore-paths`` being ignored when running with ``--recursive=y``: paths discovered
+  while walking directories are now normalized before being matched against the patterns.
+
+  Closes #6964
+
 
 What's New in Pylint 2.14.3?
 ----------------------------
