@@ -42,6 +42,8 @@ Bug fixes
   allowing the ``encoding`` and ``unlimited_dims`` options with ``save_mfdataset``.
   (:issue:`6684`)
   By `Travis A. O'Brien <https://github.com/taobrienlbl>`_.
+- Iterating over a ``DataArrayRolling`` object now respects ``center=True``
+  (:issue:`6739`, :pull:`6744`).
 - Fix backend support of pydap versions <3.3.0  (:issue:`6648`, :pull:`6656`).
   By `Hauke Schulz <https://github.com/observingClouds>`_.
 - :py:meth:`Dataset.where` with ``drop=True`` now behaves correctly with mixed dimensions.
