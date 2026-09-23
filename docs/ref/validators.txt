@@ -105,6 +105,11 @@ to, or in lieu of custom ``field.clean()`` methods.
         :exc:`~django.core.exceptions.ValidationError` if validation fails.
         Defaults to ``"Enter a valid value"``.
 
+        .. versionchanged:: 3.2
+
+            The message may contain the ``%(value)s`` placeholder, which will
+            be replaced with the provided value.
+
     .. attribute:: code
 
         The error code used by :exc:`~django.core.exceptions.ValidationError`
@@ -135,6 +140,11 @@ to, or in lieu of custom ``field.clean()`` methods.
         The error message used by
         :exc:`~django.core.exceptions.ValidationError` if validation fails.
         Defaults to ``"Enter a valid email address"``.
+
+        .. versionchanged:: 3.2
+
+            The message may contain the ``%(value)s`` placeholder, which will
+            be replaced with the provided value.
 
     .. attribute:: code
 
@@ -335,6 +345,11 @@ to, or in lieu of custom ``field.clean()`` methods.
         The error message used by
         :exc:`~django.core.exceptions.ValidationError` if validation fails.
         Defaults to ``"Null characters are not allowed."``.
+
+        .. versionchanged:: 3.2
+
+            The message may contain the ``%(value)s`` placeholder, which will
+            be replaced with the provided value.
 
     .. attribute:: code
 

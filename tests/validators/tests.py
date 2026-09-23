@@ -315,6 +315,40 @@ with open(create_path('invalid_urls.txt'), encoding='utf8') as f:
 
 
 class TestValidators(SimpleTestCase):
+    def test_error_message_includes_provided_value(self):
+        cases = [
+            (validate_integer, 'a'),
+            (validate_email, 'blah'),
+            (validate_slug, 'no spaces'),
+            (validate_unicode_slug, ' '),
+            (validate_ipv4_address, '256.1.1.1'),
+            (validate_ipv6_address, '1:2'),
+            (validate_ipv46_address, 'nope'),
+            (validate_comma_separated_integer_list, 'a,b'),
+            (int_list_validator(sep='.'), '1,2'),
+            (RegexValidator(r'^\d+\Z'), 'abc'),
+            (EmailValidator(), 'blah'),
+            (URLValidator(), 'invalid'),
+            (MaxValueValidator(10), 11),
+            (MinValueValidator(10), 9),
+            (MaxLengthValidator(2), 'abc'),
+            (MinLengthValidator(4), 'ab'),
+            (DecimalValidator(max_digits=2, decimal_places=1), Decimal('123')),
+            (DecimalValidator(max_digits=2, decimal_places=1), Decimal('NaN')),
+            (FileExtensionValidator(['txt']), ContentFile(b'', name='file.png')),
+            (ProhibitNullCharactersValidator(), 'null\x00'),
+        ]
+        for validator, value in cases:
+            with self.subTest(validator=validator.__class__.__name__, value=value):
+                with self.assertRaises(ValidationError) as cm:
+                    validator(value)
+                self.assertIs(cm.exception.error_list[0].params['value'], value)
+
+        validator = EmailValidator(message='“%(value)s” is not a valid email.')
+        with self.assertRaises(ValidationError) as cm:
+            validator('blah')
+        self.assertEqual(cm.exception.messages, ['“blah” is not a valid email.'])
+
 
     def test_validators(self):
         for validator, value, expected in TEST_DATA:

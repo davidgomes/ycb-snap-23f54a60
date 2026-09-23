@@ -327,7 +327,9 @@ Utilities
 Validators
 ~~~~~~~~~~
 
-* ...
+* Built-in validators now pass the provided value to
+  :exc:`~django.core.exceptions.ValidationError` as the ``value`` parameter.
+  Custom error messages can use the ``%(value)s`` placeholder.
 
 .. _backwards-incompatible-3.2:
 
