@@ -83,3 +83,10 @@ def unused_reassigned_import(counter):
     # type: (CollectionCounter) -> int
     print(counter)
     return 42
+
+
+import abc
+from abc import ABC
+
+X = ...  # type: abc.ABC
+Y = ...  # type: ABC

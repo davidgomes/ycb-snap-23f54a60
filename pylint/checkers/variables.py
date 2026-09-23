@@ -1826,6 +1826,11 @@ class VariablesChecker(BaseChecker):
             self._type_annotation_names.append(type_annotation.name)
             return
 
+        # ``# type: module.Name`` is an Attribute; the imported module is used.
+        if isinstance(type_annotation, astroid.Attribute):
+            self._store_type_annotation_node(type_annotation.expr)
+            return
+
         if not isinstance(type_annotation, astroid.Subscript):
             return
 
