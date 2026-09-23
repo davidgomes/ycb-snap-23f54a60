@@ -48,6 +48,13 @@ class BaseModelValidationTests(ValidationAssertions, TestCase):
         mtv = ModelToValidate(number=10, name='Some Name', parent_id=parent.pk)
         self.assertFailsValidation(mtv.full_clean, ['parent'])
 
+    def test_FK_validates_using_base_manager(self):
+        # Archived authors are excluded by the default manager but must still
+        # be valid FK targets.
+        author = Author.objects.create(name='Randy', archived=True)
+        article = Article(title='My Article', author=author)
+        self.assertIsNone(article.full_clean())
+
     def test_wrong_email_value_raises_error(self):
         mtv = ModelToValidate(number=10, name='Some Name', email='not-an-email')
         self.assertFailsValidation(mtv.full_clean, ['email'])
@@ -125,6 +132,24 @@ class ModelFormsTests(TestCase):
         article = Article(author_id=self.author.id)
         form = ArticleForm(data, instance=article)
         self.assertEqual(list(form.errors), ['pub_date'])
+
+    def test_fk_to_object_excluded_by_default_manager(self):
+        class ArticleWithAnyAuthorForm(forms.ModelForm):
+            class Meta:
+                model = Article
+                fields = ['title', 'author']
+
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+                self.fields['author'].queryset = Author._base_manager.all()
+
+        archived_author = Author.objects.create(name='Randy', archived=True)
+        form = ArticleWithAnyAuthorForm({
+            'title': 'The state of model validation',
+            'author': archived_author.pk,
+        })
+        self.assertIs(form.is_valid(), True)
+        self.assertEqual(form.save().author, archived_author)
 
 
 class GenericIPAddressFieldTests(ValidationAssertions, TestCase):
