@@ -2274,12 +2274,32 @@ class SubFigure(FigureBase):
             return
         # need to figure out *where* this subplotspec is.
         gs = self._subplotspec.get_gridspec()
-        wr = np.asarray(gs.get_width_ratios())
-        hr = np.asarray(gs.get_height_ratios())
-        dx = wr[self._subplotspec.colspan].sum() / wr.sum()
-        dy = hr[self._subplotspec.rowspan].sum() / hr.sum()
-        x0 = wr[:self._subplotspec.colspan.start].sum() / wr.sum()
-        y0 = 1 - hr[:self._subplotspec.rowspan.stop].sum() / hr.sum()
+        wr = np.asarray(gs.get_width_ratios(), dtype=float)
+        hr = np.asarray(gs.get_height_ratios(), dtype=float)
+        nrows, ncols = gs.get_geometry()
+        # None means "no extra gap"; do not fall back to subplot rcParams,
+        # which would inset every subfigure grid by default.
+        wspace = getattr(gs, "wspace", getattr(gs, "_wspace", None))
+        hspace = getattr(gs, "hspace", getattr(gs, "_hspace", None))
+        wspace = 0.0 if wspace is None else wspace
+        hspace = 0.0 if hspace is None else hspace
+
+        colspan = self._subplotspec.colspan
+        rowspan = self._subplotspec.rowspan
+
+        cell_w = 1.0 / (ncols + wspace * (ncols - 1))
+        sep_w = wspace * cell_w
+        cell_widths = wr * (cell_w * ncols / wr.sum())
+        x0 = (cell_widths[:colspan.start].sum() + sep_w * colspan.start)
+        dx = (cell_widths[colspan].sum() + sep_w * (len(colspan) - 1))
+
+        cell_h = 1.0 / (nrows + hspace * (nrows - 1))
+        sep_h = hspace * cell_h
+        cell_heights = hr * (cell_h * nrows / hr.sum())
+        y_from_top = (cell_heights[:rowspan.stop].sum()
+                      + sep_h * max(rowspan.stop - 1, 0))
+        dy = (cell_heights[rowspan].sum() + sep_h * (len(rowspan) - 1))
+        y0 = 1 - y_from_top
         if self.bbox_relative is None:
             self.bbox_relative = Bbox.from_bounds(x0, y0, dx, dy)
         else:

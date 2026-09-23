@@ -1365,6 +1365,26 @@ def test_subfigure_double():
     axsRight = subfigs[1].subplots(2, 2)
 
 
+def test_subfigure_wspace_hspace():
+    fig = plt.figure()
+    sfigs = fig.subfigures(2, 2, wspace=0, hspace=0)
+    np.testing.assert_allclose(sfigs[0, 0].bbox_relative.bounds, (0, 0.5, 0.5, 0.5))
+    np.testing.assert_allclose(sfigs[0, 1].bbox_relative.bounds, (0.5, 0.5, 0.5, 0.5))
+    np.testing.assert_allclose(sfigs[1, 0].bbox_relative.bounds, (0, 0, 0.5, 0.5))
+    np.testing.assert_allclose(sfigs[1, 1].bbox_relative.bounds, (0.5, 0, 0.5, 0.5))
+
+    sfigs = fig.subfigures(2, 2, wspace=1, hspace=1)
+    # cell = 1 / (n + space * (n - 1)); gap equals space * cell
+    np.testing.assert_allclose(sfigs[0, 0].bbox_relative.bounds,
+                               (0, 2 / 3, 1 / 3, 1 / 3))
+    np.testing.assert_allclose(sfigs[0, 1].bbox_relative.bounds,
+                               (2 / 3, 2 / 3, 1 / 3, 1 / 3))
+    np.testing.assert_allclose(sfigs[1, 0].bbox_relative.bounds,
+                               (0, 0, 1 / 3, 1 / 3))
+    np.testing.assert_allclose(sfigs[1, 1].bbox_relative.bounds,
+                               (2 / 3, 0, 1 / 3, 1 / 3))
+
+
 def test_subfigure_spanning():
     # test that subfigures get laid out properly...
     fig = plt.figure(constrained_layout=True)
