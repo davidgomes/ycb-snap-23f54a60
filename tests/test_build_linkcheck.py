@@ -255,6 +255,31 @@ def test_follows_redirects_on_HEAD(app, capsys):
     )
 
 
+class InfiniteRedirectOnHeadHandler(http.server.BaseHTTPRequestHandler):
+    def do_HEAD(self):
+        self.send_response(302, "Found")
+        self.send_header("Location", "http://localhost:7777/")
+        self.end_headers()
+
+    def do_GET(self):
+        self.send_response(200, "OK")
+        self.end_headers()
+        self.wfile.write(b"ok\n")
+
+    def log_date_time_string(self):
+        return ""
+
+
+@pytest.mark.sphinx('linkcheck', testroot='linkcheck-localserver', freshenv=True)
+def test_too_many_redirects_on_HEAD(app, capsys):
+    with http_server(InfiniteRedirectOnHeadHandler):
+        app.builder.build_all()
+    assert (app.outdir / 'output.txt').read_text() == ""
+    content = json.loads((app.outdir / 'output.json').read_text())
+    assert content["status"] == "working"
+    assert content["uri"] == "http://localhost:7777/"
+
+
 @pytest.mark.sphinx('linkcheck', testroot='linkcheck-localserver', freshenv=True)
 def test_follows_redirects_on_GET(app, capsys):
     with http_server(make_redirect_handler(support_head=False)):
