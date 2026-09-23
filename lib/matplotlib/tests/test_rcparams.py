@@ -545,6 +545,24 @@ def test_backend_fallback_headful(tmpdir):
     assert backend.strip().lower() != "agg"
 
 
+def test_rc_context_keeps_figures_with_auto_backend(tmpdir):
+    env = {**os.environ, "MPLBACKEND": "", "MPLCONFIGDIR": str(tmpdir)}
+    subprocess.run(
+        [sys.executable, "-c", """if True:
+            import matplotlib as mpl
+            import matplotlib.pyplot as plt
+            from matplotlib._pylab_helpers import Gcf
+            sentinel = mpl.rcsetup._auto_backend_sentinel
+            assert dict.__getitem__(mpl.rcParams, 'backend') is sentinel
+            with mpl.rc_context():
+                fig = plt.figure()
+            before = dict(Gcf.figs)
+            mpl.get_backend()
+            assert dict(Gcf.figs) == before
+        """],
+        env=env, check=True)
+
+
 def test_deprecation(monkeypatch):
     monkeypatch.setitem(
         mpl._deprecated_map, "patch.linewidth",
