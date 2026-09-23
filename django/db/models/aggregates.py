@@ -65,7 +65,12 @@ class Aggregate(Func):
         if hasattr(default, 'resolve_expression'):
             default = default.resolve_expression(query, allow_joins, reuse, summarize)
         c.default = None  # Reset the default argument before wrapping.
-        return Coalesce(c, default, output_field=c._output_field_or_none)
+        coalesce = Coalesce(c, default, output_field=c._output_field_or_none)
+        # Coalesce is built after resolve_expression(), so it does not inherit
+        # is_summary. Without this, aggregate() after annotate() leaves the
+        # wrapped aggregate in the inner query and emits "SELECT FROM (...)".
+        coalesce.is_summary = c.is_summary
+        return coalesce
 
     @property
     def default_alias(self):
