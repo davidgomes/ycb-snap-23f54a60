@@ -526,6 +526,14 @@ Validators
 * The :class:`.ValidationError` equality operator now ignores ``messages`` and
   ``params`` ordering.
 
+Bugfixes
+========
+
+* Fixed a bug in Django 3.1 where raising
+  :exc:`~django.core.exceptions.MiddlewareNotUsed` while loading middleware
+  in an ASGI context left the handler adapted for the unused middleware and
+  poisoned the rest of the middleware chain (:ticket:`32305`).
+
 .. _backwards-incompatible-3.2:
 
 Backwards incompatible changes in 3.2

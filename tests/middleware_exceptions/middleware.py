@@ -1,3 +1,4 @@
+from django.core.exceptions import MiddlewareNotUsed
 from django.http import Http404, HttpResponse
 from django.template import engines
 from django.template.response import TemplateResponse
@@ -121,6 +122,11 @@ class SyncAndAsyncMiddleware(BaseMiddleware):
 @sync_only_middleware
 class DecoratedPaymentMiddleware(PaymentMiddleware):
     pass
+
+
+class SyncNotUsedMiddleware(BaseMiddleware):
+    def __init__(self, get_response):
+        raise MiddlewareNotUsed
 
 
 class NotSyncOrAsyncMiddleware(BaseMiddleware):

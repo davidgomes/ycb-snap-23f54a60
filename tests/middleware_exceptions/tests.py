@@ -282,6 +282,38 @@ class MiddlewareSyncAsyncTests(SimpleTestCase):
         self.assertEqual(response.content, b'OK')
         self.assertEqual(response.status_code, 200)
 
+    @override_settings(MIDDLEWARE=[
+        'middleware_exceptions.middleware.SyncNotUsedMiddleware',
+        'middleware_exceptions.middleware.async_payment_middleware',
+    ])
+    async def test_sync_middleware_not_used_does_not_poison_async_chain(self):
+        """
+        MiddlewareNotUsed must not leave the adapted handler in place, or the
+        rest of an async middleware chain returns a bare HttpResponse.
+        """
+        with self.assertLogs('django.request', 'DEBUG') as cm:
+            response = await self.async_client.get('/middleware_exceptions/view/')
+        self.assertEqual(response.status_code, 402)
+        self.assertIn(
+            "MiddlewareNotUsed: "
+            "'middleware_exceptions.middleware.SyncNotUsedMiddleware'",
+            [record.getMessage() for record in cm.records],
+        )
+
+    @override_settings(MIDDLEWARE=[
+        'middleware_exceptions.middleware.async_payment_middleware',
+        'middleware_exceptions.middleware.SyncNotUsedMiddleware',
+    ])
+    async def test_inner_sync_middleware_not_used_with_async_middleware(self):
+        with self.assertLogs('django.request', 'DEBUG') as cm:
+            response = await self.async_client.get('/middleware_exceptions/view/')
+        self.assertEqual(response.status_code, 402)
+        self.assertIn(
+            "MiddlewareNotUsed: "
+            "'middleware_exceptions.middleware.SyncNotUsedMiddleware'",
+            [record.getMessage() for record in cm.records],
+        )
+
 
 @override_settings(ROOT_URLCONF='middleware_exceptions.urls')
 class AsyncMiddlewareTests(SimpleTestCase):
