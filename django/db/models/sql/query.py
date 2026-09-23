@@ -604,7 +604,7 @@ class Query(BaseExpression):
             # If the left side of the join was already relabeled, use the
             # updated alias.
             join = join.relabeled_clone(change_map)
-            new_alias = self.join(join, reuse=reuse)
+            new_alias = self.join(join, reuse=reuse, avoid_aliases=rhs.alias_map)
             if join.join_type == INNER:
                 rhs_votes.add(new_alias)
             # We can't reuse the same join again in the query. If we have two
@@ -745,7 +745,7 @@ class Query(BaseExpression):
             for model, values in seen.items():
                 callback(target, model, values)
 
-    def table_alias(self, table_name, create=False, filtered_relation=None):
+    def table_alias(self, table_name, create=False, filtered_relation=None, avoid_aliases=()):
         """
         Return a table alias for the given table_name and whether this is a
         new alias or not.
@@ -761,7 +761,11 @@ class Query(BaseExpression):
 
         # Create a new alias for this table.
         if alias_list:
-            alias = '%s%d' % (self.alias_prefix, len(self.alias_map) + 1)
+            suffix = len(self.alias_map) + 1
+            alias = '%s%d' % (self.alias_prefix, suffix)
+            while alias in avoid_aliases or alias in self.alias_map:
+                suffix += 1
+                alias = '%s%d' % (self.alias_prefix, suffix)
             alias_list.append(alias)
         else:
             # The first occurrence of a table uses the table name directly.
@@ -846,7 +850,12 @@ class Query(BaseExpression):
         relabelling any references to them in select columns and the where
         clause.
         """
-        assert set(change_map).isdisjoint(change_map.values())
+        # If keys and values of change_map were to intersect, an alias might be
+        # updated twice (e.g. T4 -> T5, T5 -> T6, so T4 -> T6) depending on
+        # their order in change_map.
+        assert set(change_map).isdisjoint(change_map.values()), (
+            'change_map keys and values must not intersect.'
+        )
 
         # 1. Update references in "select" (normal columns plus aliases),
         # "group by" and "where".
@@ -948,7 +957,7 @@ class Query(BaseExpression):
         """
         return len([1 for count in self.alias_refcount.values() if count])
 
-    def join(self, join, reuse=None):
+    def join(self, join, reuse=None, avoid_aliases=()):
         """
         Return an alias for the 'join', either reusing an existing alias for
         that join or creating a new one. 'join' is either a base_table_class or
@@ -976,7 +985,10 @@ class Query(BaseExpression):
             return reuse_alias
 
         # No reuse is possible, so we need a new alias.
-        alias, _ = self.table_alias(join.table_name, create=True, filtered_relation=join.filtered_relation)
+        alias, _ = self.table_alias(
+            join.table_name, create=True, filtered_relation=join.filtered_relation,
+            avoid_aliases=avoid_aliases,
+        )
         if join.join_type:
             if self.alias_map[join.parent_alias].join_type == LOUTER or join.nullable:
                 join_type = LOUTER
