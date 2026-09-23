@@ -248,9 +248,7 @@ class AbstractBaseUserTests(SimpleTestCase):
             self.assertEqual(
                 list(user.get_session_auth_fallback_hash()), [old_hash1, old_hash2]
             )
-            self.assertNotIn(
-                user.get_session_auth_hash(), [old_hash1, old_hash2]
-            )
+            self.assertNotIn(user.get_session_auth_hash(), [old_hash1, old_hash2])
 
 
 class AbstractUserTestCase(TestCase):
