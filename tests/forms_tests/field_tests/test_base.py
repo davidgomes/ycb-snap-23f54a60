@@ -35,6 +35,16 @@ class BasicFieldsTests(SimpleTestCase):
         self.assertEqual(f.fields['field1'].widget.choices, [('1', '1')])
         self.assertEqual(f.fields['field2'].widget.choices, [('2', '2')])
 
+    def test_field_deepcopies_error_messages(self):
+        class TestForm(Form):
+            field = Field(error_messages={'invalid': 'Form invalid'})
+
+        form1 = TestForm()
+        form2 = TestForm()
+        form1.fields['field'].error_messages['invalid'] = 'Form 1 invalid'
+        self.assertEqual(form2.fields['field'].error_messages['invalid'], 'Form invalid')
+        self.assertEqual(TestForm.base_fields['field'].error_messages['invalid'], 'Form invalid')
+
 
 class DisabledFieldTests(SimpleTestCase):
     def test_disabled_field_has_changed_always_false(self):
