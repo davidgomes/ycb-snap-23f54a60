@@ -18,10 +18,10 @@ from django.template import Context, Template
 from django.test import SimpleTestCase, TestCase, skipUnlessDBFeature
 
 from .models import (
-    Article, ArticleStatus, Author, Author1, Award, BetterWriter, BigInt, Book,
+    ArchivableArticle, Article, ArticleStatus, Author, Author1, Award, BetterWriter, BigInt, Book,
     Category, Character, Colour, ColourfulItem, CustomErrorMessage, CustomFF,
-    CustomFieldForExclusionModel, DateTimePost, DerivedBook, DerivedPost,
-    Document, ExplicitPK, FilePathModel, FlexibleDatePost, Homepage,
+    CustomFieldForExclusionModel, DateTimePost,     DerivedBook, DerivedPost,
+    Document, ExplicitPK, FavoriteArticle, FilePathModel, FlexibleDatePost, Homepage,
     ImprovedArticle, ImprovedArticleWithParentLink, Inventory,
     NullableUniqueCharFieldModel, Person, Photo, Post, Price, Product,
     Publication, PublicationDefaults, StrictAssignmentAll,
@@ -1643,6 +1643,36 @@ class ModelFormBasicTests(TestCase):
         obj = form.save()
         obj.name = 'Alice'
         obj.full_clean()
+
+    def test_validate_foreign_key_uses_default_manager(self):
+        class FavoriteArticleForm(forms.ModelForm):
+            class Meta:
+                model = FavoriteArticle
+                fields = '__all__'
+
+        article = ArchivableArticle.objects.create(title='Archived', archived=True)
+        form = FavoriteArticleForm({'article': article.pk})
+        self.assertIs(form.is_valid(), False)
+        self.assertEqual(
+            form.errors,
+            {'article': ['Select a valid choice. That choice is not one of the available choices.']},
+        )
+
+    def test_validate_foreign_key_to_model_with_overridden_manager(self):
+        class FavoriteArticleForm(forms.ModelForm):
+            class Meta:
+                model = FavoriteArticle
+                fields = '__all__'
+
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+                self.fields['article'].queryset = ArchivableArticle._base_manager.all()
+
+        article = ArchivableArticle.objects.create(title='Archived', archived=True)
+        form = FavoriteArticleForm({'article': article.pk})
+        self.assertIs(form.is_valid(), True)
+        favorite = form.save()
+        self.assertEqual(favorite.article, article)
 
 
 class ModelMultipleChoiceFieldTests(TestCase):

@@ -463,3 +463,19 @@ class Award(models.Model):
 
 class NullableUniqueCharFieldModel(models.Model):
     codename = models.CharField(max_length=50, blank=True, null=True, unique=True)
+
+
+class UnarchivedManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(archived=False)
+
+
+class ArchivableArticle(models.Model):
+    title = models.CharField(max_length=100)
+    archived = models.BooleanField(default=False)
+
+    objects = UnarchivedManager()
+
+
+class FavoriteArticle(models.Model):
+    article = models.ForeignKey(ArchivableArticle, models.CASCADE)
