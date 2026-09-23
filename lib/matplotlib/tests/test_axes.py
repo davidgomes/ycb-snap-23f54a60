@@ -455,6 +455,36 @@ def test_twin_inherit_autoscale_setting():
     assert not ax_y_off.get_autoscaley_on()
 
 
+@pytest.mark.parametrize('twin', ('x', 'y'))
+def test_twin_units(twin):
+    axis_name = f'{twin}axis'
+    twin_func = f'twin{twin}'
+
+    a = ['0', '1']
+    b = ['a', 'b']
+
+    fig = Figure()
+    ax1 = fig.subplots()
+    ax1.plot(a, b)
+    assert getattr(ax1, axis_name).units is not None
+    ax2 = getattr(ax1, twin_func)()
+    assert getattr(ax2, axis_name).units is not None
+    assert getattr(ax2, axis_name).units is getattr(ax1, axis_name).units
+
+
+def test_twinx_stackplot_datalim():
+    # Plotting on the twin must not reset the data limits of the original
+    # Axes, which relim() cannot recompute for collections (e.g. stackplot).
+    x = ['16 May', '17 May']
+    fig, ax1 = plt.subplots()
+    ax1.stackplot(x, [-22.717708333333402, 26.584999999999937])
+    expected = ax1.dataLim.get_points().copy()
+    ax2 = ax1.twinx()
+    ax2.plot(x, [-0.08501399999999998, -2.9833019999999966])
+    assert_array_equal(ax1.dataLim.get_points(), expected)
+    assert_allclose(ax2.dataLim.intervaly, [-2.983302, -0.085014])
+
+
 def test_inverted_cla():
     # GitHub PR #5450. Setting autoscale should reset
     # axes to be non-inverted.
