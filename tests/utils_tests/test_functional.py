@@ -195,6 +195,18 @@ class FunctionalTests(SimpleTestCase):
         self.assertEqual(lazy_a(), lazy_b())
         self.assertNotEqual(lazy_b(), lazy_c())
 
+    def test_lazy_add(self):
+        lazy_4 = lazy(lambda: 4, int)
+        lazy_5 = lazy(lambda: 5, int)
+        self.assertEqual(lazy_4() + lazy_5(), 9)
+
+    def test_lazy_add_str(self):
+        lazy_a = lazy(lambda: 'a', str)
+        lazy_b = lazy(lambda: 'b', str)
+        self.assertEqual(lazy_a() + 'b', 'ab')
+        self.assertEqual('a' + lazy_b(), 'ab')
+        self.assertEqual(lazy_a() + lazy_b(), 'ab')
+
     def test_lazy_repr_text(self):
         original_object = 'Lazy translation text'
         lazy_obj = lazy(lambda: original_object, str)
