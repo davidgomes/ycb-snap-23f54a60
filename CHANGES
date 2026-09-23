@@ -33,6 +33,8 @@ Bugs fixed
 * #7846: html theme: XML-invalid files were generated
 * #7869: :rst:role:`abbr` role without an explanation will show the explanation
   from the previous abbr role
+* napoleon: Decorated ``__init__`` method is not documented even if
+  :confval:`napoleon_include_init_with_doc` is enabled
 * C and C++, removed ``noindex`` directive option as it did
   nothing.
 
