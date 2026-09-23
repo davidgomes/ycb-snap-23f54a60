@@ -855,8 +855,12 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
     predictions = func(X_test)
     if method in ['decision_function', 'predict_proba', 'predict_log_proba']:
         if isinstance(predictions, list):
+            if hasattr(estimator, 'classes_'):
+                classes = estimator.classes_
+            else:
+                classes = [est.classes_ for est in estimator.estimators_]
             predictions = [_enforce_prediction_order(
-                estimator.classes_[i_label], predictions[i_label],
+                classes[i_label], predictions[i_label],
                 n_classes=len(set(y[:, i_label])), method=method)
                 for i_label in range(len(predictions))]
         else:
