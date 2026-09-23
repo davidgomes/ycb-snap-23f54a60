@@ -1,3 +1,4 @@
+import sys
 from datetime import date
 
 from django.forms import DateField, Form, SelectDateWidget
@@ -606,6 +607,7 @@ class SelectDateWidgetTest(WidgetTest):
             (("", "12", "1"), "0-12-1"),
             (("2000", "", "1"), "2000-0-1"),
             (("2000", "12", ""), "2000-12-0"),
+            (("2000", "12", str(sys.maxsize + 1)), "2000-12-%s" % (sys.maxsize + 1)),
             (("", "", "", ""), None),
             ((None, "12", "1"), None),
             (("2000", None, "1"), None),
