@@ -1620,6 +1620,36 @@ def test_feature_union_set_output():
     assert_array_equal(X_trans.index, X_test.index)
 
 
+def test_feature_union_set_output_aggregating_transformer():
+    """Check that FeatureUnion with pandas output keeps the index of a transformer
+    that changes the number of rows.
+
+    Non-regression test for gh-25730.
+    """
+    pd = pytest.importorskip("pandas")
+
+    class AggregatingTransformer(TransformerMixin, BaseEstimator):
+        def fit(self, X, y=None):
+            return self
+
+        def transform(self, X, y=None):
+            return X["value"].groupby(X["date"]).sum().to_frame()
+
+        def get_feature_names_out(self, input_features=None):
+            return np.asarray(["value_sum"], dtype=object)
+
+    index = pd.date_range(start="2020-01-01", end="2020-01-05", freq="H")[:-1]
+    data = pd.DataFrame({"value": [10] * len(index), "date": index.date}, index=index)
+
+    union = make_union(AggregatingTransformer()).set_output(transform="pandas")
+    X_trans = union.fit_transform(data)
+
+    assert isinstance(X_trans, pd.DataFrame)
+    assert X_trans.shape == (4, 1)
+    assert_array_equal(X_trans.index, sorted(set(index.date)))
+    assert_array_equal(X_trans.iloc[:, 0], [240] * 4)
+
+
 def test_feature_union_getitem():
     """Check FeatureUnion.__getitem__ returns expected results."""
     scalar = StandardScaler()

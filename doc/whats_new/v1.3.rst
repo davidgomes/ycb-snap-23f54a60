@@ -271,6 +271,12 @@ Changelog
 - |Enhancement| :func:`utils.multiclass.type_of_target` can identify pandas
   nullable data types as classification targets. :pr:`25638` by `Thomas Fan`_.
 
+- |Fix| When `set_output(transform="pandas")` is used, the index of a DataFrame
+  returned by a transformer is no longer overwritten by the index of the input.
+  This allows transformers that change the number of rows, e.g. by aggregating,
+  to be used in :class:`pipeline.FeatureUnion` with pandas output.
+  :pr:`25747` by `Thomas Fan`_.
+
 :mod:`sklearn.semi_supervised`
 ..............................
 
