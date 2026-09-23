@@ -34,6 +34,8 @@ from django.db.models.functions import (
     Cast,
     Coalesce,
     Greatest,
+    Lower,
+    Mod,
     Now,
     Pi,
     TruncDate,
@@ -2084,3 +2086,64 @@ class AggregateTestCase(TestCase):
             exists=Exists(Author.objects.extra(where=["1=0"])),
         )
         self.assertEqual(len(qs), 6)
+
+    def test_unused_aliased_aggregate_pruned(self):
+        with CaptureQueriesContext(connection) as ctx:
+            cnt = Book.objects.alias(
+                authors_count=Count("authors"),
+            ).count()
+        self.assertEqual(cnt, Book.objects.count())
+        sql = ctx.captured_queries[0]["sql"].lower()
+        self.assertEqual(sql.count("select"), 2, "Subquery wrapping required")
+        self.assertNotIn("authors_count", sql)
+
+    def test_non_aggregate_annotation_pruned(self):
+        with CaptureQueriesContext(connection) as ctx:
+            cnt = Book.objects.annotate(
+                name_lower=Lower("name"),
+            ).count()
+        self.assertEqual(cnt, Book.objects.count())
+        sql = ctx.captured_queries[0]["sql"].lower()
+        self.assertEqual(sql.count("select"), 1, "No subquery wrapping required")
+        self.assertNotIn("name_lower", sql)
+
+    def test_unreferenced_aggregate_annotation_pruned(self):
+        with CaptureQueriesContext(connection) as ctx:
+            cnt = Book.objects.annotate(
+                authors_count=Count("authors"),
+            ).count()
+        self.assertEqual(cnt, Book.objects.count())
+        sql = ctx.captured_queries[0]["sql"].lower()
+        self.assertEqual(sql.count("select"), 2, "Subquery wrapping required")
+        self.assertNotIn("authors_count", sql)
+
+    def test_referenced_aggregate_annotation_kept(self):
+        with CaptureQueriesContext(connection) as ctx:
+            Book.objects.annotate(
+                authors_count=Count("authors"),
+            ).aggregate(Avg("authors_count"))
+        sql = ctx.captured_queries[0]["sql"].lower()
+        self.assertEqual(sql.count("select"), 2, "Subquery wrapping required")
+        self.assertEqual(sql.count("authors_count"), 2)
+
+    def test_referenced_group_by_annotation_kept(self):
+        queryset = Book.objects.values(pages_mod=Mod("pages", 10)).annotate(
+            mod_count=Count("*")
+        )
+        with CaptureQueriesContext(connection) as ctx:
+            self.assertEqual(queryset.count(), 5)
+        sql = ctx.captured_queries[0]["sql"].lower()
+        self.assertNotIn("mod_count", sql)
+
+    def test_unreferenced_annotation_implicit_grouping_kept(self):
+        # Selected non-aggregate annotations are part of the implicit GROUP BY
+        # and can alter the number of groups.
+        queryset = Book.objects.annotate(
+            author_name=F("authors__name"),
+            stores_count=Count("store"),
+        )
+        with CaptureQueriesContext(connection) as ctx:
+            self.assertEqual(queryset.count(), len(queryset))
+        sql = ctx.captured_queries[0]["sql"].lower()
+        self.assertIn("author_name", sql)
+        self.assertNotIn("stores_count", sql)
