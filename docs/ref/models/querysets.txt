@@ -2221,7 +2221,9 @@ normally supports it).
 .. method:: bulk_update(objs, fields, batch_size=None)
 
 This method efficiently updates the given fields on the provided model
-instances, generally with one query::
+instances, generally with one query, and returns the number of rows matched
+(which may not be equal to the number of rows updated if some rows already
+have the new value)::
 
     >>> objs = [
     ...    Entry.objects.create(headline='Entry 1'),
@@ -2230,6 +2232,7 @@ instances, generally with one query::
     >>> objs[0].headline = 'This is entry 1'
     >>> objs[1].headline = 'This is entry 2'
     >>> Entry.objects.bulk_update(objs, ['headline'])
+    2
 
 :meth:`.QuerySet.update` is used to save the changes, so this is more efficient
 than iterating through the list of models and calling ``save()`` on each of
@@ -2250,6 +2253,10 @@ them, but it has a few caveats:
 The ``batch_size`` parameter controls how many objects are saved in a single
 query. The default is to update all objects in one batch, except for SQLite
 and Oracle which have restrictions on the number of variables used in a query.
+
+.. versionchanged:: 4.0
+
+    The return value of the number of rows matched was added.
 
 ``count()``
 ~~~~~~~~~~~
