@@ -2310,6 +2310,16 @@ class TestDataArray:
                 )
                 np.testing.assert_allclose(actual.values, expected)
 
+    def test_quantile_keep_attrs(self):
+        # regression test for GH3304 / PR3305
+        da = DataArray([0, 0], dims="x", attrs={"units": "K"})
+
+        q = da.quantile(0.9, dim="x")
+        assert q.attrs == OrderedDict()
+
+        q = da.quantile(0.9, dim="x", keep_attrs=True)
+        assert q.attrs == da.attrs
+
     def test_reduce_keep_attrs(self):
         # Test dropped attrs
         vm = self.va.mean()

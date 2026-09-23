@@ -4456,6 +4456,16 @@ class TestDataset:
             assert "dim3" in ds_quantile.dims
             assert all(d not in ds_quantile.dims for d in dim)
 
+        # keep variable and dataset attrs when requested
+        ds.attrs["units"] = "test"
+        ds["var1"].attrs["units"] = "K"
+        q = ds.quantile(0.5, dim="dim1", keep_attrs=True)
+        assert q.attrs["units"] == "test"
+        assert q["var1"].attrs["units"] == "K"
+        q = ds.quantile(0.5, dim="dim1", keep_attrs=False)
+        assert q.attrs == OrderedDict()
+        assert q["var1"].attrs == OrderedDict()
+
     @requires_bottleneck
     def test_rank(self):
         ds = create_test_data(seed=1234)
