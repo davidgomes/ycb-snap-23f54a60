@@ -349,6 +349,18 @@ class URLResponseTests(URLTestCaseBase):
         self.assertEqual(response.headers['content-language'], 'nl')
         self.assertEqual(response.context['LANGUAGE_CODE'], 'nl')
 
+    @override_settings(
+        LANGUAGES=[
+            ('en', 'English'),
+            ('en-latn-us', 'Latin English'),
+        ],
+    )
+    def test_language_with_script_and_region(self):
+        response = self.client.get('/en-latn-us/prefixed/')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers['content-language'], 'en-latn-us')
+        self.assertEqual(response.context['LANGUAGE_CODE'], 'en-latn-us')
+
 
 class URLRedirectWithScriptAliasTests(URLTestCaseBase):
     """
