@@ -164,11 +164,6 @@ class AskRationalHandler(CommonHandler):
 
 class AskIrrationalHandler(CommonHandler):
 
-
-    @staticmethod
-    def Expr(expr, assumptions):
-        return expr.is_irrational
-
     @staticmethod
     def Basic(expr, assumptions):
         _real = ask(Q.real(expr), assumptions)
