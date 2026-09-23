@@ -276,6 +276,23 @@ def test_multi_output_classification():
                            list(predict_proba[i]))
 
 
+@pytest.mark.parametrize(
+    'estimator',
+    [RandomForestClassifier(n_estimators=2, random_state=0),
+     MultiOutputClassifier(RandomForestClassifier(n_estimators=2,
+                                                  random_state=0))]
+)
+def test_multi_output_classes_(estimator):
+    # MultiOutputClassifier.classes_ should follow the same layout as
+    # classifiers natively supporting multioutput, e.g. RandomForestClassifier
+    estimator.fit(X, y)
+    assert isinstance(estimator.classes_, list)
+    assert len(estimator.classes_) == n_outputs
+    for estimator_classes, expected_classes in zip(estimator.classes_,
+                                                   classes):
+        assert_array_equal(estimator_classes, expected_classes)
+
+
 def test_multiclass_multioutput_estimator():
     # test to check meta of meta estimators
     svc = LinearSVC(random_state=0)
