@@ -118,6 +118,19 @@ class OptimizerTests(SimpleTestCase):
                 migrations.CreateModel('Foo', fields=[], options={'verbose_name_plural': 'Foozes'}),
             ]
         )
+        self.assertOptimizesTo(
+            [
+                migrations.CreateModel(
+                    'Foo',
+                    fields=[],
+                    options={'verbose_name': 'Foo', 'verbose_name_plural': 'Foozes'},
+                ),
+                migrations.AlterModelOptions(name='Foo', options={'verbose_name_plural': 'Bars'}),
+            ],
+            [
+                migrations.CreateModel('Foo', fields=[], options={'verbose_name_plural': 'Bars'}),
+            ],
+        )
 
     def _test_create_alter_foo_delete_model(self, alter_foo):
         """
