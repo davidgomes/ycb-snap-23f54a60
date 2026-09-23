@@ -537,6 +537,9 @@ def test_pipeline_slice():
     assert isinstance(pipe2, Pipeline)
     assert pipe2.steps == pipe.steps[:-1]
     assert 2 == len(pipe2.named_steps)
+    assert len(pipe) == 3
+    assert len(pipe2) == 2
+    assert pipe[:len(pipe)].steps == pipe.steps
     assert_raises(ValueError, lambda: pipe[::-1])
 
 
@@ -1069,5 +1072,6 @@ def test_make_pipeline_memory():
     assert pipeline.memory is memory
     pipeline = make_pipeline(DummyTransf(), SVC())
     assert pipeline.memory is None
+    assert len(pipeline) == 2
 
     shutil.rmtree(cachedir)
