@@ -1257,3 +1257,11 @@ def test_collector_respects_tbstyle(testdir):
             "*= 1 error in *",
         ]
     )
+
+
+def test_does_not_eagerly_collect_packages(testdir):
+    testdir.makepyfile("def test(): pass")
+    pydir = testdir.mkpydir("foopkg")
+    pydir.join("__init__.py").write("assert False")
+    result = testdir.runpytest()
+    assert result.ret == ExitCode.OK
