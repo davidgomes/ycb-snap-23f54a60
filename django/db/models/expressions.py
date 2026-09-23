@@ -449,9 +449,10 @@ class CombinedExpression(SQLiteNumericMixin, Expression):
             rhs_output = self.rhs.output_field
         except FieldError:
             rhs_output = None
+        lhs_type = lhs_output.get_internal_type() if lhs_output else None
+        rhs_type = rhs_output.get_internal_type() if rhs_output else None
         if (not connection.features.has_native_duration_field and
-                ((lhs_output and lhs_output.get_internal_type() == 'DurationField') or
-                 (rhs_output and rhs_output.get_internal_type() == 'DurationField'))):
+                'DurationField' in {lhs_type, rhs_type} and lhs_type != rhs_type):
             return DurationExpression(self.lhs, self.connector, self.rhs).as_sql(compiler, connection)
         if (lhs_output and rhs_output and self.connector == self.SUB and
             lhs_output.get_internal_type() in {'DateField', 'DateTimeField', 'TimeField'} and
