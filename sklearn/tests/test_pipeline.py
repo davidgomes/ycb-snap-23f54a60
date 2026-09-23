@@ -1679,3 +1679,25 @@ def test_feature_union_feature_names_in_():
     union = FeatureUnion([("pass", "passthrough")])
     union.fit(X_array)
     assert not hasattr(union, "feature_names_in_")
+
+
+def test_feature_union_set_output_aggregating_transformer():
+    """FeatureUnion with pandas output must keep the index of aggregated output."""
+    pd = pytest.importorskip("pandas")
+    from sklearn.base import TransformerMixin
+
+    class Agg(TransformerMixin, BaseEstimator):
+        def fit(self, X, y=None):
+            return self
+
+        def transform(self, X, y=None):
+            return X["value"].groupby(X["date"]).sum().to_frame()
+
+        def get_feature_names_out(self, input_features=None):
+            return np.asarray(["value"], dtype=object)
+
+    X = pd.DataFrame({"value": [1, 2, 3, 4], "date": [0, 0, 1, 1]})
+    union = FeatureUnion([("agg", Agg())]).set_output(transform="pandas")
+    out = union.fit_transform(X)
+    assert out.shape == (2, 1)
+    assert_array_equal(out.index, [0, 1])
