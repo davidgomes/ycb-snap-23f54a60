@@ -1062,3 +1062,16 @@ def test_issue_16313():
     assert (l*x).is_real is False
     assert (l*x*x).is_real is None  # since x*x can be a real number
     assert (-x).is_positive is False
+
+def test_issue_16579():
+    assert Symbol('m', even=True).is_finite is True
+    assert Symbol('n', odd=True).is_finite is True
+    assert Symbol('n', integer=True).is_finite is True
+    assert Symbol('q', rational=True).is_finite is True
+    assert Symbol('p', prime=True).is_finite is True
+    assert Symbol('i', irrational=True).is_finite is True
+    assert Symbol('j', infinite=True).is_integer is False
+    assert Symbol('j', infinite=True).is_rational is False
+    assert Symbol('r', real=True, rational=False).is_irrational is None
+    assert S.Infinity.is_rational is False
+    assert S.Infinity.is_irrational is False
