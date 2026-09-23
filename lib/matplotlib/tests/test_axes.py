@@ -2859,12 +2859,39 @@ def test_stackplot():
     ax.set_xlim((0, 10))
     ax.set_ylim((0, 70))
 
-    # Reuse testcase from above for a labeled data test
+    # Reuse testcase from above for a test with labeled data and with colours
+    # from the Axes property cycle.
     data = {"x": x, "y1": y1, "y2": y2, "y3": y3}
     fig, ax = plt.subplots()
-    ax.stackplot("x", "y1", "y2", "y3", data=data)
+    ax.stackplot("x", "y1", "y2", "y3", data=data, colors=["C0", "C1", "C2"])
     ax.set_xlim((0, 10))
     ax.set_ylim((0, 70))
+
+
+def test_stackplot_does_not_modify_prop_cycle():
+    # Explicit colors, including CN aliases, are applied directly and must not
+    # replace or advance the Axes property cycle.
+    fig, ax = plt.subplots()
+    cycle_colors = mpl.rcParams['axes.prop_cycle'].by_key()['color']
+    cols = ax.stackplot([1, 2, 3], [1, 1, 1], [1, 2, 3], [4, 3, 2],
+                        colors=['C2', 'C3', 'C4'])
+    for coll, spec in zip(cols, ['C2', 'C3', 'C4']):
+        assert_allclose(coll.get_facecolor(), mcolors.to_rgba(spec))
+    assert ax._get_lines.get_next_color() == cycle_colors[0]
+
+    # A shorter list repeats, still without touching the cycle.
+    cols = ax.stackplot([1, 2], [1, 1], [2, 2], [3, 3], colors=['C1', 'C5'])
+    assert_allclose(cols[0].get_facecolor(), mcolors.to_rgba('C1'))
+    assert_allclose(cols[2].get_facecolor(), mcolors.to_rgba('C1'))
+    assert ax._get_lines.get_next_color() == cycle_colors[1]
+
+    # Omitting colors still consumes the Axes property cycle.
+    fig, ax = plt.subplots()
+    ax.set_prop_cycle(color=['red', 'green', 'blue'])
+    cols = ax.stackplot([1, 2], [1, 1], [2, 2])
+    assert_allclose(cols[0].get_facecolor(), mcolors.to_rgba('red'))
+    assert_allclose(cols[1].get_facecolor(), mcolors.to_rgba('green'))
+    assert ax._get_lines.get_next_color() == 'blue'
 
 
 @image_comparison(['stackplot_test_baseline'], remove_text=True)
