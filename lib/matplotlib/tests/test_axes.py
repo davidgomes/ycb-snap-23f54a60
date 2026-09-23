@@ -546,6 +546,27 @@ def test_cla_not_redefined_internally():
             assert 'cla' not in klass.__dict__
 
 
+def test_cla_clears_children_axes_and_fig():
+    fig, ax = plt.subplots()
+    lines = ax.plot([], [], [], [])
+    img = ax.imshow([[1]])
+    for art in lines + [img]:
+        assert art.axes is ax
+        assert art.figure is fig
+    ax.clear()
+    for art in lines + [img]:
+        assert art.axes is None
+        assert art.figure is None
+
+
+def test_clf_clears_children_axes_and_fig():
+    fig, ax = plt.subplots()
+    line, = ax.plot([1, 2])
+    fig.clf()
+    assert line.axes is None
+    assert line.figure is None
+
+
 @check_figures_equal(extensions=["png"])
 def test_minorticks_on_rcParams_both(fig_test, fig_ref):
     with matplotlib.rc_context({"xtick.minor.visible": True,
