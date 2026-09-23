@@ -228,15 +228,20 @@ class HashedFilesMixin:
         ]
         # Do a single pass first. Post-process all files once, then repeat for
         # adjustable files.
+        processed_adjustable_paths = {}
         for name, hashed_name, processed, _ in self._post_process(paths, adjustable_paths, hashed_files):
-            yield name, hashed_name, processed
+            if name not in adjustable_paths or isinstance(processed, Exception):
+                yield name, hashed_name, processed
+            else:
+                processed_adjustable_paths[name] = (name, hashed_name, processed)
 
         paths = {path: paths[path] for path in adjustable_paths}
 
         for i in range(self.max_post_process_passes):
             substitutions = False
             for name, hashed_name, processed, subst in self._post_process(paths, adjustable_paths, hashed_files):
-                yield name, hashed_name, processed
+                # Overwrite since hashed_name may be newer.
+                processed_adjustable_paths[name] = (name, hashed_name, processed)
                 substitutions = substitutions or subst
 
             if not substitutions:
@@ -244,6 +249,8 @@ class HashedFilesMixin:
 
         if substitutions:
             yield 'All', None, RuntimeError('Max post-process passes exceeded.')
+
+        yield from processed_adjustable_paths.values()
 
         # Store the processed paths
         self.hashed_files.update(hashed_files)
