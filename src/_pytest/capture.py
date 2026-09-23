@@ -447,6 +447,13 @@ class EncodedFile(object):
         """Ensure that file.name is a string."""
         return repr(self.buffer)
 
+    @property
+    def mode(self):
+        # EncodedFile.write() accepts text, so the advertised mode must not
+        # include "b". Callers such as youtube-dl inspect mode to choose
+        # between str and bytes.
+        return self.buffer.mode.replace("b", "")
+
     def __getattr__(self, name):
         return getattr(object.__getattribute__(self, "buffer"), name)
 
