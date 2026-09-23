@@ -201,7 +201,9 @@ def as_compatible_data(data, fastpath=False):
         # can't use fastpath (yet) for scalars
         return _maybe_wrap_data(data)
 
-    if isinstance(data, Variable):
+    from .dataarray import DataArray
+
+    if isinstance(data, (Variable, DataArray)):
         return data.data
 
     if isinstance(data, NON_NUMPY_SUPPORTED_ARRAY_TYPES):
@@ -218,7 +220,8 @@ def as_compatible_data(data, fastpath=False):
         data = np.timedelta64(getattr(data, "value", data), "ns")
 
     # we don't want nested self-described arrays
-    data = getattr(data, "values", data)
+    if isinstance(data, (pd.Series, pd.Index, pd.DataFrame)):
+        data = data.values
 
     if isinstance(data, np.ma.MaskedArray):
         mask = np.ma.getmaskarray(data)

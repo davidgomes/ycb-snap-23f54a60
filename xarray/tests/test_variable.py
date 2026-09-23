@@ -8,7 +8,14 @@ import pandas as pd
 import pytest
 import pytz
 
-from xarray import Coordinate, Dataset, IndexVariable, Variable, set_options
+from xarray import (
+    Coordinate,
+    DataArray,
+    Dataset,
+    IndexVariable,
+    Variable,
+    set_options,
+)
 from xarray.core import dtypes, duck_array_ops, indexing
 from xarray.core.common import full_like, ones_like, zeros_like
 from xarray.core.indexing import (
@@ -2307,6 +2314,24 @@ class TestAsCompatibleData:
         array = CustomIndexable(np.arange(3))
         orig = Variable(dims=("x"), data=array, attrs={"foo": "bar"})
         assert isinstance(orig._data, CustomIndexable)
+
+    def test_object_with_values_attribute(self):
+        # GH2905
+        class HasValues:
+            values = 5
+
+        obj = HasValues()
+        actual = as_compatible_data(obj)
+        assert actual.dtype == object
+        assert actual.item() is obj
+
+        var = Variable(["x"], np.array([None], dtype=object))
+        var[0] = obj
+        assert var.values[0] is obj
+
+        da = DataArray([None])
+        da.loc[{"dim_0": 0}] = obj
+        assert da.values[0] is obj
 
 
 def test_raise_no_warning_for_nan_in_binary_ops():
