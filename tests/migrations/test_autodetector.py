@@ -862,6 +862,22 @@ class AutodetectorTests(TestCase):
         self.assertOperationTypes(changes, 'testapp', 0, ["RenameField"])
         self.assertOperationAttributes(changes, 'testapp', 0, 0, old_name="name", new_name="names")
 
+    def test_rename_model_and_field(self):
+        """Renaming a model and one of its fields in the same step."""
+        author_renamed = ModelState("testapp", "Writer", [
+            ("id", models.AutoField(primary_key=True)),
+            ("names", models.CharField(max_length=200)),
+        ])
+        changes = self.get_changes(
+            [self.author_name],
+            [author_renamed],
+            MigrationQuestioner({"ask_rename": True, "ask_rename_model": True}),
+        )
+        self.assertNumberMigrations(changes, 'testapp', 1)
+        self.assertOperationTypes(changes, 'testapp', 0, ["RenameModel", "RenameField"])
+        self.assertOperationAttributes(changes, 'testapp', 0, 0, old_name="Author", new_name="Writer")
+        self.assertOperationAttributes(changes, 'testapp', 0, 1, old_name="name", new_name="names")
+
     def test_rename_field_foreign_key_to_field(self):
         before = [
             ModelState('app', 'Foo', [
