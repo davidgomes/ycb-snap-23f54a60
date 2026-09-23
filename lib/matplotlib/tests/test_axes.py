@@ -938,6 +938,16 @@ def test_inverted_limits():
     assert ax.get_ylim() == (5, -3)
     plt.close()
 
+    # Passing limits in reverse order must invert a log axis as well.
+    fig, ax = plt.subplots()
+    ax.set_yscale("log")
+    ax.set_ylim(10, 1)
+    assert ax.get_ylim() == (10, 1)
+    ax.set_xscale("log")
+    ax.set_xlim(10, 1)
+    assert ax.get_xlim() == (10, 1)
+    plt.close()
+
 
 @image_comparison(baseline_images=['nonfinite_limits'])
 def test_nonfinite_limits():
