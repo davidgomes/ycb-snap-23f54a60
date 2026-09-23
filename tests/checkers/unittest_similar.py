@@ -339,6 +339,14 @@ TOTAL lines=62 duplicates=5 percent=8.06
     )
 
 
+def test_set_duplicate_lines_to_zero() -> None:
+    output = StringIO()
+    with redirect_stdout(output), pytest.raises(SystemExit) as ex:
+        similar.Run(["--duplicates=0", SIMILAR1, SIMILAR2])
+    assert ex.value.code == 0
+    assert output.getvalue() == ""
+
+
 def test_lines_without_meaningful_content_do_not_trigger_similarity() -> None:
     output = StringIO()
     with redirect_stdout(output), pytest.raises(SystemExit) as ex:
