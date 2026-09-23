@@ -278,8 +278,8 @@ def intersection_sets(self, other): # noqa:F811
 
     if other == S.Reals:
         from sympy.core.function import expand_complex
-        from sympy.solvers.solvers import denoms, solve_linear
-        from sympy.core.relational import Eq
+        from sympy.solvers.solvers import denoms
+        from sympy.solvers.solveset import solveset_real
         f = self.lamda.expr
         n = self.lamda.variables[0]
 
@@ -303,22 +303,13 @@ def intersection_sets(self, other): # noqa:F811
         elif ifree != {n}:
             return None
         else:
-            # univarite imaginary part in same variable
-            x, xis = zip(*[solve_linear(i, 0) for i in Mul.make_args(im) if n in i.free_symbols])
-            if x and all(i == n for i in x):
-                base_set -= FiniteSet(xis)
-            else:
-                base_set -= ConditionSet(n, Eq(im, 0), S.Integers)
+            # univarite imaginary part in same variable;
+            # use solveset to make sure all solutions are found
+            base_set &= solveset_real(im, n)
         # exclude values that make denominators 0
         for i in denoms(f):
             if i.has(n):
-                sol = list(zip(*[solve_linear(i, 0) for i in Mul.make_args(im) if n in i.free_symbols]))
-                if sol != []:
-                    x, xis = sol
-                    if x and all(i == n for i in x):
-                        base_set -= FiniteSet(xis)
-                else:
-                    base_set -= ConditionSet(n, Eq(i, 0), S.Integers)
+                base_set -= solveset_real(i, n)
         return imageset(lam, base_set)
 
     elif isinstance(other, Interval):

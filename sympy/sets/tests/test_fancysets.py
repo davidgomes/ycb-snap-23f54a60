@@ -657,7 +657,13 @@ def test_infinitely_indexed_set_2():
 def test_imageset_intersect_real():
     from sympy import I
     from sympy.abc import n
-    assert imageset(Lambda(n, n + (n - 1)*(n + 1)*I), S.Integers).intersect(S.Reals) == Complement(S.Integers, FiniteSet((-1, 1)))
+    S1 = imageset(Lambda(n, n + (n - 1)*(n + 1)*I), S.Integers)
+    assert S1.intersect(S.Reals) == FiniteSet(-1, 1)
+    assert 2 not in S1.intersect(S.Reals)
+    assert imageset(Lambda(n, n + I*(n - 3)/(n - 2)), S.Integers
+        ).intersect(S.Reals) == FiniteSet(3)
+    assert imageset(Lambda(n, n + n*I/(n - 2)), S.Integers
+        ).intersect(S.Reals) == FiniteSet(0)
     s = ImageSet(
         Lambda(n, -I*(I*(2*pi*n - pi/4) + log(Abs(sqrt(-I))))),
         S.Integers)
