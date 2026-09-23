@@ -1,0 +1,10 @@
+Default antialiasing for text is now determined when the Text is created
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:rc:`text.antialiased` is now read when a `.Text` (or `.Annotation`) object is
+created, rather than when it is drawn, consistently with how other artists
+handle their ``antialiased`` property. Changing the rcParam after a text has
+been created no longer affects that text; use `.Text.set_antialiased` instead.
+
+`.MathTextParser.parse` gained a keyword-only *antialiased* parameter (defaulting
+to :rc:`text.antialiased`), which is used for raster output.

@@ -191,10 +191,84 @@ def test_antialiasing():
              verticalalignment='center')
     fig.text(0.5, 0.25, r"$\sqrt{x}$", horizontalalignment='center',
              verticalalignment='center')
-    # NOTE: We don't need to restore the rcParams here, because the
-    # test cleanup will do it for us.  In fact, if we do it here, it
-    # will turn antialiasing back off before the images are actually
-    # rendered.
+
+    # Antialiasing is resolved when the Text is created, so changing the
+    # rcParam afterwards must not affect the rendered image.
+    mpl.rcParams['text.antialiased'] = False
+
+
+def test_get_set_antialiased():
+    txt = Text(.5, .5, "foo\nbar")
+    assert txt._antialiased == mpl.rcParams['text.antialiased']
+    assert txt.get_antialiased() == mpl.rcParams['text.antialiased']
+
+    txt.set_antialiased(True)
+    assert txt._antialiased is True
+    assert txt.get_antialiased() == txt._antialiased
+
+    txt.set_antialiased(False)
+    assert txt._antialiased is False
+    assert txt.get_antialiased() == txt._antialiased
+
+    txt.set_antialiased(None)
+    assert txt.get_antialiased() == mpl.rcParams['text.antialiased']
+
+    txt2 = Text(.5, .5, "foo", antialiased=False)
+    assert txt2.get_antialiased() is False
+    txt.update_from(txt2)
+    assert txt.get_antialiased() is False
+
+
+def test_annotation_antialiased():
+    annot = mpl.text.Annotation("foo\nbar", (.5, .5), antialiased=True)
+    assert annot._antialiased is True
+    assert annot.get_antialiased() == annot._antialiased
+
+    annot2 = mpl.text.Annotation("foo\nbar", (.5, .5), antialiased=False)
+    assert annot2._antialiased is False
+    assert annot2.get_antialiased() == annot2._antialiased
+
+    annot3 = mpl.text.Annotation("foo\nbar", (.5, .5), antialiased=False)
+    annot3.set_antialiased(True)
+    assert annot3.get_antialiased() is True
+    assert annot3._antialiased is True
+
+    annot4 = mpl.text.Annotation("foo\nbar", (.5, .5))
+    assert annot4._antialiased == mpl.rcParams['text.antialiased']
+
+
+@pytest.mark.parametrize("text", ["6 inches x 2 inches", r"$\sqrt{x}$"])
+@check_figures_equal()
+def test_text_antialiased_off_default_vs_manual(fig_test, fig_ref, text):
+    fig_test.text(0.5, 0.5, text, antialiased=False)
+
+    mpl.rcParams['text.antialiased'] = False
+    fig_ref.text(0.5, 0.5, text)
+
+
+@pytest.mark.parametrize("text", ["6 inches x 2 inches", r"$\sqrt{x}$"])
+@check_figures_equal()
+def test_text_antialiased_on_default_vs_manual(fig_test, fig_ref, text):
+    fig_test.text(0.5, 0.5, text, antialiased=True)
+
+    mpl.rcParams['text.antialiased'] = True
+    fig_ref.text(0.5, 0.5, text)
+
+
+def test_text_antialiased_changes_agg_output():
+    def render(antialiased):
+        fig = plt.figure(figsize=(2, 1))
+        fig.text(0.1, 0.4, r"foo $\sqrt{x}$", antialiased=antialiased)
+        fig.canvas.draw()
+        return np.asarray(fig.canvas.buffer_rgba())
+
+    aa_on = render(True)
+    aa_off = render(False)
+    assert not np.array_equal(aa_on, aa_off)
+    # Without antialiasing, text pixels are either pure background or pure
+    # foreground, i.e. there are no intermediate gray levels.
+    assert set(np.unique(aa_off[..., :3])) <= {0, 255}
+    assert len(np.unique(aa_on[..., :3])) > 2
 
 
 def test_afm_kerning():
