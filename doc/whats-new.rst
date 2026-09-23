@@ -116,6 +116,8 @@ New Features
 
 Bug fixes
 ~~~~~~~~~
+- Fix :py:meth:`DataArray.to_unstacked_dataset` for variables that only have
+  a single dimension (:issue:`4093`).
 - Fix errors combining attrs in :py:func:`open_mfdataset` (:issue:`4009`, :pull:`4173`)
   By `John Omotani <https://github.com/johnomotani>`_
 - If groupby receives a ``DataArray`` with name=None, assign a default name (:issue:`158`)
