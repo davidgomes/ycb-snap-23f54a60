@@ -422,6 +422,13 @@ class TestPandasMultiIndex:
                 "z",
             )
 
+    @pytest.mark.parametrize("dtype", ["i4", "f4", "U1"])
+    def test_stack_preserves_dtype(self, dtype) -> None:
+        # regression test for GH7392
+        ds = xr.Dataset(coords={"a": np.array([0], dtype=dtype)})
+        stacked = ds.stack(b=("a",))
+        assert stacked["a"].values.dtype == np.dtype(dtype)
+
     def test_stack_non_unique(self) -> None:
         prod_vars = {
             "x": xr.Variable("x", pd.Index(["b", "a"]), attrs={"foo": "bar"}),
