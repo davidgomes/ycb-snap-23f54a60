@@ -271,6 +271,13 @@ def test_min_samples_edge_case():
         assert_array_equal(clust.labels_, expected_labels)
 
 
+def test_min_samples_float():
+    # Non-regression test: a float min_samples used to be passed as float
+    # to NearestNeighbors(n_neighbors=...), raising a TypeError.
+    clust = OPTICS(min_samples=0.1, cluster_method='xi').fit(X)
+    assert clust.labels_.shape == (len(X),)
+
+
 # try arbitrary minimum sizes
 @pytest.mark.parametrize('min_cluster_size', range(2, X.shape[0] // 10, 23))
 def test_min_cluster_size(min_cluster_size):
