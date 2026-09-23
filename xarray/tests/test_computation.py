@@ -1922,6 +1922,84 @@ def test_where() -> None:
     assert_identical(expected, actual)
 
 
+def test_where_attrs() -> None:
+    cond = xr.DataArray([True, False], dims="x", attrs={"attr": "cond"})
+    x = xr.DataArray([1, 1], dims="x", attrs={"attr": "x"})
+    y = xr.DataArray([0, 0], dims="x", attrs={"attr": "y"})
+
+    actual = xr.where(cond, x, y, keep_attrs=True)
+    expected = xr.DataArray([1, 0], dims="x", attrs={"attr": "x"})
+    assert_identical(expected, actual)
+
+    actual = xr.where(cond, x, y)
+    expected = xr.DataArray([1, 0], dims="x")
+    assert_identical(expected, actual)
+
+    with xr.set_options(keep_attrs=True):
+        actual = xr.where(cond, x, y)
+    expected = xr.DataArray([1, 0], dims="x", attrs={"attr": "x"})
+    assert_identical(expected, actual)
+
+    # x without attrs
+    actual = xr.where(cond, 1, y, keep_attrs=True)
+    expected = xr.DataArray([1, 0], dims="x")
+    assert_identical(expected, actual)
+
+    # other values are passed on to apply_ufunc
+    actual = xr.where(cond, x, y, keep_attrs="override")
+    expected = xr.DataArray([1, 0], dims="x", attrs={"attr": "cond"})
+    assert_identical(expected, actual)
+
+    assert x.attrs == {"attr": "x"}
+
+
+def test_where_attrs_coords() -> None:
+    def coords(attr):
+        return {"x": ("x", [0, 1], {"attr": attr}), "a": ("x", [2, 3], {"attr": attr})}
+
+    cond = xr.DataArray([True, False], dims="x", coords=coords("cond"))
+    x = xr.DataArray([1, 1], dims="x", coords=coords("x"), attrs={"attr": "x"})
+    y = xr.DataArray([0, 0], dims="x", coords=coords("y"), attrs={"attr": "y"})
+
+    actual = xr.where(cond, x, y, keep_attrs=True)
+    expected = xr.DataArray([1, 0], dims="x", coords=coords("x"), attrs={"attr": "x"})
+    assert_identical(expected, actual)
+    assert cond.x.attrs == {"attr": "cond"}
+    assert cond.a.attrs == {"attr": "cond"}
+
+    # coordinates that x lacks are left untouched
+    actual = xr.where(cond, 1, y, keep_attrs=True)
+    expected = xr.DataArray([1, 0], dims="x", coords=coords("cond"))
+    assert_identical(expected, actual)
+
+
+def test_where_attrs_dataset() -> None:
+    cond = xr.DataArray([True, False], dims="x", attrs={"attr": "cond"})
+    x = xr.Dataset(
+        {"a": ("x", [1, 1], {"attr": "x_a"}), "b": ("x", [2, 2], {"attr": "x_b"})},
+        attrs={"attr": "x"},
+    )
+    y = xr.Dataset(
+        {"a": ("x", [0, 0], {"attr": "y_a"}), "b": ("x", [0, 0], {"attr": "y_b"})},
+        attrs={"attr": "y"},
+    )
+
+    actual = xr.where(cond, x, y, keep_attrs=True)
+    expected = xr.Dataset(
+        {"a": ("x", [1, 0], {"attr": "x_a"}), "b": ("x", [2, 0], {"attr": "x_b"})},
+        attrs={"attr": "x"},
+    )
+    assert_identical(expected, actual)
+
+    # a DataArray x is broadcast against every data variable of y
+    x_da = xr.DataArray([1, 1], dims="x", attrs={"attr": "x"})
+    actual = xr.where(cond, x_da, y, keep_attrs=True)
+    expected = xr.Dataset(
+        {"a": ("x", [1, 0], {"attr": "x"}), "b": ("x", [1, 0], {"attr": "x"})}
+    )
+    assert_identical(expected, actual)
+
+
 @pytest.mark.parametrize("use_dask", [True, False])
 @pytest.mark.parametrize("use_datetime", [True, False])
 def test_polyval(use_dask, use_datetime) -> None:
