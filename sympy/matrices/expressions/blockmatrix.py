@@ -164,7 +164,18 @@ class BlockMatrix(MatrixExpr):
     def _blockmul(self, other):
         if (isinstance(other, BlockMatrix) and
                 self.colblocksizes == other.rowblocksizes):
-            return BlockMatrix(self.blocks*other.blocks)
+            A, B = self.blocks, other.blocks
+            rows = []
+            for i in range(A.rows):
+                row = []
+                for j in range(B.cols):
+                    terms = [A[i, k]*B[k, j] for k in range(A.cols)]
+                    total = terms[0]
+                    for t in terms[1:]:
+                        total = total + t
+                    row.append(total)
+                rows.append(row)
+            return BlockMatrix(rows)
 
         return self * other
 
