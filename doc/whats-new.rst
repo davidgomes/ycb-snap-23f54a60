@@ -97,6 +97,8 @@ Bug fixes
   ensure it skips missing values for float dtypes (consistent with other methods). This should
   not change the behavior (:pull:`6303`).
   By `Mathias Hauser <https://github.com/mathause>`_.
+- :py:func:`polyval` now correctly handles ``timedelta64`` coordinates and returns
+  the dimensions of the coordinate before those of the coefficients (:issue:`6597`, :pull:`6599`).
 - Many bugs fixed by the explicit indexes refactor, mainly related to multi-index (virtual)
   coordinates. See the corresponding pull-request on GitHub for more details. (:pull:`5692`).
   By `Benoît Bovy <https://github.com/benbovy>`_.
