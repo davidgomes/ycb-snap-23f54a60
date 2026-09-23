@@ -213,7 +213,9 @@ Management Commands
 Migrations
 ~~~~~~~~~~
 
-* ...
+* Expressions importable from ``django.db.models`` (e.g. ``Value``, ``Func``,
+  ``Case``, and ``When``) now deconstruct to simplified paths such as
+  ``django.db.models.Value``, making generated migration code shorter.
 
 Models
 ~~~~~~
