@@ -6357,6 +6357,15 @@ def test_hist_auto_bins():
     assert bins[-1] >= 6
 
 
+def test_hist_range_with_density():
+    # range must be respected when density=True (gh-8638 regression)
+    np.random.seed(19680801)
+    _, bins, _ = plt.hist(np.random.rand(10), "auto", range=(0, 1),
+                          density=True)
+    assert bins[0] == 0
+    assert bins[-1] == 1
+
+
 def test_hist_nan_data():
     fig, (ax1, ax2) = plt.subplots(2)
 
