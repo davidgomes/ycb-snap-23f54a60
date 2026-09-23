@@ -1500,7 +1500,9 @@ class LiveServerThread(threading.Thread):
         try:
             # Create the handler for serving static and media files
             handler = self.static_handler(_MediaFilesHandler(WSGIHandler()))
-            self.httpd = self._create_server()
+            self.httpd = self._create_server(
+                connections_override=self.connections_override,
+            )
             # If binding to port zero, assign the port allocated by the OS.
             if self.port == 0:
                 self.port = self.httpd.server_address[1]
@@ -1513,11 +1515,12 @@ class LiveServerThread(threading.Thread):
         finally:
             connections.close_all()
 
-    def _create_server(self):
+    def _create_server(self, connections_override=None):
         return self.server_class(
             (self.host, self.port),
             QuietWSGIRequestHandler,
             allow_reuse_address=False,
+            connections_override=connections_override,
         )
 
     def terminate(self):
