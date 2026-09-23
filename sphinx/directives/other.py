@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from os import path
 from typing import TYPE_CHECKING, Any, cast
 
 from docutils import nodes
@@ -8,6 +9,7 @@ from docutils.parsers.rst import directives
 from docutils.parsers.rst.directives.admonitions import BaseAdmonition
 from docutils.parsers.rst.directives.misc import Class
 from docutils.parsers.rst.directives.misc import Include as BaseInclude
+from docutils.statemachine import string2lines
 
 from sphinx import addnodes
 from sphinx.domains.changeset import VersionChange  # noqa: F401  # for compatibility
@@ -17,6 +19,7 @@ from sphinx.util import docname_join, logging, url_re
 from sphinx.util.docutils import SphinxDirective
 from sphinx.util.matching import Matcher, patfilter
 from sphinx.util.nodes import explicit_title_re
+from sphinx.util.osutil import path_stabilize, relpath
 
 if TYPE_CHECKING:
     from docutils.nodes import Element, Node
@@ -372,11 +375,40 @@ class Include(BaseInclude, SphinxDirective):
         if self.arguments[0].startswith('<') and \
            self.arguments[0].endswith('>'):
             # docutils "standard" includes, do not do path processing
-            return super().run()
+            return self._run()
         rel_filename, filename = self.env.relfn2path(self.arguments[0])
         self.arguments[0] = filename
         self.env.note_included(filename)
-        return super().run()
+        return self._run()
+
+    def _run(self) -> list[Node]:
+        if not self.env.events.listeners.get('source-read'):
+            return super().run()
+
+        # docutils reads the included file and inserts its lines into the
+        # state machine itself, so intercept the insertion to emit the
+        # "source-read" event for the included text.
+        self.state_machine.insert_input = self._insert_input  # type: ignore[method-assign]
+        try:
+            return super().run()
+        finally:
+            del self.state_machine.insert_input
+
+    def _insert_input(self, include_lines: list[str], source: str) -> None:
+        # docutils terminates the included lines with a blank line and an
+        # "end of inclusion" comment, which are not part of the included text.
+        include_lines, end_marker = include_lines[:-2], include_lines[-2:]
+
+        relative_path = relpath(path.abspath(source), self.env.srcdir)
+        docname = self.env.path2doc(relative_path) or path_stabilize(relative_path)
+        arg = ['\n'.join(include_lines)]
+        self.env.events.emit('source-read', docname, arg)
+
+        tab_width = self.options.get('tab-width', self.state.document.settings.tab_width)
+        include_lines = string2lines(arg[0], tab_width, convert_whitespace=True)
+        type(self.state_machine).insert_input(
+            self.state_machine, include_lines + end_marker, source,
+        )
 
 
 def setup(app: Sphinx) -> dict[str, Any]:

@@ -54,7 +54,9 @@ def on_builder_inited(app: Sphinx) -> None:
 
 def on_source_read(app: Sphinx, docname: str, content: list[str]) -> None:
     """Start to measure reading duration."""
-    app.env.temp_data['started_at'] = time.monotonic()
+    # "source-read" is also emitted for files read by the include directive,
+    # which must not restart the measurement of the including document.
+    app.env.temp_data.setdefault('started_at', time.monotonic())
 
 
 def on_doctree_read(app: Sphinx, doctree: nodes.document) -> None:
