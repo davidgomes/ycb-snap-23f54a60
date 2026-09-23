@@ -262,6 +262,9 @@ Migrations
 Models
 ~~~~~~
 
+* Added support for the ``distinct`` argument to
+  :class:`~django.db.models.Avg` and :class:`~django.db.models.Sum`.
+
 * Added hash database functions :class:`~django.db.models.functions.MD5`,
   :class:`~django.db.models.functions.SHA1`,
   :class:`~django.db.models.functions.SHA224`,
