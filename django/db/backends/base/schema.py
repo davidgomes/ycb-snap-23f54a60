@@ -1038,19 +1038,36 @@ class BaseDatabaseSchemaEditor:
         for old_rel, new_rel in rels_to_update:
             rel_db_params = new_rel.field.db_parameters(connection=self.connection)
             rel_type = rel_db_params["type"]
-            fragment, other_actions = self._alter_column_type_sql(
-                new_rel.related_model, old_rel.field, new_rel.field, rel_type
-            )
-            self.execute(
-                self.sql_alter_column
-                % {
-                    "table": self.quote_name(new_rel.related_model._meta.db_table),
-                    "changes": fragment[0],
-                },
-                fragment[1],
-            )
-            for sql, params in other_actions:
-                self.execute(sql, params)
+            rel_collation = rel_db_params.get("collation")
+            old_rel_db_params = old_rel.field.db_parameters(connection=self.connection)
+            old_rel_collation = old_rel_db_params.get("collation")
+            if old_rel_collation != rel_collation:
+                # Collation change handles also a type change.
+                fragment = self._alter_column_collation_sql(
+                    new_rel.related_model, new_rel.field, rel_type, rel_collation
+                )
+                self.execute(
+                    self.sql_alter_column
+                    % {
+                        "table": self.quote_name(new_rel.related_model._meta.db_table),
+                        "changes": fragment[0],
+                    },
+                    fragment[1],
+                )
+            else:
+                fragment, other_actions = self._alter_column_type_sql(
+                    new_rel.related_model, old_rel.field, new_rel.field, rel_type
+                )
+                self.execute(
+                    self.sql_alter_column
+                    % {
+                        "table": self.quote_name(new_rel.related_model._meta.db_table),
+                        "changes": fragment[0],
+                    },
+                    fragment[1],
+                )
+                for sql, params in other_actions:
+                    self.execute(sql, params)
         # Does it have a foreign key?
         if (
             self.connection.features.supports_foreign_keys

@@ -4608,6 +4608,86 @@ class SchemaTests(TransactionTestCase):
             editor.alter_field(Author, new_field, old_field, strict=True)
         self.assertIsNone(self.get_column_collation(Author._meta.db_table, "name"))
 
+    @isolate_apps("schema")
+    @skipUnlessDBFeature("supports_collation_on_charfield")
+    def test_db_collation_charfield_foreign_key(self):
+        collation = connection.features.test_collations.get("non_default")
+        if not collation:
+            self.skipTest("Language collations are not supported.")
+
+        class Foo(Model):
+            field = CharField(max_length=255, primary_key=True, db_collation=collation)
+
+            class Meta:
+                app_label = "schema"
+
+        class Bar(Model):
+            foo = ForeignKey(Foo, CASCADE)
+            foo_o2o = OneToOneField(Foo, CASCADE, related_name="o2o")
+
+            class Meta:
+                app_label = "schema"
+
+        self.isolated_local_models = [Foo, Bar]
+        with connection.schema_editor() as editor:
+            editor.create_model(Foo)
+            editor.create_model(Bar)
+
+        self.assertEqual(
+            self.get_column_collation(Bar._meta.db_table, "foo_id"),
+            collation,
+        )
+        self.assertEqual(
+            self.get_column_collation(Bar._meta.db_table, "foo_o2o_id"),
+            collation,
+        )
+
+    @isolate_apps("schema")
+    @skipUnlessDBFeature("supports_collation_on_charfield")
+    def test_alter_primary_key_db_collation_foreign_key(self):
+        collation = connection.features.test_collations.get("non_default")
+        if not collation:
+            self.skipTest("Language collations are not supported.")
+
+        class Foo(Model):
+            field = CharField(max_length=255, primary_key=True)
+
+            class Meta:
+                app_label = "schema"
+
+        class Bar(Model):
+            foo = ForeignKey(Foo, CASCADE)
+            foo_null = ForeignKey(
+                Foo, CASCADE, null=True, blank=True, related_name="null_bars"
+            )
+
+            class Meta:
+                app_label = "schema"
+
+        self.isolated_local_models = [Foo, Bar]
+        with connection.schema_editor() as editor:
+            editor.create_model(Foo)
+            editor.create_model(Bar)
+
+        old_field = Foo._meta.get_field("field")
+        new_field = CharField(max_length=255, primary_key=True, db_collation=collation)
+        new_field.set_attributes_from_name("field")
+        new_field.model = Foo
+        with connection.schema_editor() as editor:
+            editor.alter_field(Foo, old_field, new_field, strict=True)
+        self.assertEqual(
+            self.get_column_collation(Foo._meta.db_table, "field"),
+            collation,
+        )
+        self.assertEqual(
+            self.get_column_collation(Bar._meta.db_table, "foo_id"),
+            collation,
+        )
+        self.assertEqual(
+            self.get_column_collation(Bar._meta.db_table, "foo_null_id"),
+            collation,
+        )
+
     @skipUnlessDBFeature("supports_collation_on_charfield")
     def test_alter_primary_key_db_collation(self):
         collation = connection.features.test_collations.get("non_default")
