@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import os
+import re
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -137,14 +138,49 @@ def test_csv_regex_error(capsys: CaptureFixture) -> None:
     """
     with pytest.raises(SystemExit):
         Run(
-            [str(EMPTY_MODULE), r"--bad-names-rgx=(foo{1,3})"],
+            [str(EMPTY_MODULE), r"--bad-names-rgx=(foo{1,}, foo{1,3}})"],
             exit=False,
         )
     output = capsys.readouterr()
     assert (
-        r"Error in provided regular expression: (foo{1 beginning at index 0: missing ), unterminated subpattern"
+        r"Error in provided regular expression: (foo{1,} beginning at index 0: missing ), unterminated subpattern"
         in output.err
     )
+
+
+CSV_REGEX_COMMA_CASES = [
+    ("foo", ["foo"]),
+    ("foo,bar", ["foo", "bar"]),
+    ("foo, bar", ["foo", "bar"]),
+    ("foo, bar{1,3}", ["foo", "bar{1,3}"]),
+    ("(foo{1,3})", ["(foo{1,3})"]),
+    (r"foo{1,3}, bar{,2}, baz{2,}", ["foo{1,3}", "bar{,2}", "baz{2,}"]),
+    (r"(foo\,bar), baz", [r"(foo\,bar)", "baz"]),
+    (r"foo\\, bar", [r"foo\\", "bar"]),
+    (r"foo\{, bar", [r"foo\{", "bar"]),
+]
+
+
+@pytest.mark.parametrize("in_string,expected", CSV_REGEX_COMMA_CASES)
+def test_csv_regex_comma_in_quantifier(in_string: str, expected: list[str]) -> None:
+    """Check that we correctly parse a comma-separated regex when there are one
+    or more commas within quantifier expressions or escaped with a backslash.
+    """
+    r = Run([str(EMPTY_MODULE), f"--bad-names-rgx={in_string}"], exit=False)
+    assert r.linter.config.bad_names_rgxs == [re.compile(regex) for regex in expected]
+
+
+def test_csv_regex_comma_in_quantifier_from_config_file(tmp_path: Path) -> None:
+    """Check that a regex with a comma in a quantifier can be set in a config file."""
+    config_file = tmp_path / "pyproject.toml"
+    config_file.write_text(
+        """
+[tool.pylint.basic]
+bad-names-rgxs = "(foo{1,3})"
+"""
+    )
+    r = Run([str(EMPTY_MODULE), f"--rcfile={config_file}"], exit=False)
+    assert r.linter.config.bad_names_rgxs == [re.compile("(foo{1,3})")]
 
 
 def test_short_verbose(capsys: CaptureFixture) -> None:

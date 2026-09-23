@@ -1,0 +1,5 @@
+Fix ``bad-names-rgxs``, ``good-names-rgxs`` and other comma-separated regular expression
+options mangling regular expressions that contain commas. Commas inside quantifiers such as
+``{1,3}`` are no longer treated as separators, and any other comma can be escaped as ``\,``.
+
+Closes #7229

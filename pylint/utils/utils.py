@@ -253,6 +253,40 @@ def _check_csv(value: list[str] | tuple[str] | str) -> Sequence[str]:
     return _splitstrip(value)
 
 
+def _check_regexp_csv(value: list[str] | tuple[str] | str) -> Sequence[str]:
+    r"""Split a comma-separated list of regular expressions.
+
+    A comma inside a quantifier (as in ``\d{1,2}``) or escaped with a backslash
+    (``\,``) belongs to the regular expression and does not separate values.
+    Values are stripped and empty values are discarded.
+
+    >>> _check_regexp_csv(r'foo, bar{1,3}, a\,b')
+    ['foo', 'bar{1,3}', 'a\\,b']
+    """
+    if isinstance(value, (list, tuple)):
+        return value
+    regexps: list[str] = []
+    current: list[str] = []
+    escaped = False
+    in_braces = False
+    for char in value:
+        if escaped:
+            escaped = False
+        elif char == "\\":
+            escaped = True
+        elif char == "{":
+            in_braces = True
+        elif char == "}":
+            in_braces = False
+        elif char == "," and not in_braces:
+            regexps.append("".join(current))
+            current = []
+            continue
+        current.append(char)
+    regexps.append("".join(current))
+    return [regexp.strip() for regexp in regexps if regexp.strip()]
+
+
 def _comment(string: str) -> str:
     """Return string as a comment."""
     lines = [line.strip() for line in string.splitlines()]
