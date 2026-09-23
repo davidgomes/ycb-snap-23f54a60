@@ -1937,6 +1937,33 @@ def test_where_attrs() -> None:
     assert actual.attrs == {}
 
 
+def test_where_keep_attrs_preserves_coord_attrs() -> None:
+    # GH7229: keep_attrs=True must not replace coordinate attrs with the
+    # data variable's attrs.
+    time = xr.Variable("time", [0, 1], {"standard_name": "time", "long_name": "Time"})
+    air = xr.DataArray(
+        [[1.0, 2.0], [3.0, 4.0]],
+        dims=("time", "lat"),
+        coords={
+            "time": time,
+            "lat": ("lat", [10, 20], {"units": "degrees_north"}),
+        },
+        attrs={"long_name": "Air temperature", "units": "degK"},
+    )
+    actual = xr.where(True, air, air, keep_attrs=True)
+    assert actual.attrs == air.attrs
+    assert actual.time.attrs == {"standard_name": "time", "long_name": "Time"}
+    assert actual.lat.attrs == {"units": "degrees_north"}
+
+    ds = air.to_dataset(name="air")
+    ds.attrs["title"] = "example"
+    actual_ds = xr.where(True, ds, ds, keep_attrs=True)
+    assert actual_ds.attrs == ds.attrs
+    assert actual_ds.air.attrs == ds.air.attrs
+    assert actual_ds.time.attrs == ds.time.attrs
+    assert actual_ds.lat.attrs == ds.lat.attrs
+
+
 @pytest.mark.parametrize(
     "use_dask", [pytest.param(False, id="nodask"), pytest.param(True, id="dask")]
 )

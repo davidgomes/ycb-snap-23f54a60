@@ -1857,13 +1857,19 @@ def where(cond, x, y, keep_attrs=None):
     """
     if keep_attrs is None:
         keep_attrs = _get_keep_attrs(default=False)
-    if keep_attrs is True:
-        # keep the attributes of x, the second parameter, by default to
-        # be consistent with the `where` method of `DataArray` and `Dataset`
-        keep_attrs = lambda attrs, context: getattr(x, "attrs", {})
+
+    # keep_attrs=True must keep the attributes of ``x`` (the second argument),
+    # matching DataArray.where / Dataset.where. A callable that always returns
+    # ``x.attrs`` is also applied while merging coordinates, which overwrites
+    # coordinate attributes with the data variable's attributes (GH7229).
+    # Merge with "override" so each coordinate keeps its own attrs, then copy
+    # attributes from ``x`` onto the result.
+    restore_from_x = keep_attrs is True
+    if restore_from_x:
+        keep_attrs = "override"
 
     # alignment for three arguments is complicated, so don't support it yet
-    return apply_ufunc(
+    result = apply_ufunc(
         duck_array_ops.where,
         cond,
         x,
@@ -1873,6 +1879,45 @@ def where(cond, x, y, keep_attrs=None):
         dask="allowed",
         keep_attrs=keep_attrs,
     )
+    if restore_from_x:
+        result = _restore_where_attrs(result, x)
+    return result
+
+
+def _restore_where_attrs(result, source):
+    """Copy attributes from ``source`` onto a ``where`` result.
+
+    Object and variable attributes come from ``source``. Coordinates that
+    ``source`` does not carry are left as merged. A scalar ``source`` has no
+    attributes, so only the result object's attributes are cleared.
+    """
+    from .dataarray import DataArray
+    from .dataset import Dataset
+    from .variable import Variable
+
+    if isinstance(result, DataArray) and isinstance(source, DataArray):
+        result.attrs = dict(source.variable._attrs or {})
+        for name, var in result.coords.variables.items():
+            src = source.coords.variables.get(name)
+            if src is not None:
+                var.attrs = dict(src._attrs or {})
+        return result
+
+    if isinstance(result, Dataset) and isinstance(source, Dataset):
+        result.attrs = dict(source._attrs or {})
+        for name, var in result.variables.items():
+            src = source._variables.get(name)
+            if src is not None:
+                var.attrs = dict(src._attrs or {})
+        return result
+
+    if isinstance(result, Variable) and isinstance(source, Variable):
+        result.attrs = dict(source._attrs or {})
+        return result
+
+    if hasattr(result, "attrs"):
+        result.attrs = {}
+    return result
 
 
 @overload
