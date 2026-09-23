@@ -105,6 +105,7 @@ class Poly(Expr):
     __slots__ = ['rep', 'gens']
 
     is_commutative = True
+    _op_priority = 10.001
     is_Poly = True
 
     def __new__(cls, rep, *gens, **args):
