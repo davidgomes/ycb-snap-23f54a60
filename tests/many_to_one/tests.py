@@ -8,8 +8,8 @@ from django.utils.translation import gettext_lazy
 
 from .models import (
     Article, Category, Child, ChildNullableParent, City, Country, District,
-    First, Parent, Record, Relation, Reporter, School, Student, Third,
-    ToFieldChild,
+    First, Order, Parent, Product, Record, Relation, Reporter, School, Student,
+    Third, ToFieldChild,
 )
 
 
@@ -548,6 +548,27 @@ class ManyToOneTests(TestCase):
         child.refresh_from_db()
         self.assertEqual(child.parent, parent)
         self.assertEqual(child.parent_id, parent.name)
+
+    def test_save_fk_after_parent_with_non_numeric_pk(self):
+        # The related CharField primary key is empty until it is set. Saving
+        # the parent must pick up that value instead of persisting the
+        # placeholder assigned when the unsaved instance was attached.
+        with transaction.atomic():
+            order = Order()
+            order.product = Product()
+            order.product.sku = 'foo'
+            order.product.save()
+            order.save()
+            self.assertEqual(order.product_id, 'foo')
+            self.assertTrue(Order.objects.filter(product=order.product).exists())
+            self.assertFalse(Order.objects.filter(product_id='').exists())
+
+        with transaction.atomic():
+            order = Order()
+            order.product = Product(sku='bar')
+            order.product.save()
+            order.save()
+            self.assertTrue(Order.objects.filter(product=order.product).exists())
 
     def test_fk_to_bigautofield(self):
         ch = City.objects.create(name='Chicago')

@@ -933,9 +933,12 @@ class Model(metaclass=ModelBase):
                         "%s() prohibited to prevent data loss due to unsaved "
                         "related object '%s'." % (operation_name, field.name)
                     )
-                elif getattr(self, field.attname) is None:
+                elif getattr(self, field.attname) in field.empty_values:
                     # Use pk from related object if it has been saved after
-                    # an assignment.
+                    # an assignment. Non-numeric primary keys (for example a
+                    # CharField) default to an empty value rather than None,
+                    # so an empty placeholder assigned before the related pk
+                    # was set must be replaced as well.
                     setattr(self, field.attname, obj.pk)
                 # If the relationship's pk/to_field was changed, clear the
                 # cached relationship.

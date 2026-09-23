@@ -114,3 +114,11 @@ class School(models.Model):
 
 class Student(models.Model):
     school = models.ForeignKey(School, models.CASCADE)
+
+
+class Product(models.Model):
+    sku = models.CharField(primary_key=True, max_length=50)
+
+
+class Order(models.Model):
+    product = models.ForeignKey(Product, models.CASCADE)
