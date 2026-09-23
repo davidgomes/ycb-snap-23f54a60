@@ -84,12 +84,9 @@ class MigrationLoader:
                     continue
                 raise
             else:
-                # Empty directories are namespaces.
-                # getattr() needed on PY36 and older (replace w/attribute access).
-                if getattr(module, '__file__', None) is None:
-                    self.unmigrated_apps.add(app_config.label)
-                    continue
                 # Module is not a package (e.g. migrations.py).
+                # Implicit namespace packages have no __file__ but do have
+                # __path__, which pkgutil.iter_modules() uses for discovery.
                 if not hasattr(module, '__path__'):
                     self.unmigrated_apps.add(app_config.label)
                     continue

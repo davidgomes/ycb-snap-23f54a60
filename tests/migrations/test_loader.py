@@ -190,12 +190,14 @@ class LoaderTests(TestCase):
             )
 
     def test_load_empty_dir(self):
+        """Migrations packages without __init__.py are namespace packages."""
         with override_settings(MIGRATION_MODULES={"migrations": "migrations.faulty_migrations.namespace"}):
             loader = MigrationLoader(connection)
             self.assertIn(
-                "migrations", loader.unmigrated_apps,
-                "App missing __init__.py in migrations module not in unmigrated apps."
+                "migrations", loader.migrated_apps,
+                "App with a namespace migrations package not in migrated apps."
             )
+            self.assertNotIn("migrations", loader.unmigrated_apps)
 
     @override_settings(
         INSTALLED_APPS=['migrations.migrations_test_apps.migrated_app'],
