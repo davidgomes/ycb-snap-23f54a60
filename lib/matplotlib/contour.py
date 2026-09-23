@@ -986,6 +986,19 @@ class ContourSet(ContourLabeler, mcoll.Collection):
             self._transform = self._transform._as_mpl_transform(self.axes)
         return self._transform
 
+    def set_paths(self, paths):
+        """
+        Set the paths of this ContourSet.
+
+        Parameters
+        ----------
+        paths : list of `~matplotlib.path.Path`
+            One path per contour level (or per filled region between levels,
+            for filled contours).
+        """
+        self._paths = paths
+        self.stale = True
+
     def __getstate__(self):
         state = self.__dict__.copy()
         # the C object _contour_generator cannot currently be pickled. This
