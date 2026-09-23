@@ -119,6 +119,27 @@ class TestMockDecoration:
         values = getfuncargnames(f)
         assert values == ("y", "z")
 
+    def test_getfuncargnames_patching_new_array(self):
+        """patch(new=<array-like>) must not use equality (issue with numpy arrays)."""
+        from _pytest.compat import getfuncargnames
+        from unittest.mock import patch
+
+        class ArrayLike:
+            def __eq__(self, other):
+                raise ValueError(
+                    "The truth value of an array with more than one element is ambiguous"
+                )
+
+        class T:
+            value = None
+
+        @patch.object(T, "value", new=ArrayLike())
+        def f(x):
+            pass
+
+        values = getfuncargnames(f)
+        assert values == ("x",)
+
     def test_unittest_mock(self, testdir):
         testdir.makepyfile(
             """
