@@ -266,6 +266,15 @@ def test_colormap_return_types():
     assert cmap(x2d).shape == x2d.shape + (4,)
 
 
+@pytest.mark.parametrize("dtype", [np.uint8, np.int8, int, np.float16, float])
+def test_index_dtype(dtype):
+    # The under/over/bad indices (N, N+1, N+2) must not overflow the input
+    # dtype, e.g. for uint8 with N=256.
+    cm = mpl.colormaps["viridis"]
+    assert_array_equal(cm(dtype(0)), cm(0))
+    assert cm(np.empty((0,), dtype=dtype)).shape == (0, 4)
+
+
 def test_BoundaryNorm():
     """
     GitHub issue #1258: interpolation was failing with numpy
