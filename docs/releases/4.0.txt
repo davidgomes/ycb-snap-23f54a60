@@ -218,6 +218,9 @@ Forms
   error message. This allows custom error messages to use the ``%(value)s``
   placeholder.
 
+* Non-form errors in formsets are now rendered with an additional class of
+  ``nonform`` to help distinguish them from form-specific errors.
+
 Generic Views
 ~~~~~~~~~~~~~
 
