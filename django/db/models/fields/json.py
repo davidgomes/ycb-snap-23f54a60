@@ -193,13 +193,13 @@ class HasKeyLookup(PostgresOperatorLookup):
                 *_, rhs_key_transforms = key.preprocess_lhs(compiler, connection)
             else:
                 rhs_key_transforms = [key]
-            rhs_params.append(
-                "%s%s"
-                % (
-                    lhs_json_path,
-                    compile_json_path(rhs_key_transforms, include_root=False),
-                )
-            )
+            # The final segment is an object key. Compile it as a quoted key so
+            # numeric keys (e.g. "1111") are not treated as array indexes on
+            # SQLite, MySQL, and Oracle. Earlier segments stay path navigation.
+            *rhs_key_transforms, final_key = rhs_key_transforms
+            rhs_json_path = compile_json_path(rhs_key_transforms, include_root=False)
+            rhs_json_path += ".%s" % json.dumps(str(final_key))
+            rhs_params.append("%s%s" % (lhs_json_path, rhs_json_path))
         # Add condition for each key.
         if self.logical_operator:
             sql = "(%s)" % self.logical_operator.join([sql] * len(rhs_params))

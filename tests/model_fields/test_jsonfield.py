@@ -512,6 +512,26 @@ class TestQuerying(TestCase):
             [self.objs[3], self.objs[4]],
         )
 
+    def test_has_key_numeric(self):
+        obj = NullableJSONModel.objects.create(
+            value={"1111": "bar", "nested": {"2222": "baz"}},
+        )
+        tests = [
+            Q(value__has_key="1111"),
+            Q(value__nested__has_key="2222"),
+            Q(value__has_key=KeyTransform("1111", "value")),
+            Q(value__has_keys=["1111", "nested"]),
+            Q(value__nested__has_keys=["2222"]),
+            Q(value__has_any_keys=["1111", "missing"]),
+            Q(value__nested__has_any_keys=["2222", "missing"]),
+        ]
+        for condition in tests:
+            with self.subTest(condition=condition):
+                self.assertSequenceEqual(
+                    NullableJSONModel.objects.filter(condition),
+                    [obj],
+                )
+
     def test_has_key_null_value(self):
         self.assertSequenceEqual(
             NullableJSONModel.objects.filter(value__has_key="j"),
