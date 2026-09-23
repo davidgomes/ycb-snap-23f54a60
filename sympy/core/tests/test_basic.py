@@ -28,6 +28,12 @@ def test__aresame():
     assert not _aresame(Basic(2), Basic(2.))
 
 
+def test_immutable():
+    assert not hasattr(b1, '__dict__')
+    with raises(AttributeError):
+        b1.x = 1
+
+
 def test_structure():
     assert b21.args == (b2, b1)
     assert b21.func(*b21.args) == b21
