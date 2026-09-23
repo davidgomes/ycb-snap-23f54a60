@@ -1759,6 +1759,39 @@ class OperationTests(OperationTestBase):
         operation = migrations.AlterIndexTogether("Pony", None)
         self.assertEqual(operation.describe(), "Alter index_together for Pony (0 constraint(s))")
 
+    @skipUnlessDBFeature('allows_multiple_constraints_on_same_fields')
+    def test_alter_index_together_remove_with_unique_together(self):
+        app_label = 'test_alintoremove_wunto'
+        table_name = '%s_pony' % app_label
+
+        def get_constraints(**kwargs):
+            with connection.cursor() as cursor:
+                constraints = connection.introspection.get_constraints(cursor, table_name)
+            return [
+                name for name, details in constraints.items()
+                if details['columns'] == ['pink', 'weight'] and
+                all(details[key] == value for key, value in kwargs.items())
+            ]
+
+        project_state = self.set_up_test_model(app_label, unique_together=True)
+        self.assertEqual(len(get_constraints(unique=True)), 1)
+        # Add index together.
+        new_state = project_state.clone()
+        operation = migrations.AlterIndexTogether('Pony', [('pink', 'weight')])
+        operation.state_forwards(app_label, new_state)
+        with connection.schema_editor() as editor:
+            operation.database_forwards(app_label, editor, project_state, new_state)
+        self.assertEqual(len(get_constraints(index=True, unique=False)), 1)
+        # Remove index together.
+        project_state = new_state
+        new_state = project_state.clone()
+        operation = migrations.AlterIndexTogether('Pony', set())
+        operation.state_forwards(app_label, new_state)
+        with connection.schema_editor() as editor:
+            operation.database_forwards(app_label, editor, project_state, new_state)
+        self.assertEqual(len(get_constraints(index=True, unique=False)), 0)
+        self.assertEqual(len(get_constraints(unique=True)), 1)
+
     @skipUnlessDBFeature('supports_table_check_constraints')
     def test_add_constraint(self):
         project_state = self.set_up_test_model("test_addconstraint")
