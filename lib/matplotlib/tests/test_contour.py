@@ -697,7 +697,8 @@ def test_contour_remove():
 
 def test_bool_autolevel():
     # Boolean inputs have a single meaningful boundary between False and True.
-    x, y = np.random.rand(2, 9)
+    rng = np.random.RandomState(0)
+    x, y = rng.rand(2, 9)
     z = (np.arange(9) % 2).reshape((3, 3)).astype(bool)
     m = [[False, False, False], [False, True, False], [False, False, False]]
     assert plt.contour(z.tolist()).levels.tolist() == [.5]
