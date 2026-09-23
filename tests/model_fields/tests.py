@@ -74,6 +74,30 @@ class BasicFieldTests(SimpleTestCase):
         form_field = field.formfield(disabled=True)
         self.assertIs(form_field.disabled, True)
 
+    def test_fields_from_abstract_model_are_not_equal(self):
+        """
+        Fields contributed by the same abstract base compare unequal when they
+        belong to different concrete models, so they can coexist in a set.
+        """
+        class Abstract(models.Model):
+            class Meta:
+                abstract = True
+            myfield = models.IntegerField()
+
+        class ChildB(Abstract):
+            pass
+
+        class ChildC(Abstract):
+            pass
+
+        field_b = ChildB._meta.get_field('myfield')
+        field_c = ChildC._meta.get_field('myfield')
+        self.assertNotEqual(field_b, field_c)
+        self.assertEqual(len({field_b, field_c}), 2)
+        self.assertNotEqual(hash(field_b), hash(field_c))
+        # creation_counter still dominates ordering.
+        self.assertEqual(field_b < field_c, field_b.model._meta.label < field_c.model._meta.label)
+
     def test_field_str(self):
         f = models.Field()
         self.assertEqual(str(f), '<django.db.models.fields.Field>')
