@@ -1,4 +1,5 @@
 from __future__ import division
+from sympy.utilities.randtest import verify_numerically as tn
 from sympy.stats import (P, E, where, density, variance, covariance, skewness,
                          given, pspace, cdf, characteristic_function, ContinuousRV, sample,
                          Arcsin, Benini, Beta, BetaPrime, Cauchy,
@@ -13,9 +14,9 @@ from sympy.stats import (P, E, where, density, variance, covariance, skewness,
                          moment, cmoment, smoment)
 
 from sympy import (Symbol, Abs, exp, S, N, pi, simplify, Interval, erf, erfc,
-                   Eq, log, lowergamma, Sum, symbols, sqrt, And, gamma, beta,
+                   Eq, log, lowergamma, uppergamma, Sum, symbols, sqrt, And, gamma, beta,
                    Piecewise, Integral, sin, cos, besseli, factorial, binomial,
-                   floor, expand_func, Rational, I)
+                   floor, expand_func, Rational, I, hyper, diff)
 
 
 from sympy.stats.crv_types import NormalDistribution
@@ -177,11 +178,16 @@ def test_ContinuousRV():
 
 
 def test_arcsin():
+    from sympy import asin
+
     a = Symbol("a", real=True)
     b = Symbol("b", real=True)
 
     X = Arcsin('x', a, b)
     assert density(X)(x) == 1/(pi*sqrt((-x + b)*(x - a)))
+    assert cdf(X)(x) == Piecewise((0, a > x),
+                            (2*asin(sqrt((-a + x)/(-a + b)))/pi, b >= x),
+                            (1, True))
 
 
 def test_benini():
@@ -259,6 +265,8 @@ def test_dagum():
 
     X = Dagum('x', p, a, b)
     assert density(X)(x) == a*p*(x/b)**(a*p)*((x/b)**a + 1)**(-p - 1)/x
+    assert cdf(X)(x) == Piecewise(((1 + (x/b)**(-a))**(-p), x >= 0),
+                                    (0, True))
 
 def test_erlang():
     k = Symbol("k", integer=True, positive=True)
@@ -266,6 +274,8 @@ def test_erlang():
 
     X = Erlang("x", k, l)
     assert density(X)(x) == x**(k - 1)*l**k*exp(-x*l)/gamma(k)
+    assert cdf(X)(x) == Piecewise((lowergamma(k, l*x)/gamma(k), x > 0),
+                               (0, True))
 
 def test_exponential():
     rate = Symbol('lambda', positive=True, real=True, finite=True)
@@ -306,6 +316,7 @@ def test_frechet():
 
     X = Frechet("x", a, s=s, m=m)
     assert density(X)(x) == a*((x - m)/s)**(-a - 1)*exp(-((x - m)/s)**(-a))/s
+    assert cdf(X)(x) == Piecewise((exp(-((-m + x)/s)**(-a)), m <= x), (0, True))
 
 def test_gamma():
     k = Symbol("k", positive=True)
@@ -334,6 +345,7 @@ def test_gamma_inverse():
 
     X = GammaInverse("x", a, b)
     assert density(X)(x) == x**(-a - 1)*b**a*exp(-b/x)/gamma(a)
+    assert cdf(X)(x) == Piecewise((uppergamma(a, b/x)/gamma(a), x > 0), (0, True))
 
 def test_gompertz():
     b = Symbol("b", positive=True)
@@ -355,6 +367,9 @@ def test_kumaraswamy():
 
     X = Kumaraswamy("x", a, b)
     assert density(X)(x) == x**(a - 1)*a*b*(-x**a + 1)**(b - 1)
+    assert cdf(X)(x) == Piecewise((0, x < 0),
+                                (-(-x**a + 1)**b + 1, x <= 1),
+                                (1, True))
 
 def test_laplace():
     mu = Symbol("mu")
@@ -362,6 +377,8 @@ def test_laplace():
 
     X = Laplace('x', mu, b)
     assert density(X)(x) == exp(-Abs(x - mu)/b)/(2*b)
+    assert cdf(X)(x) == Piecewise((exp((-mu + x)/b)/2, mu > x),
+                            (-exp((mu - x)/b)/2 + 1, True))
 
 def test_logistic():
     mu = Symbol("mu", real=True)
@@ -369,6 +386,7 @@ def test_logistic():
 
     X = Logistic('x', mu, s)
     assert density(X)(x) == exp((-x + mu)/s)/(s*(exp((-x + mu)/s) + 1)**2)
+    assert cdf(X)(x) == 1/(exp((mu - x)/s) + 1)
 
 def test_lognormal():
     mean = Symbol('mu', real=True, finite=True)
@@ -419,6 +437,9 @@ def test_nakagami():
            *gamma(mu + S.Half)/gamma(mu + 1))
     assert simplify(variance(X, meijerg=True)) == (
     omega - omega*gamma(mu + S(1)/2)**2/(gamma(mu)*gamma(mu + 1)))
+    assert cdf(X)(x) == Piecewise(
+                                (lowergamma(mu, mu*x**2/omega)/gamma(mu), x > 0),
+                                (0, True))
 
 
 def test_pareto():
@@ -475,6 +496,8 @@ def test_studentt():
 
     X = StudentT('x', nu)
     assert density(X)(x) == (1 + x**2/nu)**(-nu/2 - 1/2)/(sqrt(nu)*beta(1/2, nu/2))
+    assert cdf(X)(x) == 1/2 + x*gamma(nu/2 + 1/2)*hyper((1/2, nu/2 + 1/2),
+                                (3/2,), -x**2/nu)/(sqrt(pi)*sqrt(nu)*gamma(nu/2))
 
 
 def test_trapezoidal():
@@ -725,6 +748,58 @@ def test_precomputed_cdf():
         compdiff = cdf(X)(x) - simplify(X.pspace.density.compute_cdf()(x))
         compdiff = simplify(compdiff.rewrite(erfc))
         assert compdiff == 0
+
+
+def test_long_precomputed_cdf():
+    x = symbols("x", real=True, finite=True)
+    distribs = [
+            Arcsin("A", -5, 9),
+            Dagum("D", 4, 10, 3),
+            Erlang("E", 14, 5),
+            Frechet("F", 2, 6, -3),
+            Gamma("G", 2, 7),
+            GammaInverse("GI", 3, 5),
+            Kumaraswamy("K", 6, 8),
+            Laplace("LA", -5, 4),
+            Logistic("L", -6, 7),
+            Nakagami("N", 2, 7),
+            StudentT("S", 4)
+            ]
+    for distr in distribs:
+        for _ in range(5):
+            assert tn(diff(cdf(distr)(x), x), density(distr)(x), x, a=0, b=0, c=1, d=0)
+
+    US = UniformSum("US", 5)
+    pdf01 = density(US)(x).subs(floor(x), 0).doit()   # pdf on (0, 1)
+    cdf01 = cdf(US, evaluate=False)(x).subs(floor(x), 0).doit()   # cdf on (0, 1)
+    assert tn(diff(cdf01, x), pdf01, x, a=0, b=0, c=1, d=0)
+
+
+def test_issue_13830():
+    # Inputs for which integrating the PDF does not yield a usable CDF.
+    from sympy import asin
+    assert cdf(Arcsin("x", 0, 3))(1) == 2*asin(sqrt(S(1)/3))/pi
+    assert cdf(Dagum("x", S(1)/3, S(1)/5, 2))(3) == (1 + (S(3)/2)**(-S(1)/5))**(-S(1)/3)
+    erlang = cdf(Erlang("x", 1, 1))(1)
+    assert erlang == lowergamma(1, 1)
+    assert not erlang.is_Float
+    assert cdf(Frechet("x", S(4)/3, 1, 2))(3) == exp(-1)
+    gamma_float = cdf(Gamma("x", 0.1, 2))(3)
+    assert gamma_float.has(lowergamma) and not gamma_float.has(Integral)
+    assert cdf(Gamma("x", S(1)/10, 2))(3) == lowergamma(S(1)/10, S(3)/2)/gamma(S(1)/10)
+    assert cdf(GammaInverse("x", S(5)/7, 2))(3) == uppergamma(S(5)/7, S(2)/3)/gamma(S(5)/7)
+    assert cdf(Kumaraswamy("x", S(1)/123, 5))(S(1)/3) == 1 - (1 - (S(1)/3)**(S(1)/123))**5
+    assert cdf(Laplace("x", 2, 3))(5) == 1 - exp(-1)/2
+    assert abs(cdf(Logistic("x", 1, 0.1))(2) - 1/(1 + exp(-10))) < 1e-12
+    assert cdf(Logistic("x", 1, S(1)/10))(2) == 1/(1 + exp(-10))
+    assert cdf(Nakagami("x", S(7)/3, 1))(2) == lowergamma(S(7)/3, S(28)/3)/gamma(S(7)/3)
+    nu = 10
+    assert cdf(StudentT("x", nu))(2) == (
+        S.Half + 2*gamma((nu + 1)/S(2))*hyper((S.Half, (nu + 1)/S(2)),
+        (S(3)/2,), -S(4)/nu)/(sqrt(pi*nu)*gamma(nu/S(2))))
+    assert cdf(UniformSum("x", 5))(2) == Rational(9, 40)
+    assert cdf(UniformSum("x", 5), evaluate=False)(2).doit() == Rational(9, 40)
+
 
 def test_issue_13324():
     X = Uniform('X', 0, 1)
