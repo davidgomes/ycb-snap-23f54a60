@@ -11,6 +11,7 @@ from matplotlib.testing.decorators import check_figures_equal, image_comparison
 from matplotlib.testing._markers import needs_usetex
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+from matplotlib.backend_bases import MouseEvent
 import matplotlib.patches as mpatches
 import matplotlib.transforms as mtransforms
 import matplotlib.collections as mcollections
@@ -1038,6 +1039,19 @@ def test_legend_draggable(draggable):
     ax.plot(range(10), label='shabnams')
     leg = ax.legend(draggable=draggable)
     assert leg.get_draggable() is draggable
+
+
+def test_legend_draggable_disconnect_after_remove():
+    fig, ax = plt.subplots()
+    ax.plot(range(10), label='shabnams')
+    leg = ax.legend(draggable=True)
+    cids = leg._draggable.cids
+    leg.remove()
+    # The next event notices the legend is gone and disconnects its callbacks.
+    MouseEvent("button_release_event", fig.canvas, 0, 0)._process()
+    connected = {cid for proxies in fig.canvas.callbacks.callbacks.values()
+                 for cid in proxies}
+    assert connected.isdisjoint(cids)
 
 
 def test_alpha_handles():
