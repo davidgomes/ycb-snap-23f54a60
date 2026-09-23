@@ -345,7 +345,12 @@ class IsolationForest(OutlierMixin, BaseBagging):
             return self
 
         # else, define offset_ wrt contamination parameter
-        self.offset_ = np.percentile(self.score_samples(X), 100.0 * self.contamination)
+        # To avoid performing input validation a second time we call
+        # _score_samples rather than score_samples. Trees require CSR input
+        # for prediction, while fitting was done on CSC.
+        if issparse(X):
+            X = X.tocsr()
+        self.offset_ = np.percentile(self._score_samples(X), 100.0 * self.contamination)
 
         return self
 
@@ -434,6 +439,15 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
         # Check data
         X = self._validate_data(X, accept_sparse="csr", dtype=np.float32, reset=False)
+
+        return self._score_samples(X)
+
+    def _score_samples(self, X):
+        """Private version of score_samples without input validation.
+
+        Input validation would remove feature names, so we disable it.
+        """
+        check_is_fitted(self)
 
         # Take the opposite of the scores as bigger is better (here less
         # abnormal)
