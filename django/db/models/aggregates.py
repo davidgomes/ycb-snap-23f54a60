@@ -121,11 +121,13 @@ class Count(Aggregate):
 class Max(Aggregate):
     function = 'MAX'
     name = 'Max'
+    allow_distinct = True
 
 
 class Min(Aggregate):
     function = 'MIN'
     name = 'Min'
+    allow_distinct = True
 
 
 class StdDev(NumericOutputFieldMixin, Aggregate):
