@@ -771,3 +771,7 @@ def test_Indexed():
     i, j = symbols('i j')
     b = numpy.array([[1, 2], [3, 4]])
     assert lambdify(a, Sum(a[x, y], (x, 0, 1), (y, 0, 1)))(b) == 10
+
+def test_issue_12092():
+    f = implemented_function('f', lambda x: x**2)
+    assert f(f(2)).evalf() == Float(16)
