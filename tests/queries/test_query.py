@@ -107,6 +107,13 @@ class TestQuery(SimpleTestCase):
         self.assertIsInstance(b_isnull.lhs, SimpleCol)
         self.assertEqual(b_isnull.lhs.target, ObjectC._meta.get_field('objectb'))
 
+    def test_iterable_lookup_value(self):
+        query = Query(Item)
+        where = query.build_where(Q(name=['a', 'b']))
+        name_exact = where.children[0]
+        self.assertIsInstance(name_exact, Exact)
+        self.assertEqual(name_exact.rhs, "['a', 'b']")
+
     def test_clone_select_related(self):
         query = Query(Item)
         query.add_select_related(['creator'])
