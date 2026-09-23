@@ -27,6 +27,23 @@ def test_change_level(caplog):
     assert "CRITICAL" in caplog.text
 
 
+def test_set_level_restores_handler_level(testdir):
+    """The handler level set by caplog.set_level is restored after the test."""
+    testdir.makepyfile(
+        """
+        def test_foo(caplog):
+            assert caplog.handler.level == 0
+            caplog.set_level(42)
+            assert caplog.handler.level == 42
+
+        def test_bar(caplog):
+            assert caplog.handler.level == 0
+    """
+    )
+    result = testdir.runpytest()
+    result.assert_outcomes(passed=2)
+
+
 def test_change_level_undo(testdir):
     """Ensure that 'set_level' is undone after the end of the test"""
     testdir.makepyfile(

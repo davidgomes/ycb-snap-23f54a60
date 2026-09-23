@@ -1,0 +1,1 @@
+``caplog.set_level()`` restores the log handler level at the end of the test.
