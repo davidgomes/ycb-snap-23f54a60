@@ -236,6 +236,12 @@ def test_Point2D():
     assert p2.distance(p3) == sqrt(17)/2
 
 
+def test_distance_mixed_dimensions():
+    assert Point(2, 0).distance(Point(1, 0, 2)) == sqrt(5)
+    assert Point(1, 0, 2).distance(Point(2, 0)) == sqrt(5)
+    assert Point(2, 0).distance((1, 0, 2)) == sqrt(5)
+
+
 def test_issue_9214():
     p1 = Point3D(4, -2, 6)
     p2 = Point3D(1, 2, 3)

@@ -266,8 +266,12 @@ class Point(GeometryEntity):
         sqrt(x**2 + y**2)
 
         """
-        return sqrt(sum([(a - b)**2 for a, b in zip(
-            self.args, p.args if isinstance(p, Point) else p)]))
+        s = self.args
+        p = p.args if isinstance(p, Point) else tuple(p)
+        n = max(len(s), len(p))
+        s = s + (S.Zero,)*(n - len(s))
+        p = p + (S.Zero,)*(n - len(p))
+        return sqrt(sum([(a - b)**2 for a, b in zip(s, p)]))
 
     def taxicab_distance(self, p):
         """The Taxicab Distance from self to point p.
