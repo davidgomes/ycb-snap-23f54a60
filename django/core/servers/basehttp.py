@@ -11,6 +11,7 @@ import logging
 import socket
 import socketserver
 import sys
+from collections import deque
 from wsgiref import simple_server
 
 from django.core.exceptions import ImproperlyConfigured
@@ -132,8 +133,11 @@ class ServerHandler(simple_server.ServerHandler):
         super().cleanup_headers()
         # HTTP/1.1 requires support for persistent connections. Send 'close' if
         # the content length is unknown to prevent clients from reusing the
-        # connection.
-        if "Content-Length" not in self.headers:
+        # connection. Responses to HEAD requests have no body to delimit.
+        if (
+            self.environ["REQUEST_METHOD"] != "HEAD"
+            and "Content-Length" not in self.headers
+        ):
             self.headers["Connection"] = "close"
         # Persistent connections require threading server.
         elif not isinstance(self.request_handler.server, socketserver.ThreadingMixIn):
@@ -143,9 +147,33 @@ class ServerHandler(simple_server.ServerHandler):
         if self.headers.get("Connection") == "close":
             self.request_handler.close_connection = True
 
+    def set_content_length(self):
+        # The body of a HEAD response isn't sent, so its length can't be
+        # derived from the number of bytes sent.
+        if self.environ["REQUEST_METHOD"] != "HEAD":
+            super().set_content_length()
+
     def close(self):
         self.get_stdin().read()
         super().close()
+
+    def finish_response(self):
+        if self.environ["REQUEST_METHOD"] != "HEAD":
+            return super().finish_response()
+        # The response to a HEAD request must not contain a body (RFC 9110
+        # Section 9.3.2), but the iterable is still consumed as for GET.
+        try:
+            deque(self.result, maxlen=0)
+            # finish_content() isn't used as it would default Content-Length
+            # to "0" rather than omit it when the length is unknown.
+            if not self.headers_sent:
+                self.send_headers()
+        except BaseException:
+            if hasattr(self.result, "close"):
+                self.result.close()
+            raise
+        else:
+            self.close()
 
 
 class WSGIRequestHandler(simple_server.WSGIRequestHandler):
