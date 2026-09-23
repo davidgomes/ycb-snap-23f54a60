@@ -49,6 +49,9 @@ New checkers
 Other Changes
 =============
 
+* pyreverse now uses type annotations to display the type of attributes, as well as
+  the type of method arguments and return values in dot files
+
 * Pylint's tags are now the standard form ``vX.Y.Z`` and not ``pylint-X.Y.Z`` anymore.
 
 * Fix false-positive ``too-many-ancestors`` when inheriting from builtin classes,

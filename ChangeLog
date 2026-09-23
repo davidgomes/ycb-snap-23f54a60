@@ -9,6 +9,11 @@ Release date: TBA
 ..
   Put new features and bugfixes here and also in 'doc/whatsnew/2.9.rst'
 
+* pyreverse now uses type annotations to display the type of attributes, as well as
+  the type of method arguments and return values in dot files
+
+  Closes #1548
+
 * astroid has been upgraded to 2.6.0
 
 * ``setuptools_scm`` has been removed and replaced by ``tbump`` in order to not
