@@ -126,6 +126,8 @@ Bug fixes
 - :py:meth:`isel` with `drop=True` works as intended with scalar :py:class:`DataArray` indexers.
   (:issue:`6554`, :pull:`6579`)
   By `Michael Niklas <https://github.com/headtr1ck>`_.
+- :py:func:`polyval` again accepts ``timedelta64`` coordinates, converting them to
+  numeric offsets instead of treating them as datetimes (:issue:`6597`).
 
 Documentation
 ~~~~~~~~~~~~~
