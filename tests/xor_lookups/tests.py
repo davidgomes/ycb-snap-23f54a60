@@ -60,6 +60,33 @@ class XorLookupsTests(TestCase):
             self.numbers[:2],
         )
 
+    def test_parity(self):
+        # a ^ b ^ c is true when an odd number of operands are true.
+        self.assertCountEqual(
+            Number.objects.filter(Q(num__lte=1) ^ Q(num__lte=1)),
+            [],
+        )
+        self.assertCountEqual(
+            Number.objects.filter(Q(num__lte=1) ^ Q(num__lte=1) ^ Q(num__lte=1)),
+            self.numbers[:2],
+        )
+        self.assertCountEqual(
+            Number.objects.filter(
+                Q(num__lte=1) ^ Q(num__lte=1) ^ Q(num__lte=1) ^ Q(num__lte=1)
+            ),
+            [],
+        )
+        self.assertCountEqual(
+            Number.objects.filter(
+                Q(num__lte=1)
+                ^ Q(num__lte=1)
+                ^ Q(num__lte=1)
+                ^ Q(num__lte=1)
+                ^ Q(num__lte=1)
+            ),
+            self.numbers[:2],
+        )
+
     def test_empty_in(self):
         self.assertCountEqual(
             Number.objects.filter(Q(pk__in=[]) ^ Q(num__gte=5)),
