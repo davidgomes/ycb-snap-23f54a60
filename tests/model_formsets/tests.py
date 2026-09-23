@@ -2021,3 +2021,79 @@ class TestModelFormsetOverridesTroughFormMeta(TestCase):
         BookFormSet = modelformset_factory(Author, fields='__all__', renderer=renderer)
         formset = BookFormSet()
         self.assertEqual(formset.renderer, renderer)
+
+    def test_modelformset_factory_default_edit_only(self):
+        AuthorFormSet = modelformset_factory(Author, fields='__all__')
+        self.assertIs(AuthorFormSet.edit_only, False)
+
+    def test_modelformset_factory_edit_only(self):
+        charles = Author.objects.create(name='Charles Baudelaire')
+        AuthorFormSet = modelformset_factory(Author, fields='__all__', edit_only=True)
+        data = {
+            'form-TOTAL_FORMS': '2',
+            'form-INITIAL_FORMS': '0',
+            'form-MAX_NUM_FORMS': '0',
+            'form-0-name': 'Arthur Rimbaud',
+            'form-1-name': 'Walt Whitman',
+        }
+        formset = AuthorFormSet(data)
+        self.assertIs(formset.is_valid(), True)
+        self.assertEqual(formset.save(), [])
+        self.assertSequenceEqual(Author.objects.all(), [charles])
+        data = {
+            'form-TOTAL_FORMS': '2',
+            'form-INITIAL_FORMS': '1',
+            'form-MAX_NUM_FORMS': '0',
+            'form-0-id': charles.pk,
+            'form-0-name': 'Arthur Rimbaud',
+            'form-1-name': 'Walt Whitman',
+        }
+        formset = AuthorFormSet(data)
+        self.assertIs(formset.is_valid(), True)
+        self.assertEqual(formset.save(), [charles])
+        charles.refresh_from_db()
+        self.assertEqual(charles.name, 'Arthur Rimbaud')
+        self.assertSequenceEqual(Author.objects.all(), [charles])
+
+    def test_modelformset_factory_edit_only_commit_false(self):
+        charles = Author.objects.create(name='Charles Baudelaire')
+        AuthorFormSet = modelformset_factory(Author, fields='__all__', edit_only=True)
+        data = {
+            'form-TOTAL_FORMS': '2',
+            'form-INITIAL_FORMS': '1',
+            'form-MAX_NUM_FORMS': '0',
+            'form-0-id': charles.pk,
+            'form-0-name': 'Arthur Rimbaud',
+            'form-1-name': 'Walt Whitman',
+        }
+        formset = AuthorFormSet(data)
+        self.assertIs(formset.is_valid(), True)
+        self.assertEqual(formset.save(commit=False), [charles])
+        self.assertEqual(len(formset.saved_forms), 1)
+
+    def test_inlineformset_factory_edit_only(self):
+        author = Author.objects.create(name='Charles Baudelaire')
+        book = Book.objects.create(author=author, title='Les Paradis Artificiels')
+        BookFormSet = inlineformset_factory(
+            Author, Book, can_delete=False, fields='__all__', edit_only=True,
+        )
+        data = {
+            'book_set-TOTAL_FORMS': '4',
+            'book_set-INITIAL_FORMS': '1',
+            'book_set-MAX_NUM_FORMS': '0',
+            'book_set-0-id': book.pk,
+            'book_set-0-title': 'Les Fleurs du Mal',
+            'book_set-0-author': author.pk,
+            'book_set-1-title': 'Le Spleen de Paris',
+            'book_set-1-author': author.pk,
+            'book_set-2-title': 'Les Épaves',
+            'book_set-2-author': author.pk,
+            'book_set-3-title': 'Petits Poèmes en prose',
+            'book_set-3-author': author.pk,
+        }
+        formset = BookFormSet(data, instance=author)
+        self.assertIs(formset.is_valid(), True)
+        self.assertEqual(formset.save(), [book])
+        book.refresh_from_db()
+        self.assertEqual(book.title, 'Les Fleurs du Mal')
+        self.assertSequenceEqual(Book.objects.all(), [book])
