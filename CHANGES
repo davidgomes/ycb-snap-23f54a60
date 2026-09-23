@@ -63,6 +63,8 @@ Bugs fixed
 * #9678: linkcheck: file extension was shown twice in warnings
 * #9697: py domain: An index entry with parens was registered for ``py:method``
   directive with ``:property:`` option
+* #9711: :confval:`needs_extensions` compared extension versions as strings,
+  so e.g. version 0.10 was treated as older than 0.6
 
 Testing
 --------
