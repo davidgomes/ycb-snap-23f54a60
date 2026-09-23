@@ -245,6 +245,13 @@ def test_dbscan_optics_parity(eps, min_samples):
     assert percent_mismatch <= 0.05
 
 
+def test_min_samples_float():
+    # A fractional min_samples must be rounded to an int before it is passed
+    # as n_neighbors to NearestNeighbors.
+    clust = OPTICS(min_samples=0.1).fit(X)
+    assert clust.labels_.shape == (X.shape[0],)
+
+
 def test_min_samples_edge_case():
     C1 = [[0, 0], [0, 0.1], [0, -.1]]
     C2 = [[10, 10], [10, 9], [10, 11]]
