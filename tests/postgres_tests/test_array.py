@@ -1124,6 +1124,24 @@ class TestSplitFormWidget(PostgreSQLWidgetTestCase):
             )
         )
 
+    def test_render_checkbox_checked(self):
+        """
+        A True value must not leave later CheckboxInput widgets checked.
+        CheckboxInput used to write 'checked' onto the shared attrs dict.
+        """
+        self.check_html(
+            SplitArrayWidget(forms.CheckboxInput(), size=4),
+            'array', [True, False, True, False],
+            html=(
+                """
+                <input checked name="array_0" type="checkbox">
+                <input name="array_1" type="checkbox">
+                <input checked name="array_2" type="checkbox">
+                <input name="array_3" type="checkbox">
+                """
+            ),
+        )
+
     def test_value_omitted_from_data(self):
         widget = SplitArrayWidget(forms.TextInput(), size=2)
         self.assertIs(widget.value_omitted_from_data({}, {}, 'field'), True)

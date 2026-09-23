@@ -521,10 +521,11 @@ class CheckboxInput(Input):
         return str(value)
 
     def get_context(self, name, value, attrs):
+        # CheckboxInput is the only widget that sets 'checked' on attrs.
+        # Copy so callers that reuse the same dict (SplitArrayWidget) do not
+        # keep 'checked' after the first True value.
         if self.check_test(value):
-            if attrs is None:
-                attrs = {}
-            attrs['checked'] = True
+            attrs = {**(attrs or {}), 'checked': True}
         return super().get_context(name, value, attrs)
 
     def value_from_datadict(self, data, files, name):
