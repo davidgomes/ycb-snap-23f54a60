@@ -1,0 +1,1 @@
+Fixed a crash on Python debug builds when using ``True``, ``False`` or ``None`` as identifiers in ``-k`` or ``-m`` expressions.
