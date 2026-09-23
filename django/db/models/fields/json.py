@@ -423,6 +423,28 @@ class KeyTransformExact(JSONExact):
         return super().as_sql(compiler, connection)
 
 
+class KeyTransformIn(lookups.In):
+    def process_rhs(self, compiler, connection):
+        rhs, rhs_params = super().process_rhs(compiler, connection)
+        if connection.features.has_native_json_field or not self.rhs_is_direct_value():
+            return rhs, rhs_params
+        if connection.vendor == 'oracle':
+            func = []
+            for value in rhs_params:
+                value = json.loads(value)
+                function = 'JSON_QUERY' if isinstance(value, (list, dict)) else 'JSON_VALUE'
+                func.append("%s('%s', '$.value')" % (
+                    function,
+                    json.dumps({'value': value}),
+                ))
+            rhs = rhs % tuple(func)
+            rhs_params = []
+        elif connection.vendor in {'mysql', 'sqlite'}:
+            func = ["JSON_EXTRACT(%s, '$')"] * len(rhs_params)
+            rhs = rhs % tuple(func)
+        return rhs, rhs_params
+
+
 class KeyTransformIExact(CaseInsensitiveMixin, KeyTransformTextLookupMixin, lookups.IExact):
     pass
 
@@ -480,6 +502,7 @@ class KeyTransformGte(KeyTransformNumericLookupMixin, lookups.GreaterThanOrEqual
 
 
 KeyTransform.register_lookup(KeyTransformExact)
+KeyTransform.register_lookup(KeyTransformIn)
 KeyTransform.register_lookup(KeyTransformIExact)
 KeyTransform.register_lookup(KeyTransformIsNull)
 KeyTransform.register_lookup(KeyTransformIContains)
