@@ -1597,7 +1597,17 @@ default: %(va)s
                                                  hspace is not None):
             # Gridspec wspace and hspace is ignored on subfigure instantiation,
             # and no space is left.  So need to account for it here if required.
-            bottoms, tops, lefts, rights = gs.get_grid_positions(self)
+            # get_grid_positions falls back to figure.subplot rcParams for any
+            # spacing left as None; without a layout engine that default is 0.
+            orig_wspace, orig_hspace = gs.wspace, gs.hspace
+            try:
+                if gs.wspace is None:
+                    gs.wspace = 0
+                if gs.hspace is None:
+                    gs.hspace = 0
+                bottoms, tops, lefts, rights = gs.get_grid_positions(self)
+            finally:
+                gs.wspace, gs.hspace = orig_wspace, orig_hspace
             for sfrow, bottom, top in zip(sfarr, bottoms, tops):
                 for sf, left, right in zip(sfrow, lefts, rights):
                     bbox = Bbox.from_extents(left, bottom, right, top)

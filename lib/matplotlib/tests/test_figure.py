@@ -1473,6 +1473,21 @@ def test_subfigures_wspace_hspace():
     np.testing.assert_allclose(sub_figs[1, 2].bbox.min, [w * 0.7, 0])
     np.testing.assert_allclose(sub_figs[1, 2].bbox.max, [w, h * 0.4])
 
+    # An omitted spacing is zero when no layout engine is active, rather than
+    # the subplot rcParam (which would open a gap on the other axis).
+    wspace_only = plt.figure().subfigures(2, 2, wspace=0.5)
+    np.testing.assert_allclose(wspace_only[0, 0].bbox_relative.extents,
+                               [0, 0.5, 0.4, 1])
+    np.testing.assert_allclose(wspace_only[0, 1].bbox_relative.extents,
+                               [0.6, 0.5, 1, 1])
+    np.testing.assert_allclose(wspace_only[1, 0].bbox_relative.extents,
+                               [0, 0, 0.4, 0.5])
+    hspace_only = plt.figure().subfigures(2, 2, hspace=1)
+    np.testing.assert_allclose(hspace_only[0, 0].bbox_relative.extents,
+                               [0, 2/3, 0.5, 1])
+    np.testing.assert_allclose(hspace_only[1, 0].bbox_relative.extents,
+                               [0, 0, 0.5, 1/3])
+
 
 def test_add_subplot_kwargs():
     # fig.add_subplot() always creates new axes, even if axes kwargs differ.
