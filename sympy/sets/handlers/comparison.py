@@ -24,11 +24,6 @@ def _eval_is_eq(lhs, rhs): # noqa: F811
                lhs.right_open == rhs.right_open)
 
 
-@dispatch(FiniteSet, Interval) # type:ignore
-def _eval_is_eq(lhs, rhs): # noqa: F811
-    return False
-
-
 @dispatch(FiniteSet, FiniteSet) # type:ignore
 def _eval_is_eq(lhs, rhs): # noqa: F811
     def all_in_both():
@@ -56,4 +51,4 @@ def _eval_is_eq(lhs, rhs): # noqa: F811
 
 @dispatch(Set, Set) # type:ignore
 def _eval_is_eq(lhs, rhs): # noqa: F811
-    return None
+    return tfn[fuzzy_and(a.is_subset(b) for a, b in [(lhs, rhs), (rhs, lhs)])]

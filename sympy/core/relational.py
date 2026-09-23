@@ -305,6 +305,10 @@ class Relational(Boolean, EvalfMixin):
         r = self
         r = r.func(*[i.simplify(**kwargs) for i in r.args])
         if r.is_Relational:
+            # Sets and other non-Expr objects do not support subtraction
+            # or ``.equals``; leave the relation as-is.
+            if not isinstance(r.lhs, Expr) or not isinstance(r.rhs, Expr):
+                return r
             dif = r.lhs - r.rhs
             # replace dif with a valid Number that will
             # allow a definitive comparison with 0
@@ -561,6 +565,8 @@ class Equality(Relational):
         # standard simplify
         e = super()._eval_simplify(**kwargs)
         if not isinstance(e, Equality):
+            return e
+        if not isinstance(e.lhs, Expr) or not isinstance(e.rhs, Expr):
             return e
         free = self.free_symbols
         if len(free) == 1:
