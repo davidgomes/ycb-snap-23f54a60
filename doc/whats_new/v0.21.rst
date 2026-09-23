@@ -202,6 +202,11 @@ Support for Python 3.4 and below has been officially dropped.
   by the liblinear solver. :issue:`12860` by :user:`Nicolas Hug
   <NicolasHug>`.
 
+- |Fix| Fixed a bug where :class:`linear_model.HuberRegressor` raised a
+  ``TypeError`` when ``X`` had boolean dtype. Boolean predictors are now
+  converted to float, consistent with other linear models.
+  :issue:`13328`.
+
 - |Fix| Fixed a bug in :class:`linear_model.LogisticRegression` and
   :class:`linear_model.LogisticRegressionCV` with 'saga' solver, where the
   weights would not be correctly updated in some cases.

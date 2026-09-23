@@ -179,6 +179,18 @@ def test_huber_warm_start():
     assert huber_warm.n_iter_ == 0
 
 
+def test_huber_bool():
+    # Boolean predictors are cast to float and must not raise.
+    X, y = make_regression(
+        n_samples=200, n_features=2, noise=4.0, random_state=0)
+    X_bool = X > 0
+    huber_bool = HuberRegressor().fit(X_bool, y)
+    huber_float = HuberRegressor().fit(np.asarray(X_bool, dtype=float), y)
+    assert_array_almost_equal(huber_bool.coef_, huber_float.coef_)
+    assert_almost_equal(huber_bool.intercept_, huber_float.intercept_)
+    assert_array_equal(huber_bool.outliers_, huber_float.outliers_)
+
+
 def test_huber_better_r2_score():
     # Test that huber returns a better r2 score than non-outliers"""
     X, y = make_regression_with_outliers()
