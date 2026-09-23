@@ -32,6 +32,8 @@ from sphinx.util.console import (  # type: ignore
 from sphinx.util.nodes import get_node_line
 from sphinx.util.requests import is_ssl_error
 
+uri_re = re.compile('([a-z]+:)?//')  # matches to foo:// and // (a protocol relative URL)
+
 
 logger = logging.getLogger(__name__)
 
@@ -213,7 +215,19 @@ class CheckExternalLinksBuilder(Builder):
             if len(uri) == 0 or uri.startswith(('#', 'mailto:', 'ftp:')):
                 return 'unchecked', '', 0
             elif not uri.startswith(('http:', 'https:')):
-                return 'local', '', 0
+                if uri_re.match(uri):
+                    # non supported URI schemes (ex. ftp)
+                    return 'unchecked', '', 0
+                else:
+                    srcdir = path.dirname(self.env.doc2path(docname))
+                    if path.exists(path.join(srcdir, uri.split('#')[0])):
+                        return 'working', '', 0
+                    else:
+                        for rex in self.to_ignore:
+                            if rex.match(uri):
+                                return 'ignored', '', 0
+                        else:
+                            return 'broken', '', 0
             elif uri in self.good:
                 return 'working', 'old', 0
             elif uri in self.broken:
