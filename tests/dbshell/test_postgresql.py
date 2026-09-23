@@ -18,6 +18,7 @@ class PostgreSqlDbshellCommandTestCase(SimpleTestCase):
         """
         def _mock_subprocess_run(*args, env=os.environ, **kwargs):
             self.subprocess_args = list(*args)
+            self.subprocess_env = env
             self.pgpassword = env.get('PGPASSWORD')
             return subprocess.CompletedProcess(self.subprocess_args, 0)
         with mock.patch('subprocess.run', new=_mock_subprocess_run):
@@ -50,6 +51,27 @@ class PostgreSqlDbshellCommandTestCase(SimpleTestCase):
                 None,
             )
         )
+
+    def test_ssl_certificate(self):
+        self.assertEqual(
+            self._run_it({
+                'database': 'dbname',
+                'user': 'someuser',
+                'host': 'somehost',
+                'port': '444',
+                'sslmode': 'verify-ca',
+                'sslrootcert': 'root.crt',
+                'sslcert': 'client.crt',
+                'sslkey': 'client.key',
+            }), (
+                ['psql', '-U', 'someuser', '-h', 'somehost', '-p', '444', 'dbname'],
+                None,
+            )
+        )
+        self.assertEqual(self.subprocess_env['PGSSLMODE'], 'verify-ca')
+        self.assertEqual(self.subprocess_env['PGSSLROOTCERT'], 'root.crt')
+        self.assertEqual(self.subprocess_env['PGSSLCERT'], 'client.crt')
+        self.assertEqual(self.subprocess_env['PGSSLKEY'], 'client.key')
 
     def test_column(self):
         self.assertEqual(
