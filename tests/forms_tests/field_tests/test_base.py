@@ -1,4 +1,6 @@
-from django.forms import ChoiceField, Field, Form, Select
+import copy
+
+from django.forms import CharField, ChoiceField, Field, Form, Select
 from django.test import SimpleTestCase
 
 
@@ -34,6 +36,13 @@ class BasicFieldsTests(SimpleTestCase):
         f.fields['field2'].choices = [('2', '2')]
         self.assertEqual(f.fields['field1'].widget.choices, [('1', '1')])
         self.assertEqual(f.fields['field2'].widget.choices, [('2', '2')])
+
+    def test_field_deep_copy_error_messages(self):
+        field = CharField(error_messages={'required': 'Required.'})
+        field_copy = copy.deepcopy(field)
+        self.assertIsNot(field_copy.error_messages, field.error_messages)
+        field_copy.error_messages['required'] = 'Changed.'
+        self.assertEqual(field.error_messages['required'], 'Required.')
 
 
 class DisabledFieldTests(SimpleTestCase):
