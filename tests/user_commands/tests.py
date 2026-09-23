@@ -8,7 +8,12 @@ from admin_scripts.tests import AdminScriptTestCase
 from django.apps import apps
 from django.core import management
 from django.core.checks import Tags
-from django.core.management import BaseCommand, CommandError, find_commands
+from django.core.management import (
+    BaseCommand,
+    CommandError,
+    CommandParser,
+    find_commands,
+)
 from django.core.management.utils import (
     find_command,
     get_random_secret_key,
@@ -405,6 +410,29 @@ class CommandTests(SimpleTestCase):
         msg = "Error: the following arguments are required: subcommand"
         with self.assertRaisesMessage(CommandError, msg):
             management.call_command("subparser_dest", subcommand="foo", bar=12)
+
+    def test_subparser_retains_error_formatting(self):
+        missing_args_message = "args required"
+        parser = CommandParser(
+            called_from_command_line=True,
+            missing_args_message=missing_args_message,
+        )
+        subparsers = parser.add_subparsers(required=True)
+        create = subparsers.add_parser("create")
+        create.add_argument("name")
+        self.assertIs(create.called_from_command_line, True)
+        self.assertEqual(create.missing_args_message, missing_args_message)
+        with captured_stderr() as err, self.assertRaises(SystemExit):
+            parser.parse_args(["create"])
+        self.assertIn("the following arguments are required: name", err.getvalue())
+        programmatic = CommandParser(called_from_command_line=False)
+        subparsers = programmatic.add_subparsers()
+        create = subparsers.add_parser("create")
+        create.add_argument("name")
+        with self.assertRaisesMessage(
+            CommandError, "Error: the following arguments are required: name"
+        ):
+            programmatic.parse_args(["create"])
 
     def test_create_parser_kwargs(self):
         """BaseCommand.create_parser() passes kwargs to CommandParser."""
