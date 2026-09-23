@@ -65,6 +65,18 @@ class ExecutorTests(MigrationTestBase):
         self.assertTableNotExists("migrations_author")
         self.assertTableNotExists("migrations_book")
 
+    @override_settings(MIGRATION_MODULES={"migrations": "migrations.test_migrations"})
+    def test_migrate_skips_schema_creation(self):
+        """
+        The django_migrations table isn't created if there are no migrations
+        to record.
+        """
+        executor = MigrationExecutor(connection)
+        # 0 queries, since the query for has_table is being mocked.
+        with mock.patch.object(executor.recorder, 'has_table', return_value=False):
+            with self.assertNumQueries(0):
+                executor.migrate([], plan=[])
+
     @override_settings(MIGRATION_MODULES={"migrations": "migrations.test_migrations_squashed"})
     def test_run_with_squashed(self):
         """
