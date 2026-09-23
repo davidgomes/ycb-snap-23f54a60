@@ -387,6 +387,10 @@ class Axes3D(Axes):
 
     @martist.allow_rasterization
     def draw(self, renderer):
+        # Axes3D draws panes and the 3D frame before calling the base
+        # Axes.draw, which is where 2D Axes honor set_visible(False).
+        if not self.get_visible():
+            return
         self._unstale_viewLim()
 
         # draw the background patch

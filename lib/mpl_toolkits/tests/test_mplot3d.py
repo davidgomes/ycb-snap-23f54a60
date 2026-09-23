@@ -1045,6 +1045,13 @@ def test_unautoscale(axis, auto):
     np.testing.assert_array_equal(get_lim(), (-0.5, 0.5))
 
 
+@check_figures_equal(extensions=["png"])
+def test_invisible_axes(fig_test, fig_ref):
+    ax = fig_test.subplots(subplot_kw=dict(projection='3d'))
+    ax.scatter(1, 1, 1)
+    ax.set_visible(False)
+
+
 def test_axes3d_focal_length_checks():
     fig = plt.figure()
     ax = fig.add_subplot(projection='3d')
