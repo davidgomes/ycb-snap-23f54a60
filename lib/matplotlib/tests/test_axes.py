@@ -2859,12 +2859,23 @@ def test_stackplot():
     ax.set_xlim((0, 10))
     ax.set_ylim((0, 70))
 
-    # Reuse testcase from above for a labeled data test
+    # Reuse testcase from above for a test with labeled data and with colours
+    # from the Axes property cycle.
     data = {"x": x, "y1": y1, "y2": y2, "y3": y3}
     fig, ax = plt.subplots()
-    ax.stackplot("x", "y1", "y2", "y3", data=data)
+    ax.stackplot("x", "y1", "y2", "y3", data=data, colors=["C0", "C1", "C2"])
     ax.set_xlim((0, 10))
     ax.set_ylim((0, 70))
+
+
+def test_stackplot_colors_do_not_change_prop_cycle():
+    fig, ax = plt.subplots()
+    polys = ax.stackplot([1, 2, 3], [[1, 1, 1], [1, 2, 3], [4, 3, 2]],
+                         colors=['C2', 'C3', 'C4'])
+    for poly, color in zip(polys, ['C2', 'C3', 'C4']):
+        assert mcolors.same_color(poly.get_facecolor(), color)
+    line, = ax.plot([1, 2], [1, 2])
+    assert mcolors.same_color(line.get_color(), 'C0')
 
 
 @image_comparison(['stackplot_test_baseline'], remove_text=True)
