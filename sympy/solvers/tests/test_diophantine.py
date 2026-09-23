@@ -909,6 +909,12 @@ def test_diophantine_permute_sign():
     soln = set([(-1, -1), (-1, 2), (1, -2), (1, 1)])
     assert diophantine(10*x**2 + 12*x*y + 12*y**2 - 34, permute=True) == soln
 
+    # permute must not depend on the order of syms
+    m, n = symbols("m, n", integer=True)
+    eq = n**4 + m**4 - 2**4 - 3**4
+    assert diophantine(eq, syms=(m, n), permute=True) == \
+        diophantine(eq, syms=(n, m), permute=True) == complete_soln
+
 
 @XFAIL
 def test_not_implemented():
