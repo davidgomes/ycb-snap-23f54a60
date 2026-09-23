@@ -676,6 +676,9 @@ def test_Poly_mul():
 
     assert Poly(x, x) * 2 == Poly(2*x, x)
     assert 2 * Poly(x, x) == Poly(2*x, x)
+    assert x * Poly(x, x) == Poly(x**2, x)
+    assert S(-2) * Poly(x, x) == Poly(-2*x, x)
+    assert Poly(x, x) * S(-2) == Poly(-2*x, x)
 
 
 def test_Poly_sqr():
