@@ -13,9 +13,10 @@ from sympy.stats import (P, E, where, density, variance, covariance, skewness,
                          moment, cmoment, smoment)
 
 from sympy import (Symbol, Abs, exp, S, N, pi, simplify, Interval, erf, erfc,
-                   Eq, log, lowergamma, Sum, symbols, sqrt, And, gamma, beta,
-                   Piecewise, Integral, sin, cos, besseli, factorial, binomial,
-                   floor, expand_func, Rational, I)
+                   Eq, log, lowergamma, uppergamma, Sum, symbols, sqrt, And,
+                   gamma, beta, Piecewise, Integral, sin, cos, besseli,
+                   factorial, binomial, floor, expand_func, Rational, I,
+                   asin, hyper, diff)
 
 
 from sympy.stats.crv_types import NormalDistribution
@@ -730,3 +731,52 @@ def test_issue_13324():
     X = Uniform('X', 0, 1)
     assert E(X, X > Rational(1,2)) == Rational(3,4)
     assert E(X, X > 0) == Rational(1,2)
+
+
+def _cdf_matches_pdf(X, points):
+    """Differentiate a precomputed CDF and compare with the PDF."""
+    z = Symbol('z', real=True, finite=True)
+    difference = diff(cdf(X)(z), z) - density(X)(z)
+    for pt in points:
+        assert abs(difference.subs(z, pt).doit().evalf()) < 1e-8
+
+
+def test_precomputed_cdf_hard_integrals():
+    # Cases where integrating the PDF does not produce a usable CDF.
+    assert cdf(Arcsin('x', 0, 3))(1) == 2*asin(sqrt(Rational(1, 3)))/pi
+    assert simplify(cdf(Dagum('x', Rational(1, 3), Rational(1, 5), 2))(3) - (
+        1 + (Rational(3, 2))**(-Rational(1, 5)))**(-Rational(1, 3))) == 0
+    assert cdf(Erlang('x', 1, 1))(1) == 1 - exp(-1)
+    assert not cdf(Erlang('x', 1, 1))(1).is_Float
+    assert cdf(Frechet('x', Rational(4, 3), 1, 2))(3) == exp(-1)
+    gamma_cdf = cdf(Gamma('x', Rational(1, 10), 2))(3)
+    assert gamma_cdf == lowergamma(Rational(1, 10), Rational(3, 2))/gamma(Rational(1, 10))
+    gamma_float = cdf(Gamma('x', 0.1, 2))(3)
+    assert not gamma_float.has(Integral)
+    assert cdf(GammaInverse('x', Rational(5, 7), 2))(3) == (
+        uppergamma(Rational(5, 7), Rational(2, 3))/gamma(Rational(5, 7)))
+    a = Rational(1, 123)
+    assert cdf(Kumaraswamy('x', a, 5))(Rational(1, 3)) == 1 - (1 - Rational(1, 3)**a)**5
+    assert cdf(Laplace('x', 2, 3))(5) == 1 - exp(-1)/2
+    assert cdf(Logistic('x', 1, Rational(1, 10)))(2) == 1/(1 + exp(-10))
+    assert cdf(Logistic('x', 1, 0.1))(2) == 1/(1 + exp(-10.0))
+    assert cdf(Nakagami('x', Rational(7, 3), 1))(2) == (
+        lowergamma(Rational(7, 3), Rational(28, 3))/gamma(Rational(7, 3)))
+    t, nu = S(2), S(10)
+    expected_t = (S.Half + t*gamma((nu + 1)/2)*hyper(
+        (S.Half, (nu + 1)/2), (S(3)/2,), -t**2/nu)/(sqrt(pi*nu)*gamma(nu/2)))
+    assert simplify(cdf(StudentT('x', nu))(t) - expected_t) == 0
+    assert cdf(UniformSum('x', 5))(2) == Rational(9, 40)
+
+    _cdf_matches_pdf(Arcsin('x', 0, 3), [S(1)/2, 1, S(5)/2])
+    _cdf_matches_pdf(Dagum('x', Rational(1, 3), Rational(1, 5), 2), [1, 3, 5])
+    _cdf_matches_pdf(Erlang('x', 1, 1), [S(1)/2, 1, 2])
+    _cdf_matches_pdf(Frechet('x', Rational(4, 3), 1, 2), [S(5)/2, 3, 4])
+    _cdf_matches_pdf(Gamma('x', Rational(1, 10), 2), [1, 3, 5])
+    _cdf_matches_pdf(GammaInverse('x', Rational(5, 7), 2), [1, 3, 6])
+    _cdf_matches_pdf(Kumaraswamy('x', a, 5), [S(1)/5, S(1)/3, S(4)/5])
+    _cdf_matches_pdf(Laplace('x', 2, 3), [0, 1, 5])
+    _cdf_matches_pdf(Logistic('x', 1, Rational(1, 10)), [0, 1, 2])
+    _cdf_matches_pdf(Nakagami('x', Rational(7, 3), 1), [S(1)/2, 1, 2])
+    _cdf_matches_pdf(StudentT('x', 10), [-2, 0, 2])
+    _cdf_matches_pdf(UniformSum('x', 5), [S(1)/2, Rational(3, 2), Rational(7, 2)])
