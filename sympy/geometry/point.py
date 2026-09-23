@@ -11,7 +11,7 @@ Point3D
 from __future__ import division, print_function
 
 from sympy.core import S, sympify
-from sympy.core.compatibility import iterable
+from sympy.core.compatibility import iterable, zip_longest
 from sympy.core.containers import Tuple
 from sympy.simplify import nsimplify, simplify
 from sympy.geometry.exceptions import GeometryError
@@ -265,9 +265,14 @@ class Point(GeometryEntity):
         >>> p3.distance(Point(0, 0))
         sqrt(x**2 + y**2)
 
+        Missing coordinates of the lower-dimensional point are taken as 0:
+
+        >>> Point(2, 0).distance(Point(1, 0, 2))
+        sqrt(5)
+
         """
-        return sqrt(sum([(a - b)**2 for a, b in zip(
-            self.args, p.args if isinstance(p, Point) else p)]))
+        return sqrt(sum([(a - b)**2 for a, b in zip_longest(
+            self.args, p.args if isinstance(p, Point) else p, fillvalue=0)]))
 
     def taxicab_distance(self, p):
         """The Taxicab Distance from self to point p.
