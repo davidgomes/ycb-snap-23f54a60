@@ -1200,6 +1200,26 @@ class DateFunctionWithTimeZoneTests(DateFunctionTests):
                 self.assertEqual(melb_model.hour, 9)
                 self.assertEqual(melb_model.hour_melb, 9)
 
+    def test_extract_func_with_etc_gmt_timezone(self):
+        start_datetime = datetime(2015, 6, 15, 23, 30, 1, 321)
+        end_datetime = datetime(2015, 6, 16, 13, 11, 27, 123)
+        start_datetime = timezone.make_aware(start_datetime, is_dst=False)
+        end_datetime = timezone.make_aware(end_datetime, is_dst=False)
+        self.create_model(start_datetime, end_datetime)
+        for tzinfo in self.get_timezones('Etc/GMT-10'):
+            with self.subTest(repr(tzinfo)):
+                model = DTModel.objects.annotate(
+                    day=Extract('start_datetime', 'day', tzinfo=tzinfo),
+                    hour=ExtractHour('start_datetime', tzinfo=tzinfo),
+                    truncated_day=TruncDay('start_datetime', tzinfo=tzinfo),
+                ).get()
+                self.assertEqual(model.day, 16)
+                self.assertEqual(model.hour, 9)
+                self.assertEqual(
+                    model.truncated_day,
+                    timezone.make_aware(datetime(2015, 6, 16), tzinfo),
+                )
+
     def test_extract_func_explicit_timezone_priority(self):
         start_datetime = datetime(2015, 6, 15, 23, 30, 1, 321)
         end_datetime = datetime(2015, 6, 16, 13, 11, 27, 123)
