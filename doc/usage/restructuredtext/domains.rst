@@ -555,11 +555,18 @@ using the following syntax::
    :type point: tuple[float, float]
 
 Multiple types in a type field will be linked automatically if separated by the
-word "or"::
+word "or" or a vertical bar (``|``)::
 
    :type an_arg: int or None
    :vartype a_var: str or int
    :rtype: float or str
+
+   :type an_arg: int | None
+   :vartype a_var: str | int
+   :rtype: float | str
+
+.. versionchanged:: 4.1
+   Support for the ``|`` (vertical bar) separator.
 
 .. _python-roles:
 
