@@ -991,6 +991,13 @@ def test_latex_mul_symbol():
     assert latex(4*x, mul_symbol='dot') == "4 \\cdot x"
     assert latex(4*x, mul_symbol='ldot') == r"4 \,.\, x"
 
+    # Arbitrary separators are inserted as given. A thin space between two
+    # numbers is ambiguous, so the number separator stays a dot.
+    assert latex(3*x**2*y, mul_symbol=r'\,') == r'3\,x^{2}\,y'
+    assert latex(3*x**2*y, mul_symbol=r' \, ') == r'3 \, x^{2} \, y'
+    assert latex(4*4**x, mul_symbol=r'\,') == r'4 \cdot 4^{x}'
+    assert latex(1.5e20*x, mul_symbol=r'\,') == r'1.5 \cdot 10^{20}\,x'
+
 
 def test_latex_issue_4381():
     y = 4*4**log(2)
