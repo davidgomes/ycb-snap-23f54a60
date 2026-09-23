@@ -159,6 +159,14 @@ class TestMergeMethod:
         with raises_regex(ValueError, "should be coordinates or not"):
             data.merge(data.reset_coords())
 
+    def test_merge_dataarray(self):
+        ds = xr.Dataset({"a": 0})
+        da = xr.DataArray(data=1, name="b")
+
+        expected = xr.merge([ds, da])
+        actual = ds.merge(da)
+        assert expected.identical(actual)
+
     def test_merge_broadcast_equals(self):
         ds1 = xr.Dataset({"x": 0})
         ds2 = xr.Dataset({"x": ("y", [0, 0])})
