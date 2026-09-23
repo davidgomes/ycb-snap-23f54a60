@@ -346,3 +346,40 @@ def test_get_toctree_for_includehidden(app):
 
     assert_node(toctree[2],
                 [bullet_list, list_item, compact_paragraph, reference, "baz"])
+
+
+@pytest.mark.sphinx('xml', testroot='toctree-index')
+def test_toctree_index(app, warning):
+    app.build()
+    toctree = app.env.tocs['index']
+    assert_node(toctree,
+                [bullet_list, ([list_item, (compact_paragraph,  # [0][0]
+                                            [bullet_list, (addnodes.toctree,  # [0][1][0]
+                                                           addnodes.toctree)])])])  # [0][1][1]
+    assert_node(toctree[0][1][1], addnodes.toctree,
+                caption="Indices", glob=False, hidden=False,
+                titlesonly=False, maxdepth=-1, numbered=0,
+                entries=[(None, 'genindex'), (None, 'modindex'), (None, 'search')],
+                includefiles=[])
+    assert app.env.toctree_includes == {'index': ['foo']}
+    assert 'toctree contains' not in warning.getvalue()
+
+    toctree = TocTree(app.env).get_toctree_for('index', app.builder, collapse=False)
+    assert_node(toctree,
+                [compact_paragraph, ([bullet_list, list_item, compact_paragraph,
+                                      reference, "foo"],
+                                     [title, "Indices"],
+                                     bullet_list)])
+    assert_node(toctree[2],
+                ([list_item, compact_paragraph, reference, "Index"],
+                 [list_item, compact_paragraph, reference, "Module Index"],
+                 [list_item, compact_paragraph, reference, "Search Page"]))
+    assert_node(toctree[2][0][0][0], reference, refuri="genindex")
+    assert_node(toctree[2][1][0][0], reference, refuri="py-modindex")
+    assert_node(toctree[2][2][0][0], reference, refuri="search")
+
+
+@pytest.mark.sphinx('latex', testroot='toctree-index', confoverrides={'numfig': True})
+def test_toctree_index_latex(app, warning):
+    app.build()
+    assert 'toctree contains' not in warning.getvalue()
