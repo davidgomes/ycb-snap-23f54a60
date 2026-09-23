@@ -203,6 +203,16 @@ def test_nonuniform_strategies(strategy, expected_2bins, expected_3bins):
     assert_array_equal(expected_3bins, Xt.ravel())
 
 
+def test_kmeans_unsorted_bin_edges():
+    # Non-regression test for GH-13134: k-means centers are not guaranteed
+    # to be sorted, which made np.digitize fail on the resulting bin edges.
+    X = np.array([0, 0.5, 2, 3, 9, 10]).reshape(-1, 1)
+    est = KBinsDiscretizer(n_bins=5, strategy='kmeans', encode='ordinal')
+    Xt = est.fit_transform(X)
+    assert Xt.shape == (X.shape[0], 1)
+    assert np.all(np.diff(est.bin_edges_[0]) > 0)
+
+
 @pytest.mark.parametrize('strategy', ['uniform', 'kmeans', 'quantile'])
 @pytest.mark.parametrize('encode', ['ordinal', 'onehot', 'onehot-dense'])
 def test_inverse_transform(strategy, encode):
