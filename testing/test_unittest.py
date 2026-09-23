@@ -1193,6 +1193,48 @@ def test_pdb_teardown_called(testdir, monkeypatch):
     ]
 
 
+@pytest.mark.parametrize(
+    "class_mark, method_mark",
+    [
+        ("", "@unittest.skip"),
+        ("@unittest.skip", ""),
+        ("", "@pytest.mark.skip"),
+    ],
+)
+def test_pdb_teardown_skipped(testdir, monkeypatch, class_mark, method_mark):
+    """
+    With --pdb, setUp and tearDown should not be called for skipped tests (#7215).
+    """
+    tracked = []
+    monkeypatch.setattr(pytest, "test_pdb_teardown_skipped", tracked, raising=False)
+
+    testdir.makepyfile(
+        """
+        import unittest
+        import pytest
+
+        {class_mark}
+        class MyTestCase(unittest.TestCase):
+
+            def setUp(self):
+                pytest.test_pdb_teardown_skipped.append("setUp:" + self.id())
+
+            def tearDown(self):
+                pytest.test_pdb_teardown_skipped.append("tearDown:" + self.id())
+
+            {method_mark}
+            def test_1(self):
+                pass
+
+    """.format(
+            class_mark=class_mark, method_mark=method_mark
+        )
+    )
+    result = testdir.runpytest_inprocess("--pdb")
+    result.stdout.fnmatch_lines("* 1 skipped in *")
+    assert tracked == []
+
+
 def test_async_support(testdir):
     pytest.importorskip("unittest.async_case")
 
