@@ -338,6 +338,11 @@ class AutodetectorTests(TestCase):
         ("author", models.ForeignKey("testapp.Author", models.CASCADE)),
         ("title", models.CharField(max_length=200)),
     ])
+    book_with_no_author_fk = ModelState("otherapp", "Book", [
+        ("id", models.AutoField(primary_key=True)),
+        ("author", models.IntegerField()),
+        ("title", models.CharField(max_length=200)),
+    ])
     book_proxy_fk = ModelState("otherapp", "Book", [
         ("id", models.AutoField(primary_key=True)),
         ("author", models.ForeignKey("thirdapp.AuthorProxy", models.CASCADE)),
@@ -1120,6 +1125,15 @@ class AutodetectorTests(TestCase):
         self.assertOperationTypes(changes, 'thirdapp', 0, ["CreateModel"])
         self.assertOperationAttributes(changes, 'thirdapp', 0, 0, name="Edition")
         self.assertMigrationDependencies(changes, 'thirdapp', 0, [("otherapp", "auto_1")])
+
+    def test_alter_field_to_fk_dependency_other_app(self):
+        changes = self.get_changes(
+            [self.author_empty, self.book_with_no_author_fk],
+            [self.author_empty, self.book],
+        )
+        self.assertNumberMigrations(changes, 'otherapp', 1)
+        self.assertOperationTypes(changes, 'otherapp', 0, ['AlterField'])
+        self.assertMigrationDependencies(changes, 'otherapp', 0, [('testapp', '__first__')])
 
     def test_proxy_fk_dependency(self):
         """FK dependencies still work on proxy models."""
