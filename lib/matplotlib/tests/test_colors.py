@@ -212,6 +212,13 @@ def test_colormap_endian():
         assert_array_equal(cmap(anative), cmap(aforeign))
 
 
+@pytest.mark.parametrize('dtype', [np.uint8, int, np.float16, float])
+def test_index_dtype(dtype):
+    # We use subtraction in the indexing, so need to verify that uint8 works
+    cm = mpl.colormaps["viridis"]
+    assert_array_equal(cm(dtype(0)), cm(0))
+
+
 def test_colormap_invalid():
     """
     GitHub issue #9892: Handling of nan's were getting mapped to under

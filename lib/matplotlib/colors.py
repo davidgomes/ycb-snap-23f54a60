@@ -706,29 +706,24 @@ class Colormap:
         if not self._isinit:
             self._init()
 
-        # Take the bad mask from a masked array, or in all other cases defer
-        # np.isnan() to after we have converted to an array.
-        mask_bad = X.mask if np.ma.is_masked(X) else None
         xa = np.array(X, copy=True)
-        if mask_bad is None:
-            mask_bad = np.isnan(xa)
         if not xa.dtype.isnative:
             xa = xa.byteswap().newbyteorder()  # Native byteorder is faster.
         if xa.dtype.kind == "f":
-            with np.errstate(invalid="ignore"):
-                xa *= self.N
-                # Negative values are out of range, but astype(int) would
-                # truncate them towards zero.
-                xa[xa < 0] = -1
-                # xa == 1 (== N after multiplication) is not out of range.
-                xa[xa == self.N] = self.N - 1
-                # Avoid converting large positive values to negative integers.
-                np.clip(xa, -1, self.N, out=xa)
-                xa = xa.astype(int)
-        # Set the over-range indices before the under-range;
-        # otherwise the under-range values get converted to over-range.
-        xa[xa > self.N - 1] = self._i_over
-        xa[xa < 0] = self._i_under
+            xa *= self.N
+            # xa == 1 (== N after multiplication) is not out of range.
+            xa[xa == self.N] = self.N - 1
+        # Pre-compute the masks before casting to int (which can truncate
+        # negative values to zero or wrap large floats to negative ints).
+        mask_under = xa < 0
+        mask_over = xa >= self.N
+        # If input was masked, get the bad mask from it; else mask out nans.
+        mask_bad = X.mask if np.ma.is_masked(X) else np.isnan(xa)
+        with np.errstate(invalid="ignore"):
+            # We need this cast for unsigned ints as well as floats
+            xa = xa.astype(int)
+        xa[mask_under] = self._i_under
+        xa[mask_over] = self._i_over
         xa[mask_bad] = self._i_bad
 
         lut = self._lut
