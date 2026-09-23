@@ -45,4 +45,20 @@ class Contains(BooleanFunction):
             isinstance(i, (Eq, Ne))])
 
     def as_set(self):
-        raise NotImplementedError()
+        """
+        Return the set ``S`` from ``Contains(x, S)``.
+
+        ``Contains`` is a boolean, so rewriting it as a set means the set of
+        values for which the containment holds. When the element is a free
+        symbol, that set is ``S`` itself.
+
+        Examples
+        ========
+
+        >>> from sympy import Contains, Reals, Symbol
+        >>> x = Symbol('x')
+        >>> Contains(x, Reals).as_set()
+        Reals
+
+        """
+        return self.args[1]
