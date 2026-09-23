@@ -999,6 +999,28 @@ def test_hexbin_log_clim():
     assert h.get_clim() == (2, 100)
 
 
+@pytest.mark.parametrize("mincnt", [None, 0, 1, 2, 3])
+def test_hexbin_mincnt_behavior_upon_C_parameter(mincnt):
+    # GH 12926: mincnt should mean "at least" whether or not C is given.
+    np.random.seed(42)
+    x, y = np.random.multivariate_normal(
+        [0.0, 0.0], [[1.0, 0.1], [0.1, 1.0]], size=250).T
+    kwargs = dict(extent=[-3., 3., -3., 3.], gridsize=(7, 7), mincnt=mincnt)
+    fig, ax = plt.subplots()
+    without_C = ax.hexbin(x, y, **kwargs)
+    with_C = ax.hexbin(x, y, C=np.ones_like(x), reduce_C_function=np.sum,
+                       **kwargs)
+    counts = without_C.get_array()
+    offsets = without_C.get_offsets()
+    if mincnt is None:
+        # By default, empty cells are kept without C but not reduced with C.
+        nonempty = counts > 0
+        counts, offsets = counts[nonempty], offsets[nonempty]
+    assert len(counts) > 0
+    assert_array_equal(counts, with_C.get_array())
+    assert_array_equal(offsets, with_C.get_offsets())
+
+
 def test_inverted_limits():
     # Test gh:1553
     # Calling invert_xaxis prior to plotting should not disable autoscaling

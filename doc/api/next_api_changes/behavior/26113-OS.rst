@@ -1,0 +1,8 @@
+*mincnt* parameter given to ``Axes.hexbin`` now consistently means "at least"
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When *C* is given, cells are now displayed if they contain at least *mincnt*
+points, rather than more than *mincnt* points, matching the behavior when *C*
+is not given. The default (``mincnt=None``) still only displays cells that
+contain at least one point when *C* is given. Passing ``mincnt=0`` together
+with *C* now calls *reduce_C_function* on empty cells as well.
