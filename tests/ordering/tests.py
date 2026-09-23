@@ -8,7 +8,10 @@ from django.db.models import (
 from django.db.models.functions import Upper
 from django.test import TestCase
 
-from .models import Article, Author, ChildArticle, OrderedByFArticle, Reference
+from .models import (
+    Article, Author, ChildArticle, OrderedByFArticle, Reference, SelfRef,
+    SelfRefChild,
+)
 
 
 class OrderingTests(TestCase):
@@ -320,6 +323,42 @@ class OrderingTests(TestCase):
             Author.objects.all(),
             list(reversed(range(1, Author.objects.count() + 1))),
             attrgetter("pk"),
+        )
+
+    def test_order_by_self_referential_fk_attname(self):
+        """
+        Ordering by a self-referential foreign key's attname orders by that
+        column and does not inherit the related model's Meta.ordering or add
+        an extra join (#29408).
+        """
+        root = SelfRef.objects.create(oneval=1)
+        parent = SelfRef.objects.create(root=root, oneval=2)
+        other = SelfRef.objects.create(oneval=3)
+        SelfRefChild.objects.create(record=parent, twoval=1)
+        SelfRefChild.objects.create(record=other, twoval=2)
+        SelfRefChild.objects.create(record=root, twoval=3)
+
+        ascending = SelfRefChild.objects.filter(record__oneval__in=[1, 2, 3]).order_by('record__root_id')
+        sql = str(ascending.query)
+        self.assertEqual(sql.count('JOIN'), 1)
+        order_by = sql[sql.find('ORDER BY'):]
+        self.assertIn('root_id', order_by)
+        self.assertNotIn('DESC', order_by)
+        self.assertQuerysetEqual(
+            ascending,
+            [None, None, root.pk],
+            attrgetter('record.root_id'),
+        )
+
+        descending = SelfRefChild.objects.filter(record__oneval__in=[1, 2, 3]).order_by('-record__root_id')
+        desc_sql = str(descending.query)
+        self.assertEqual(desc_sql.count('JOIN'), 1)
+        desc_order = desc_sql[desc_sql.find('ORDER BY'):]
+        self.assertIn('DESC', desc_order)
+        self.assertQuerysetEqual(
+            descending,
+            [root.pk, None, None],
+            attrgetter('record.root_id'),
         )
 
     def test_order_by_fk_attname(self):

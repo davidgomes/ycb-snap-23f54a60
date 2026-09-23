@@ -59,3 +59,17 @@ class Reference(models.Model):
 
     class Meta:
         ordering = ('article',)
+
+
+class SelfRef(models.Model):
+    """Self-referential FK with a default ordering that is not the pk."""
+    root = models.ForeignKey('self', models.CASCADE, null=True)
+    oneval = models.BigIntegerField(null=True)
+
+    class Meta:
+        ordering = ('-id',)
+
+
+class SelfRefChild(models.Model):
+    record = models.ForeignKey(SelfRef, models.CASCADE)
+    twoval = models.BigIntegerField(null=True)
