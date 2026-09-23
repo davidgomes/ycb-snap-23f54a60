@@ -6961,6 +6961,49 @@ def test_2dcolor_plot(fig_test, fig_ref):
     axs[4].bar(np.arange(10), np.arange(10), color=color.reshape((1, -1)))
 
 
+def _tick_visibility(ax):
+    ax.figure.canvas.draw()
+    vis = {}
+    for name, axis in (("x", ax.xaxis), ("y", ax.yaxis)):
+        tick = axis.get_major_ticks()[0]
+        vis[name] = (
+            tick.tick1line.get_visible(),
+            tick.tick2line.get_visible(),
+            tick.label1.get_visible(),
+            tick.label2.get_visible(),
+        )
+    return vis
+
+
+def test_shared_axes_clear():
+    # clear() must not un-hide tick labels on shared axes, or turn on the
+    # top/right ticks that rcParams (and subplot sharing) disabled.
+    x = np.arange(0.0, 2 * np.pi, 0.01)
+    y = np.sin(x)
+
+    fig_ref, axs_ref = plt.subplots(2, 2, sharex=True, sharey=True)
+    for ax in axs_ref.flat:
+        ax.plot(x, y)
+
+    fig_test, axs_test = plt.subplots(2, 2, sharex=True, sharey=True)
+    for ax in axs_test.flat:
+        ax.clear()
+        ax.plot(x, y)
+
+    for ax_ref, ax_test in zip(axs_ref.flat, axs_test.flat):
+        assert _tick_visibility(ax_test) == _tick_visibility(ax_ref)
+
+    fig, ax = plt.subplots()
+    ax.plot(x, y)
+    before = _tick_visibility(ax)
+    ax.clear()
+    ax.plot(x, y)
+    assert _tick_visibility(ax) == before
+    plt.close(fig_ref)
+    plt.close(fig_test)
+    plt.close(fig)
+
+
 def test_shared_axes_retick():
     fig, axs = plt.subplots(2, 2, sharex='all', sharey='all')
 
