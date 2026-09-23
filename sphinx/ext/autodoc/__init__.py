@@ -770,7 +770,8 @@ class Documenter:
                 else:
                     keep = False
             else:
-                if self.options.members is ALL and is_filtered_inherited_member(membername, obj):
+                if (self.options.members is ALL and
+                        is_filtered_inherited_member(membername, obj)):
                     keep = False
                 else:
                     # ignore undocumented members if :undoc-members: is not given
