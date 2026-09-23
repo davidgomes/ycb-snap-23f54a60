@@ -669,6 +669,10 @@ class FormattingTests(SimpleTestCase):
                 "⌚ 10:15", Template('{{ t|time:"⌚ H:i" }}').render(self.ctxt)
             )
 
+    def test_get_format_lazy_format(self):
+        self.assertEqual(get_format(gettext_lazy("DATE_FORMAT")), "N j, Y")
+        self.assertEqual(get_format(gettext_lazy("Y-m-d")), "Y-m-d")
+
     @ignore_warnings(category=RemovedInDjango50Warning)
     @override_settings(USE_L10N=False)
     def test_l10n_disabled(self):
