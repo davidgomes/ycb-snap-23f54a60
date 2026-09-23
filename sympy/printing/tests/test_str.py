@@ -1058,3 +1058,10 @@ def test_AppliedPredicate():
 def test_printing_str_array_expressions():
     assert sstr(ArraySymbol("A", 2, 3, 4)) == "A"
     assert sstr(ArrayElement("A", (2, 1/(1-x), 0))) == "A[2, 1/(1 - x), 0]"
+
+
+def test_issue_21537():
+    a, b, c = symbols('a b c')
+    expr = Mul((a**3 + b)/c, Pow(Mul(1, Pow(c**2, -1, evaluate=False),
+        evaluate=False), -1, evaluate=False), evaluate=False)
+    assert str(expr) == '((a**3 + b)/c)/((1/c**2))'
