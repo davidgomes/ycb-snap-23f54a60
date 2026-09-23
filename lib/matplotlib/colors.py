@@ -725,6 +725,11 @@ class Colormap:
                 # Avoid converting large positive values to negative integers.
                 np.clip(xa, -1, self.N, out=xa)
                 xa = xa.astype(int)
+        # Under/over/bad sentinels are N, N+1 and N+2.  Narrow integer dtypes
+        # such as uint8 cannot represent them, and NumPy 1.24 deprecates the
+        # overflowing cast of those Python ints into the array.
+        if not np.can_cast(self.N + 2, xa.dtype, casting="safe"):
+            xa = xa.astype(int)
         # Set the over-range indices before the under-range;
         # otherwise the under-range values get converted to over-range.
         xa[xa > self.N - 1] = self._i_over

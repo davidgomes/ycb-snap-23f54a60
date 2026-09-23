@@ -1,6 +1,7 @@
 import copy
 import itertools
 import unittest.mock
+import warnings
 
 from io import BytesIO
 import numpy as np
@@ -244,6 +245,22 @@ def test_colormap_invalid():
     assert_array_equal(cmap(-np.inf), cmap(0))
     assert_array_equal(cmap(np.inf), cmap(1.0))
     assert_array_equal(cmap(np.nan), [0., 0., 0., 0.])
+
+
+def test_colormap_uint8_index_no_overflow_warning():
+    """
+    NumPy 1.24 deprecates storing the under/over/bad sentinels (N, N+1, N+2)
+    in a uint8 index array.  Mapping uint8 data must stay silent and match
+    the wider integer path.
+    """
+    cmap = mpl.colormaps["viridis"]
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", DeprecationWarning)
+        empty = cmap(np.empty((0,), dtype=np.uint8))
+        indices = np.array([0, 1, 255], dtype=np.uint8)
+        mapped = cmap(indices)
+    assert empty.shape == (0, 4)
+    assert_array_equal(mapped, cmap(indices.astype(int)))
 
 
 def test_colormap_return_types():
