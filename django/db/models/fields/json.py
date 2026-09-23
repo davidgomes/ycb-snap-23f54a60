@@ -378,6 +378,27 @@ class KeyTransformIsNull(lookups.IsNull):
         return super().as_sql(compiler, connection)
 
 
+class KeyTransformIn(lookups.In):
+    def resolve_expression_parameter(self, compiler, connection, sql, param):
+        sql, params = super().resolve_expression_parameter(
+            compiler, connection, sql, param,
+        )
+        if (
+            not hasattr(param, 'as_sql') and
+            not connection.features.has_native_json_field
+        ):
+            if connection.vendor == 'oracle':
+                value = json.loads(param)
+                sql = "%s(JSON_OBJECT('value' VALUE %%s FORMAT JSON), '$.value')"
+                if isinstance(value, (list, dict)):
+                    sql = sql % 'JSON_QUERY'
+                else:
+                    sql = sql % 'JSON_VALUE'
+            elif connection.vendor in {'sqlite', 'mysql'}:
+                sql = "JSON_EXTRACT(%s, '$')"
+        return sql, params
+
+
 class KeyTransformExact(JSONExact):
     def process_lhs(self, compiler, connection):
         lhs, lhs_params = super().process_lhs(compiler, connection)
@@ -479,6 +500,7 @@ class KeyTransformGte(KeyTransformNumericLookupMixin, lookups.GreaterThanOrEqual
     pass
 
 
+KeyTransform.register_lookup(KeyTransformIn)
 KeyTransform.register_lookup(KeyTransformExact)
 KeyTransform.register_lookup(KeyTransformIExact)
 KeyTransform.register_lookup(KeyTransformIsNull)
