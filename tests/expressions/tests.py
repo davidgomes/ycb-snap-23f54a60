@@ -21,6 +21,7 @@ from django.db.models.sql import constants
 from django.db.models.sql.datastructures import Join
 from django.test import SimpleTestCase, TestCase, skipUnlessDBFeature
 from django.test.utils import Approximate, isolate_apps
+from django.utils.functional import SimpleLazyObject
 
 from .models import (
     UUID, UUIDPK, Company, Employee, Experiment, Number, RemoteEmployee,
@@ -607,6 +608,15 @@ class BasicExpressionsTests(TestCase):
             ),
         )
         self.assertEqual(qs.get().float, 1.2)
+
+    def test_subquery_filter_by_lazy(self):
+        max_ceo = SimpleLazyObject(lambda: Employee.objects.get(pk=self.max.pk))
+        qs = Company.objects.annotate(
+            ceo_ref=Subquery(
+                Company.objects.filter(pk=OuterRef('pk')).values('ceo'),
+            ),
+        ).filter(ceo_ref=max_ceo)
+        self.assertEqual(qs.get(), self.gmbh)
 
     def test_aggregate_subquery_annotation(self):
         with self.assertNumQueries(1) as ctx:
