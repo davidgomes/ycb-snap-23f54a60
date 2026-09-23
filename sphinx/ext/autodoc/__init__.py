@@ -725,6 +725,9 @@ class Documenter:
             if isinstance(obj, ObjectMember) and obj.docstring:
                 # hack for ClassDocumenter to inject docstring via ObjectMember
                 doc = obj.docstring
+            elif (namespace, membername) in attr_docs:
+                # use the doc-comment of the variable (ex. ``#: comment``)
+                doc = '\n'.join(attr_docs[(namespace, membername)])
 
             has_doc = bool(doc)
 
