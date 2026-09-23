@@ -60,6 +60,9 @@ Features added
 Bugs fixed
 ----------
 
+* py domain: parameter fields that name several arguments (``x1, x2``)
+  were rendered as a type plus a single name, so a separate ``:type:``
+  (including ``optional``) was dropped
 * #7886: autodoc: TypeError is raised on mocking generic-typed classes
 * #7935: autodoc: function signature is not shown when the function has a
   parameter having ``inspect._empty`` as its default value

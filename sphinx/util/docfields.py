@@ -325,9 +325,12 @@ class DocFieldTransformer:
                 except ValueError:
                     pass
                 else:
-                    types.setdefault(typename, {})[argname] = \
-                        [nodes.Text(argtype)]
-                    fieldarg = argname
+                    # Names may list several parameters ("x1, x2").  The first
+                    # token then ends with a comma and is not a type.
+                    if not argtype.endswith(','):
+                        types.setdefault(typename, {})[argname] = \
+                            [nodes.Text(argtype)]
+                        fieldarg = argname
 
             translatable_content = nodes.inline(field_body.rawsource,
                                                 translatable=True)

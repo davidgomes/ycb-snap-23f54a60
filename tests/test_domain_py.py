@@ -521,6 +521,21 @@ def test_pyfunction(app):
     assert domain.objects['example.func2'] == ('index', 'example.func2', 'function')
 
 
+def test_combined_parameter_names(app):
+    text = (".. py:function:: func(x1, x2)\n"
+            "\n"
+            "   :param x1, x2: Input arrays, description of x1, x2.\n"
+            "   :type x1, x2: array_like, optional\n"
+            "   :param int foo: typed parameter\n")
+    doctree = restructuredtext.parse(app, text)
+    items = list(doctree.traverse(nodes.list_item))
+    assert len(items) == 2
+    assert items[0].astext() == (
+        'x1, x2 (array_like, optional) -- Input arrays, description of x1, x2.'
+    )
+    assert items[1].astext() == 'foo (int) -- typed parameter'
+
+
 def test_pyclass_options(app):
     text = (".. py:class:: Class1\n"
             ".. py:class:: Class2\n"
