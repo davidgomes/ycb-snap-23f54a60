@@ -6,6 +6,7 @@ from sympy.assumptions.refine import refine
 from sympy.core.add import Add
 from sympy.core.basic import Basic, Atom
 from sympy.core.expr import Expr
+from sympy.core.function import expand_mul
 from sympy.core.power import Pow
 from sympy.core.symbol import (Symbol, Dummy, symbols,
     _uniquely_named_symbol)
@@ -177,7 +178,7 @@ class MatrixDeterminant(MatrixCommon):
         # XXX included as a workaround for issue #12362.  Should use `_find_reasonable_pivot` instead
         def _find_pivot(l):
             for pos,val in enumerate(l):
-                if val:
+                if val and not expand_mul(val).is_zero:
                     return (pos, val, None, None)
             return (None, None, None, None)
 
@@ -208,7 +209,7 @@ class MatrixDeterminant(MatrixCommon):
             def entry(i, j):
                 ret = (pivot_val*tmp_mat[i, j + 1] - mat[pivot_pos, j + 1]*tmp_mat[i, 0]) / cumm
                 if not ret.is_Atom:
-                    cancel(ret)
+                    return cancel(ret)
                 return ret
 
             return sign*bareiss(self._new(mat.rows - 1, mat.cols - 1, entry), pivot_val)
