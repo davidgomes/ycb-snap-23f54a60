@@ -1144,6 +1144,10 @@ class FormsFormsetTestCase(SimpleTestCase):
         formset = ChoiceFormSet(data, auto_id=False, prefix='choices')
         self.assertIsInstance(formset.non_form_errors(), ErrorList)
         self.assertEqual(list(formset.non_form_errors()), ['This is a non-form error'])
+        self.assertEqual(
+            str(formset.non_form_errors()),
+            '<ul class="errorlist nonform"><li>This is a non-form error</li></ul>',
+        )
 
     def test_validate_max_ignores_forms_marked_for_deletion(self):
         class CheckForm(Form):

@@ -616,6 +616,17 @@ errors. For example, ``{{ form.non_field_errors }}`` would look like:
         <li>Generic validation error</li>
     </ul>
 
+Non-form errors (errors from :meth:`FormSet.non_form_errors()
+<django.forms.formsets.BaseFormSet.non_form_errors>`) are rendered with an
+additional class of ``nonform``. For example,
+``{{ formset.non_form_errors }}`` would look like:
+
+.. code-block:: html+django
+
+    <ul class="errorlist nonform">
+        <li>Articles in a set must have distinct titles.</li>
+    </ul>
+
 See :doc:`/ref/forms/api` for more on errors, styling, and working with form
 attributes in templates.
 

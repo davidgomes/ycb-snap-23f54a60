@@ -212,6 +212,10 @@ File Uploads
 Forms
 ~~~~~
 
+* The rendering of non-form errors in unordered lists (``<ul>``) now includes
+  ``nonform`` in its list of classes to distinguish them from form-specific
+  errors.
+
 * :class:`~django.forms.ModelChoiceField` now includes the provided value in
   the ``params`` argument of a raised
   :exc:`~django.core.exceptions.ValidationError` for the ``invalid_choice``
