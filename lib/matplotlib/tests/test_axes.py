@@ -377,6 +377,36 @@ def test_twinx_cla():
 
 
 @pytest.mark.parametrize('twin', ('x', 'y'))
+def test_twin_units(twin):
+    axis_name = f'{twin}axis'
+    twin_func = f'twin{twin}'
+
+    a = ['0', '1']
+    b = ['a', 'b']
+
+    fig = Figure()
+    ax1 = fig.subplots()
+    ax1.plot(a, b)
+    assert getattr(ax1, axis_name).units is not None
+    ax2 = getattr(ax1, twin_func)()
+    assert getattr(ax2, axis_name).units is not None
+    assert getattr(ax2, axis_name).units is getattr(ax1, axis_name).units
+
+
+def test_twinx_stackplot_keeps_datalim():
+    # Categorical stackplot, then a plot on a twin, must not reset ax1 dataLim.
+    # https://github.com/matplotlib/matplotlib/issues/26194
+    index = ['16 May', '17 May']
+    fig, ax1 = plt.subplots()
+    ax1.stackplot(index, [-22.717708333333402, 26.584999999999937])
+    y0 = ax1.dataLim.intervaly.copy()
+    ax2 = ax1.twinx()
+    ax2.plot(index, [-0.08501399999999998, -2.9833019999999966])
+    assert_allclose(ax1.dataLim.intervaly, y0)
+    assert np.all(np.isfinite(ax2.dataLim.intervaly))
+
+
+@pytest.mark.parametrize('twin', ('x', 'y'))
 @check_figures_equal(extensions=['png'], tol=0.19)
 def test_twin_logscale(fig_test, fig_ref, twin):
     twin_func = f'twin{twin}'  # test twinx or twiny

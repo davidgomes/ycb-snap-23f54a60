@@ -4441,6 +4441,11 @@ class _AxesBase(martist.Artist):
         self.yaxis.tick_left()
         ax2.xaxis.set_visible(False)
         ax2.patch.set_visible(False)
+        # Share the unit mapping. A later unit-aware plot on the twin
+        # otherwise installs a new converter; the units callback then relims
+        # the original Axes, dropping artists such as stackplot and replacing
+        # dataLim with +/-inf (#26194).
+        ax2.xaxis.units = self.xaxis.units
         return ax2
 
     def twiny(self):
@@ -4470,6 +4475,8 @@ class _AxesBase(martist.Artist):
         self.xaxis.tick_bottom()
         ax2.yaxis.set_visible(False)
         ax2.patch.set_visible(False)
+        # See twinx: keep the shared axis on the same unit mapping.
+        ax2.yaxis.units = self.yaxis.units
         return ax2
 
     def get_shared_x_axes(self):
