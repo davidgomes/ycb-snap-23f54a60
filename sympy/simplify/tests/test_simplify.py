@@ -511,6 +511,20 @@ def test_posify():
     assert str(Sum(posify(1/x**n)[0], (n,1,3)).expand()) == \
         'Sum(_x**(-n), (n, 1, 3))'
 
+    # assumptions that do not decide positivity should be kept (issue 16438)
+    xf = Symbol('xf', finite=True)
+    assert posify(xf)[0].is_finite is True
+    xi = Symbol('xi', integer=True)
+    xip = posify(xi)[0]
+    assert xip.is_integer is True
+    assert xip.is_positive is True
+    xr = Symbol('xr', rational=True)
+    assert posify(xr)[0].is_rational is True
+    xe = Symbol('xe', even=True)
+    assert posify(xe)[0].is_even is True
+    xo = Symbol('xo', odd=True)
+    assert posify(xo)[0].is_odd is True
+
 
 def test_issue_4194():
     # simplify should call cancel
