@@ -73,11 +73,25 @@ def test_ndim_array_initiation():
 
     from sympy.abc import x
     rank_zero_array = ImmutableDenseNDimArray(x)
-    assert len(rank_zero_array) == 0
+    assert len(rank_zero_array) == 1
     assert rank_zero_array.shape == ()
     assert rank_zero_array.rank() == 0
     assert rank_zero_array[()] == x
-    raises(ValueError, lambda: rank_zero_array[0])
+    assert rank_zero_array[0] == x
+    assert list(rank_zero_array) == [x]
+    raises(ValueError, lambda: rank_zero_array[1])
+
+    rank_zero_sparse_array = ImmutableSparseNDimArray(x)
+    assert len(rank_zero_sparse_array) == 1
+    assert rank_zero_sparse_array.shape == ()
+    assert rank_zero_sparse_array.rank() == 0
+    assert rank_zero_sparse_array[()] == x
+    assert list(rank_zero_sparse_array) == [x]
+
+    empty_array = ImmutableDenseNDimArray([], (0,))
+    assert len(empty_array) == 0
+    assert empty_array.shape == (0,)
+    assert empty_array.rank() == 1
 
 
 def test_reshape():
