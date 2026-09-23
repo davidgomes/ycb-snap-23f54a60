@@ -218,6 +218,25 @@ class OptimizerTests(SimpleTestCase):
             migrations.AlterOrderWithRespectTo("Foo", "b"),
         )
 
+    def test_alter_foo_together_separated_by_other_together(self):
+        """
+        AlterUniqueTogether and AlterIndexTogether on the same model can be
+        optimized through each other, so a clear followed by a new value
+        collapses to the final operation.
+        """
+        self.assertOptimizesTo(
+            [
+                migrations.AlterUniqueTogether("MyModel", set()),
+                migrations.AlterIndexTogether("MyModel", set()),
+                migrations.AlterUniqueTogether("MyModel", {("col",)}),
+                migrations.AlterIndexTogether("MyModel", {("col",)}),
+            ],
+            [
+                migrations.AlterUniqueTogether("MyModel", {("col",)}),
+                migrations.AlterIndexTogether("MyModel", {("col",)}),
+            ],
+        )
+
     def test_optimize_through_create(self):
         """
         We should be able to optimize away create/delete through a create or delete
