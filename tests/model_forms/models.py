@@ -411,9 +411,25 @@ class StumpJoke(models.Model):
         Character,
         models.CASCADE,
         limit_choices_to=today_callable_dict,
-        related_name="+",
+        related_name='jokes',
     )
-    has_fooled_today = models.ManyToManyField(Character, limit_choices_to=today_callable_q, related_name="+")
+    has_fooled_today = models.ManyToManyField(
+        Character,
+        limit_choices_to=today_callable_q,
+        related_name='jokes_today',
+    )
+    funny = models.BooleanField(default=False)
+
+
+class CharacterDetails(models.Model):
+    character = models.ForeignKey(
+        Character,
+        models.CASCADE,
+        limit_choices_to=models.Q(
+            jokes__funny=True,
+            jokes_today__funny=True,
+        ),
+    )
 
 
 # Model for #13776

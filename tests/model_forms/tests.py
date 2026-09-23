@@ -19,12 +19,12 @@ from django.test import SimpleTestCase, TestCase, skipUnlessDBFeature
 
 from .models import (
     Article, ArticleStatus, Author, Author1, Award, BetterWriter, BigInt, Book,
-    Category, Character, Colour, ColourfulItem, CustomErrorMessage, CustomFF,
-    CustomFieldForExclusionModel, DateTimePost, DerivedBook, DerivedPost,
-    Document, ExplicitPK, FilePathModel, FlexibleDatePost, Homepage,
-    ImprovedArticle, ImprovedArticleWithParentLink, Inventory,
-    NullableUniqueCharFieldModel, Person, Photo, Post, Price, Product,
-    Publication, PublicationDefaults, StrictAssignmentAll,
+    Category, Character, CharacterDetails, Colour, ColourfulItem,
+    CustomErrorMessage, CustomFF, CustomFieldForExclusionModel, DateTimePost,
+    DerivedBook, DerivedPost, Document, ExplicitPK, FilePathModel,
+    FlexibleDatePost, Homepage, ImprovedArticle, ImprovedArticleWithParentLink,
+    Inventory, NullableUniqueCharFieldModel, Person, Photo, Post, Price,
+    Product, Publication, PublicationDefaults, StrictAssignmentAll,
     StrictAssignmentFieldSpecific, Student, StumpJoke, TextFile, Triple,
     Writer, WriterProfile, test_images,
 )
@@ -2828,6 +2828,35 @@ class LimitChoicesToTests(TestCase):
             self.assertEqual(today_callable_dict.call_count, 2)
             StumpJokeForm()
             self.assertEqual(today_callable_dict.call_count, 3)
+
+    def test_limit_choices_to_no_duplicates(self):
+        joke1 = StumpJoke.objects.create(
+            funny=True,
+            most_recently_fooled=self.threepwood,
+        )
+        joke2 = StumpJoke.objects.create(
+            funny=True,
+            most_recently_fooled=self.threepwood,
+        )
+        joke3 = StumpJoke.objects.create(
+            funny=True,
+            most_recently_fooled=self.marley,
+        )
+        StumpJoke.objects.create(funny=False, most_recently_fooled=self.marley)
+        joke1.has_fooled_today.add(self.marley, self.threepwood)
+        joke2.has_fooled_today.add(self.marley)
+        joke3.has_fooled_today.add(self.marley, self.threepwood)
+
+        class CharacterDetailsForm(forms.ModelForm):
+            class Meta:
+                model = CharacterDetails
+                fields = '__all__'
+
+        form = CharacterDetailsForm()
+        self.assertCountEqual(
+            form.fields['character'].queryset,
+            [self.marley, self.threepwood],
+        )
 
 
 class FormFieldCallbackTests(SimpleTestCase):
