@@ -1717,6 +1717,29 @@ def test_nan_bar_values():
     ax.bar([0, 1], [np.nan, 4])
 
 
+def test_bar_all_nan_x():
+    fig, ax = plt.subplots()
+    bars = ax.bar([np.nan], [np.nan])
+    assert len(bars) == 1
+    assert np.isnan(bars[0].get_x())
+    assert np.isnan(bars[0].get_height())
+    ax.bar([np.nan], [0])
+    ax.barh([np.nan], [np.nan])
+
+
+@check_figures_equal(extensions=["png"])
+def test_bar_all_nan(fig_test, fig_ref):
+    mpl.style.use("mpl20")
+    ax_test = fig_test.subplots()
+    ax_ref = fig_ref.subplots()
+
+    ax_test.bar([np.nan], [np.nan])
+    ax_test.bar([1], [1])
+
+    ax_ref.bar([1], [1]).remove()
+    ax_ref.bar([1], [1])
+
+
 def test_bar_ticklabel_fail():
     fig, ax = plt.subplots()
     ax.bar([], [])
