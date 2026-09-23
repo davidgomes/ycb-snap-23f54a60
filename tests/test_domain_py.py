@@ -239,6 +239,11 @@ def test_get_full_qualified_name():
 def test_parse_annotation():
     doctree = _parse_annotation("int")
     assert_node(doctree, ([pending_xref, "int"],))
+    assert doctree[0]['reftype'] == 'class'
+
+    doctree = _parse_annotation("None")
+    assert_node(doctree, ([pending_xref, "None"],))
+    assert doctree[0]['reftype'] == 'obj'
 
     doctree = _parse_annotation("List[int]")
     assert_node(doctree, ([pending_xref, "List"],
