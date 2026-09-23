@@ -1611,6 +1611,15 @@ class ClassDocumenter(DocstringSignatureMixin, ModuleLevelDocumenter):  # type: 
 
         return []
 
+    def get_real_modname(self) -> str:
+        if self.doc_as_attr:
+            # An alias is a variable; its doc-comment lives in the module (or class)
+            # where it is assigned, not in the module defining the aliased class.
+            real_modname = self.get_attr(self.parent or self.object, '__module__', None)
+            return real_modname or self.modname
+        else:
+            return super().get_real_modname()
+
     def get_canonical_fullname(self) -> Optional[str]:
         __modname__ = safe_getattr(self.object, '__module__', self.modname)
         __qualname__ = safe_getattr(self.object, '__qualname__', None)
@@ -1721,9 +1730,16 @@ class ClassDocumenter(DocstringSignatureMixin, ModuleLevelDocumenter):  # type: 
         tab_width = self.directive.state.document.settings.tab_width
         return [prepare_docstring(docstring, ignore, tab_width) for docstring in docstrings]
 
+    def get_variable_comment(self) -> Optional[List[str]]:
+        if self.analyzer:
+            key = ('.'.join(self.objpath[:-1]), self.objpath[-1])
+            return self.analyzer.find_attr_docs().get(key)
+        else:
+            return None
+
     def add_content(self, more_content: Optional[StringList], no_docstring: bool = False
                     ) -> None:
-        if self.doc_as_attr:
+        if self.doc_as_attr and not self.get_variable_comment():
             try:
                 more_content = StringList([_('alias of %s') % restify(self.object)], source='')
             except AttributeError:
