@@ -1521,8 +1521,13 @@ class Locator(TickHelper):
         return locs
 
     def nonsingular(self, v0, v1):
-        """Modify the endpoints of a range as needed to avoid singularities."""
-        return mtransforms.nonsingular(v0, v1, increasing=False, expander=.05)
+        """
+        Expand a range as needed to avoid singularities.
+
+        The returned range is always increasing (``v0 <= v1``).  Axis limit
+        setters restore a requested inverted order after calling this method.
+        """
+        return mtransforms.nonsingular(v0, v1, expander=.05)
 
     def view_limits(self, vmin, vmax):
         """

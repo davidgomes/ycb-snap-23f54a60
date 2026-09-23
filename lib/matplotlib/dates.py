@@ -1220,7 +1220,11 @@ class DateLocator(ticker.Locator):
         Given the proposed upper and lower extent, adjust the range
         if it is too close to being singular (i.e. a range of ~0).
 
+        The returned range is always increasing, matching
+        `~matplotlib.ticker.Locator.nonsingular`.
         """
+        if vmax < vmin:
+            vmin, vmax = vmax, vmin
         unit = self._get_unit()
         interval = self._get_interval()
         if abs(vmax - vmin) < 1e-6:
@@ -1437,6 +1441,9 @@ class AutoDateLocator(DateLocator):
     def nonsingular(self, vmin, vmax):
         # whatever is thrown at us, we can scale the unit.
         # But default nonsingular date plots at an ~4 year period.
+        # Always return an increasing range, matching Locator.nonsingular.
+        if vmax < vmin:
+            vmin, vmax = vmax, vmin
         if vmin == vmax:
             vmin = vmin - DAYS_PER_YEAR * 2
             vmax = vmax + DAYS_PER_YEAR * 2

@@ -623,8 +623,12 @@ class Axes3D(Axes):
             cbook._warn_external(
                 f"Attempting to set identical left == right == {left} results "
                 f"in singular transformations; automatically expanding.")
+        # nonsingular() returns an increasing range; restore requested order.
+        swapped = left > right
         left, right = self.xaxis.get_major_locator().nonsingular(left, right)
         left, right = self.xaxis.limit_range_for_scale(left, right)
+        if swapped:
+            left, right = right, left
         self.xy_viewLim.intervalx = (left, right)
 
         if auto is not None:
@@ -681,8 +685,12 @@ class Axes3D(Axes):
                 f"Attempting to set identical bottom == top == {bottom} "
                 f"results in singular transformations; automatically "
                 f"expanding.")
+        # nonsingular() returns an increasing range; restore requested order.
+        swapped = bottom > top
         bottom, top = self.yaxis.get_major_locator().nonsingular(bottom, top)
         bottom, top = self.yaxis.limit_range_for_scale(bottom, top)
+        if swapped:
+            bottom, top = top, bottom
         self.xy_viewLim.intervaly = (bottom, top)
 
         if auto is not None:
@@ -739,8 +747,12 @@ class Axes3D(Axes):
                 f"Attempting to set identical bottom == top == {bottom} "
                 f"results in singular transformations; automatically "
                 f"expanding.")
+        # nonsingular() returns an increasing range; restore requested order.
+        swapped = bottom > top
         bottom, top = self.zaxis.get_major_locator().nonsingular(bottom, top)
         bottom, top = self.zaxis.limit_range_for_scale(bottom, top)
+        if swapped:
+            bottom, top = top, bottom
         self.zz_viewLim.intervalx = (bottom, top)
 
         if auto is not None:

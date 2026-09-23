@@ -938,6 +938,47 @@ def test_inverted_limits():
     assert ax.get_ylim() == (5, -3)
     plt.close()
 
+    # Inverted limits must be honored on nonlinear scales.
+    y = np.linspace(1000e2, 1, 100)
+    x = np.exp(-np.linspace(0, 1, y.size))
+    fig, ax = plt.subplots()
+    ax.plot(x, y)
+    ax.set_yscale('log')
+    ax.set_ylim(y.max(), y.min())
+    assert ax.get_ylim() == (y.max(), y.min())
+    ax.set_xscale('log')
+    ax.set_xlim(x.max(), x.min())
+    assert ax.get_xlim() == (x.max(), x.min())
+    plt.close(fig)
+
+    for scale, lim in (('symlog', (10, -10)), ('logit', (0.8, 0.2))):
+        fig, ax = plt.subplots()
+        if scale == 'logit':
+            ax.plot([0.2, 0.8], [0.2, 0.8])
+        else:
+            ax.plot([1, 2], [1, 2])
+        ax.set_xscale(scale)
+        ax.set_yscale(scale)
+        ax.set_xlim(*lim)
+        ax.set_ylim(*lim)
+        assert ax.get_xlim() == lim
+        assert ax.get_ylim() == lim
+        plt.close(fig)
+
+    # Date locators must return an increasing range so set_xlim can
+    # restore a requested inverted order.
+    import matplotlib.dates as mdates
+    t0 = datetime.datetime(2009, 1, 20)
+    tf = datetime.datetime(2009, 1, 31)
+    n0 = mdates.date2num(t0)
+    n1 = mdates.date2num(tf)
+    for locator in (mdates.AutoDateLocator(), mdates.DayLocator()):
+        fig, ax = plt.subplots()
+        ax.xaxis.set_major_locator(locator)
+        ax.set_xlim(n1, n0)
+        assert ax.get_xlim() == (n1, n0)
+        plt.close(fig)
+
 
 @image_comparison(baseline_images=['nonfinite_limits'])
 def test_nonfinite_limits():
