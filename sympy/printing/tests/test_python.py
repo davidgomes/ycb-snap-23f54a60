@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from sympy import (Symbol, symbols, oo, limit, Rational, Integral, Derivative,
-    log, exp, sqrt, pi, Function, sin, Eq, Ge, Le, Gt, Lt, Ne, Abs, conjugate,
-    I, Matrix)
+from sympy import (Symbol, symbols, oo, limit, Limit, Rational, Integral,
+    Derivative, log, exp, sqrt, pi, Function, sin, Eq, Ge, Le, Gt, Lt, Ne, Abs,
+    conjugate, I, Matrix)
 
 from sympy.printing.python import python
 
@@ -80,12 +80,14 @@ def test_python_keyword_function_name_escaping():
 
 
 def test_python_relational():
-    assert python(Eq(x, y)) == "e = Eq(x, y)"
+    assert python(Eq(x, y)) == "x = Symbol('x')\ny = Symbol('y')\ne = Eq(x, y)"
     assert python(Ge(x, y)) == "x = Symbol('x')\ny = Symbol('y')\ne = x >= y"
     assert python(Le(x, y)) == "x = Symbol('x')\ny = Symbol('y')\ne = x <= y"
     assert python(Gt(x, y)) == "x = Symbol('x')\ny = Symbol('y')\ne = x > y"
     assert python(Lt(x, y)) == "x = Symbol('x')\ny = Symbol('y')\ne = x < y"
-    assert python(Ne(x/(y + 1), y**2)) in ["e = Ne(x/(1 + y), y**2)", "e = Ne(x/(y + 1), y**2)"]
+    assert python(Ne(x/(y + 1), y**2)) in [
+        "x = Symbol('x')\ny = Symbol('y')\ne = Ne(x/(1 + y), y**2)",
+        "x = Symbol('x')\ny = Symbol('y')\ne = Ne(x/(y + 1), y**2)"]
 
 
 def test_python_functions():
@@ -182,6 +184,10 @@ def test_python_matrix():
 def test_python_limits():
     assert python(limit(x, x, oo)) == 'e = oo'
     assert python(limit(x**2, x, 0)) == 'e = 0'
+    assert python(Limit(x, x, Rational(1, 2))) == \
+        "x = Symbol('x')\ne = Limit(x, x, Rational(1, 2))"
+    assert python(Limit(x, x, 0, dir='-')) == \
+        "x = Symbol('x')\ne = Limit(x, x, 0, dir='-')"
 
 
 def test_settings():

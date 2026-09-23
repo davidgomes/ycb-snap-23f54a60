@@ -163,6 +163,8 @@ def test_Interval():
                 for r in (True, False):
                     ival = Interval(n[i], n[j], l, r)
                     assert S(str(ival)) == ival
+    assert sstr(Interval(Rational(1, 2), 3), sympy_integers=True) == \
+        "Interval(S(1)/2, S(3))"
 
 
 def test_AccumBounds():
@@ -176,6 +178,9 @@ def test_Lambda():
     # issue 2908
     assert str(Lambda((), 1)) == "Lambda((), 1)"
     assert str(Lambda((), x)) == "Lambda((), x)"
+    assert sstr(Lambda(x, x/2), sympy_integers=True) == "Lambda(x, x/S(2))"
+    assert sstr(Lambda((x, y), x/2), sympy_integers=True) == \
+        "Lambda((x, y), x/S(2))"
 
 
 def test_Limit():
@@ -183,6 +188,8 @@ def test_Limit():
     assert str(Limit(1/x, x, 0)) == "Limit(1/x, x, 0)"
     assert str(
         Limit(sin(x)/x, x, y, dir="-")) == "Limit(sin(x)/x, x, y, dir='-')"
+    assert sstr(Limit(x/2, x, Rational(1, 2), dir="-"), sympy_integers=True) == \
+        "Limit(x/S(2), x, S(1)/2, dir='-')"
 
 
 def test_list():
@@ -491,6 +498,9 @@ def test_Rational():
 
     assert sstr(Rational(2, 3), sympy_integers=True) == "S(2)/3"
     assert sstr(Symbol("x")**Rational(2, 3), sympy_integers=True) == "x**(S(2)/3)"
+    assert sstr(Eq(x, Rational(2, 3)), sympy_integers=True) == "Eq(x, S(2)/3)"
+    assert sstr(Limit(x, x, Rational(7, 2)), sympy_integers=True) == \
+        "Limit(x, x, S(7)/2)"
 
 
 def test_Float():
@@ -516,6 +526,9 @@ def test_Relational():
     assert str(Rel(x, y, ':=')) == "Assignment(x, y)"
     assert str(Eq(x, 1) | Eq(x, 2)) == "Eq(x, 1) | Eq(x, 2)"
     assert str(Ne(x, 1) & Ne(x, 2)) == "Ne(x, 1) & Ne(x, 2)"
+    assert sstr(Ne(x, Rational(1, 2)), sympy_integers=True) == "Ne(x, S(1)/2)"
+    assert sstr(Rel(x, Rational(1, 2), ':='), sympy_integers=True) == \
+        "Assignment(x, S(1)/2)"
 
 
 def test_CRootOf():
