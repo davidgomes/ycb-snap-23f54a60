@@ -61,6 +61,9 @@ Bug fixes
   now reopens the file from scratch for h5netcdf and scipy netCDF backends,
   rather than reusing a cached version (:issue:`4240`, :issue:`4862`).
   By `Stephan Hoyer <https://github.com/shoyer>`_.
+- Fixed bug where :py:meth:`Dataset.coarsen.construct` and
+  :py:meth:`DataArray.coarsen.construct` would demote non-dimension
+  coordinates to variables. (:issue:`7232`)
 - Raise a TypeError when trying to plot empty data (:issue:`7156`, :pull:`7228`).
   By `Michael Niklas <https://github.com/headtr1ck>`_.
 
