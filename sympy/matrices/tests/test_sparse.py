@@ -587,3 +587,14 @@ def test_hermitian():
     assert a.is_hermitian is None
     a[0, 1] = a[1, 0]*I
     assert a.is_hermitian is False
+
+
+def test_hstack_vstack_null_matrices():
+    sparse_matrices = [SparseMatrix.zeros(0, n) for n in range(4)]
+    assert SparseMatrix.hstack(*sparse_matrices) == SparseMatrix(0, 6, [])
+    sparse_matrices = [SparseMatrix.zeros(n, 0) for n in range(4)]
+    assert SparseMatrix.vstack(*sparse_matrices) == SparseMatrix(6, 0, [])
+    sparse_matrices = [SparseMatrix.zeros(1, n) for n in range(4)]
+    assert SparseMatrix.hstack(*sparse_matrices) == SparseMatrix.zeros(1, 6)
+    sparse_matrices = [SparseMatrix.zeros(n, 1) for n in range(4)]
+    assert SparseMatrix.vstack(*sparse_matrices) == SparseMatrix.zeros(6, 1)
