@@ -389,6 +389,16 @@ Miscellaneous
 * Tests that fail to load, for example due to syntax errors, now always match
   when using :option:`test --tag`.
 
+Bugfixes
+========
+
+Tests
+-----
+
+* Fixed a race condition where :class:`~django.test.LiveServerTestCase`'s
+  ``ThreadedWSGIServer`` didn't close database connections after each request
+  thread (:ticket:`32416`).
+
 .. _deprecated-features-4.0:
 
 Features deprecated in 4.0
