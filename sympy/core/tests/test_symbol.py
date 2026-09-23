@@ -1,3 +1,4 @@
+from sympy.core.function import Function, UndefinedFunction
 from sympy.core.numbers import (I, Rational, pi)
 from sympy.core.relational import (GreaterThan, LessThan, StrictGreaterThan, StrictLessThan)
 from sympy.core.symbol import (Dummy, Symbol, Wild, symbols)
@@ -241,6 +242,11 @@ def test_symbols():
     assert symbols(('x', 'y', 'z')) == (x, y, z)
     assert symbols(['x', 'y', 'z']) == [x, y, z]
     assert symbols({'x', 'y', 'z'}) == {x, y, z}
+
+    q, u = symbols(('q:2', 'u:2'), cls=Function)
+    assert all(isinstance(f, UndefinedFunction) for f in q + u)
+    assert [str(f) for f in q + u] == ['q0', 'q1', 'u0', 'u1']
+    assert symbols(['a', ('b', 'c')], cls=Dummy)[1][0].is_Dummy
 
     raises(ValueError, lambda: symbols(''))
     raises(ValueError, lambda: symbols(','))
