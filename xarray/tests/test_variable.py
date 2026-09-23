@@ -2300,6 +2300,11 @@ class TestAsCompatibleData:
         class CustomIndexable(CustomArray, indexing.ExplicitlyIndexed):
             pass
 
+        # Type with data stored in the values attribute. Must not be unwrapped.
+        class CustomWithValuesAttr:
+            def __init__(self, array):
+                self.values = array
+
         array = CustomArray(np.arange(3))
         orig = Variable(dims=("x"), data=array, attrs={"foo": "bar"})
         assert isinstance(orig._data, np.ndarray)  # should not be CustomArray
@@ -2307,6 +2312,25 @@ class TestAsCompatibleData:
         array = CustomIndexable(np.arange(3))
         orig = Variable(dims=("x"), data=array, attrs={"foo": "bar"})
         assert isinstance(orig._data, CustomIndexable)
+
+        array = CustomWithValuesAttr(np.arange(3))
+        orig = Variable(dims=(), data=array)
+        assert isinstance(orig._data.item(), CustomWithValuesAttr)
+
+    def test_setitem_object_with_values_attr(self):
+        # Objects that merely expose a ``values`` attribute must be stored as
+        # themselves in object-dtype arrays (GH2097).
+        class HasValues:
+            values = 5
+
+        v = Variable(["x"], np.array([None], dtype=object))
+        v[dict(x=0)] = HasValues()
+        stored = v.values[0]
+        assert isinstance(stored, HasValues)
+        assert stored.values == 5
+
+        v[dict(x=0)] = set()
+        assert v.values[0] == set()
 
 
 def test_raise_no_warning_for_nan_in_binary_ops():

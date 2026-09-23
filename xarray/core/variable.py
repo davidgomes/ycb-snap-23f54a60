@@ -192,8 +192,9 @@ def as_compatible_data(data, fastpath=False):
     - If data does not have the necessary attributes, convert it to ndarray.
     - If data has dtype=datetime64, ensure that it has ns precision. If it's a
       pandas.Timestamp, convert it to datetime64.
-    - If data is already a pandas or xarray object (other than an Index), just
-      use the values.
+    - If data is a pandas Series, Index, or DataFrame, use its ``values``.
+      Other objects that happen to have a ``values`` attribute are left intact
+      so they can be stored in object-dtype arrays.
 
     Finally, wrap it up with an adapter if necessary.
     """
@@ -217,8 +218,11 @@ def as_compatible_data(data, fastpath=False):
     if isinstance(data, timedelta):
         data = np.timedelta64(getattr(data, "value", data), "ns")
 
-    # we don't want nested self-described arrays
-    data = getattr(data, "values", data)
+    # Unwrap only known pandas containers. Arbitrary objects may also expose
+    # a ``values`` attribute (for example third-party model results); pulling
+    # that attribute would store the nested data instead of the object itself.
+    if isinstance(data, (pd.Series, pd.Index, pd.DataFrame)):
+        data = data.values
 
     if isinstance(data, np.ma.MaskedArray):
         mask = np.ma.getmaskarray(data)
