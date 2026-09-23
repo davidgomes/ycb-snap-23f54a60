@@ -253,6 +253,11 @@ Model evaluation and meta-estimators
   return estimators fitted on each split. :issue:`9686` by :user:`Aurélien Bellet
   <bellet>`.
 
+- Add ``refit_time_`` attribute to :class:`model_selection.GridSearchCV` and
+  :class:`model_selection.RandomizedSearchCV`, which stores the time spent
+  refitting the best estimator on the whole dataset when ``refit`` is not
+  False. :issue:`11310` by :user:`Matthias Feurer <mfeurer>`.
+
 Decomposition and manifold learning
 
 - Speed improvements for both 'exact' and 'barnes_hut' methods in

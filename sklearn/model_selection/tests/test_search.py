@@ -433,6 +433,7 @@ def test_no_refit():
         grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, refit=False)
         grid_search.fit(X, y)
         assert_true(not hasattr(grid_search, "best_estimator_") and
+                    not hasattr(grid_search, "refit_time_") and
                     hasattr(grid_search, "best_index_") and
                     hasattr(grid_search, "best_params_"))
 
@@ -1171,6 +1172,10 @@ def test_search_cv_timing():
             assert_true(search.cv_results_[key][1] >= 0)
             assert_true(search.cv_results_[key][0] == 0.0)
             assert_true(np.all(search.cv_results_[key] < 1))
+
+        assert_true(hasattr(search, "refit_time_"))
+        assert_true(isinstance(search.refit_time_, float))
+        assert_true(search.refit_time_ >= 0)
 
 
 def test_grid_search_correct_score_results():
