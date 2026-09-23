@@ -2995,6 +2995,24 @@ class TestDataset:
         assert isinstance(actual.variables["x"], Variable)
         assert actual.xindexes["y"].equals(expected.xindexes["y"])
 
+    def test_swap_dims_does_not_mutate_original(self) -> None:
+        # Regression test for GH6931: promoting a data variable to a dimension
+        # coordinate must not rewrite dims on the source dataset.
+        ds = Dataset(
+            data_vars={
+                "y": ("z", np.arange(11)),
+                "lev": ("z", np.arange(11) * 10),
+            }
+        )
+        ds2 = (
+            ds.swap_dims(z="lev").rename_dims(lev="z").reset_index("lev").reset_coords()
+        )
+        assert ds2["lev"].dims == ("z",)
+        swapped = ds2.swap_dims(z="lev")
+        assert swapped["lev"].dims == ("lev",)
+        assert ds2["lev"].dims == ("z",)
+        assert_identical(ds, ds2)
+
     def test_expand_dims_error(self) -> None:
         original = Dataset(
             {
