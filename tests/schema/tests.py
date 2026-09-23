@@ -3961,6 +3961,28 @@ class SchemaTests(TransactionTestCase):
         with connection.schema_editor() as editor, self.assertNumQueries(0):
             editor.alter_field(Book, new_field, old_field, strict=True)
 
+    def test_alter_field_choices_noop(self):
+        """Changing a field's choices does not change the database schema."""
+        with connection.schema_editor() as editor:
+            editor.create_model(Author)
+        old_field = Author._meta.get_field("name")
+        new_field = CharField(
+            max_length=255,
+            choices=[("Jane", "Jane"), ("Joe", "Joe")],
+        )
+        new_field.set_attributes_from_name("name")
+        with connection.schema_editor() as editor, self.assertNumQueries(0):
+            editor.alter_field(Author, old_field, new_field, strict=True)
+        changed_choices = CharField(
+            max_length=255,
+            choices=[("Jane", "Jane"), ("Joe", "Joe"), ("John", "John")],
+        )
+        changed_choices.set_attributes_from_name("name")
+        with connection.schema_editor() as editor, self.assertNumQueries(0):
+            editor.alter_field(Author, new_field, changed_choices, strict=True)
+        with connection.schema_editor() as editor, self.assertNumQueries(0):
+            editor.alter_field(Author, changed_choices, old_field, strict=True)
+
     def test_add_textfield_unhashable_default(self):
         # Create the table
         with connection.schema_editor() as editor:
