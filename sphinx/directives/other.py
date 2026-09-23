@@ -23,6 +23,7 @@ from sphinx.util.osutil import path_stabilize, relpath
 
 if TYPE_CHECKING:
     from docutils.nodes import Element, Node
+    from docutils.statemachine import StringList
 
     from sphinx.application import Sphinx
     from sphinx.util.typing import OptionSpec
@@ -394,14 +395,15 @@ class Include(BaseInclude, SphinxDirective):
         finally:
             del self.state_machine.insert_input
 
-    def _insert_input(self, include_lines: list[str], source: str) -> None:
+    def _insert_input(self, input_lines: list[str] | StringList, source: str) -> None:
         # docutils terminates the included lines with a blank line and an
         # "end of inclusion" comment, which are not part of the included text.
-        include_lines, end_marker = include_lines[:-2], include_lines[-2:]
+        text = '\n'.join(input_lines[:-2])
+        end_marker = list(input_lines[-2:])
 
         relative_path = relpath(path.abspath(source), self.env.srcdir)
         docname = self.env.path2doc(relative_path) or path_stabilize(relative_path)
-        arg = ['\n'.join(include_lines)]
+        arg = [text]
         self.env.events.emit('source-read', docname, arg)
 
         tab_width = self.options.get('tab-width', self.state.document.settings.tab_width)
