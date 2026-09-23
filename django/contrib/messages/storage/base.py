@@ -1,7 +1,17 @@
 from django.conf import settings
 from django.contrib.messages import constants, utils
+from django.core.signals import setting_changed
 
 LEVEL_TAGS = utils.get_level_tags()
+
+
+def update_level_tags(*, setting, **kwargs):
+    if setting == 'MESSAGE_TAGS':
+        global LEVEL_TAGS
+        LEVEL_TAGS = utils.get_level_tags()
+
+
+setting_changed.connect(update_level_tags)
 
 
 class Message:
