@@ -54,6 +54,22 @@ class BulkUpdateNoteTests(TestCase):
         with self.assertNumQueries(len(self.notes)):
             Note.objects.bulk_update(self.notes, fields=['note'], batch_size=1)
 
+    def test_rows_updated(self):
+        for note in self.notes:
+            note.note = 'test-%s' % note.id
+        rows_updated = Note.objects.bulk_update(self.notes, ['note'])
+        self.assertEqual(rows_updated, len(self.notes))
+
+    def test_rows_updated_batch_size(self):
+        rows_updated = Note.objects.bulk_update(self.notes, ['note'], batch_size=3)
+        self.assertEqual(rows_updated, len(self.notes))
+
+    def test_rows_updated_duplicates(self):
+        rows_updated = Note.objects.bulk_update(
+            [self.notes[0], self.notes[0], self.notes[1]], ['note'],
+        )
+        self.assertEqual(rows_updated, 2)
+
     def test_unsaved_models(self):
         objs = self.notes + [Note(note='test', misc='test')]
         msg = 'All bulk_update() objects must have a primary key set.'
@@ -125,7 +141,8 @@ class BulkUpdateTests(TestCase):
 
     def test_empty_objects(self):
         with self.assertNumQueries(0):
-            Note.objects.bulk_update([], ['note'])
+            rows_updated = Note.objects.bulk_update([], ['note'])
+        self.assertEqual(rows_updated, 0)
 
     def test_large_batch(self):
         Note.objects.bulk_create([
