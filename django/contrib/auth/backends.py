@@ -39,6 +39,12 @@ class ModelBackend(BaseBackend):
     def authenticate(self, request, username=None, password=None, **kwargs):
         if username is None:
             username = kwargs.get(UserModel.USERNAME_FIELD)
+        # If credentials aren't provided for this backend, don't query the
+        # database or run the password hasher (both are unnecessary and the
+        # hasher is expensive). Timing differences between backends are
+        # expected because they run different code.
+        if username is None or password is None:
+            return
         try:
             user = UserModel._default_manager.get_by_natural_key(username)
         except UserModel.DoesNotExist:

@@ -242,6 +242,23 @@ class ModelBackendTest(BaseModelBackendTest, TestCase):
             password='test',
         )
 
+    @override_settings(PASSWORD_HASHERS=['auth_tests.test_auth_backends.CountingMD5PasswordHasher'])
+    def test_authenticate_without_credentials(self):
+        """
+        ModelBackend doesn't query the database or hash a password when
+        username or password is missing (another backend's credentials).
+        """
+        CountingMD5PasswordHasher.calls = 0
+        for credentials in (
+            {},
+            {'username': 'test'},
+            {'password': 'test'},
+        ):
+            with self.subTest(credentials=credentials):
+                with self.assertNumQueries(0):
+                    self.assertIsNone(authenticate(**credentials))
+        self.assertEqual(CountingMD5PasswordHasher.calls, 0)
+
     def test_authenticate_inactive(self):
         """
         An inactive user can't authenticate.
