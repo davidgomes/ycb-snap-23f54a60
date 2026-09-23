@@ -354,6 +354,57 @@ class TestValidators(SimpleTestCase):
         with self.assertRaisesMessage(ValidationError, '"djangoproject.com" has more than 16 characters.'):
             v('djangoproject.com')
 
+    def test_value_placeholder_with_custom_message(self):
+        tests = [
+            (validate_integer, '-42.5'),
+            (validate_email, 'a'),
+            (validate_email, 'a@b\n.com'),
+            (validate_email, 'a\n@b.com'),
+            (validate_slug, '你 好'),
+            (validate_unicode_slug, '你 好'),
+            (validate_ipv4_address, '256.1.1.1'),
+            (validate_ipv6_address, '1:2'),
+            (validate_ipv46_address, '256.1.1.1'),
+            (validate_comma_separated_integer_list, 'a,b,c'),
+            (int_list_validator(), '-1,2,3'),
+            (MaxLengthValidator(10), 11 * 'x'),
+            (MinLengthValidator(10), 9 * 'x'),
+            (URLValidator(), 'no_scheme'),
+            (URLValidator(), 'http://test[.com'),
+            (URLValidator(), 'http://[::1:2::3]/'),
+            (URLValidator(), 'http://' + '.'.join(['a' * 35 for _ in range(9)])),
+            (RegexValidator('[0-9]+'), 'xxxxxx'),
+            (validate_email, 'a@b'),
+            (MaxValueValidator(0), 1),
+            (MinValueValidator(0), -1),
+            (DecimalValidator(max_digits=2, decimal_places=2), Decimal('Inf')),
+            (DecimalValidator(max_digits=2, decimal_places=1), Decimal('0.99')),
+            (DecimalValidator(max_digits=3, decimal_places=1), Decimal('999')),
+            (DecimalValidator(max_digits=2, decimal_places=2), Decimal('999')),
+            (ProhibitNullCharactersValidator(), '\x00something'),
+        ]
+        for validator, value in tests:
+            with self.subTest(validator=validator, value=value):
+                with self.assertRaises(ValidationError) as cm:
+                    validator(value)
+                error = cm.exception.error_list[0]
+                self.assertEqual(error.params['value'], value)
+                self.assertEqual(
+                    ValidationError('"%(value)s"', params=error.params).messages,
+                    ['"%s"' % value],
+                )
+
+    def test_email_validator_custom_message_value_placeholder(self):
+        validator = EmailValidator(message='“%(value)s” is not a valid email.')
+        with self.assertRaisesMessage(ValidationError, '“blah” is not a valid email.'):
+            validator('blah')
+
+    def test_file_extension_validator_value_param(self):
+        value = ContentFile('contents', name='file.jpg')
+        with self.assertRaises(ValidationError) as cm:
+            FileExtensionValidator(['txt'])(value)
+        self.assertIs(cm.exception.error_list[0].params['value'], value)
+
 
 class TestValidatorEquality(TestCase):
     """
