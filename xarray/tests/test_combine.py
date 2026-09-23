@@ -611,6 +611,19 @@ class TestCombineAuto:
         expected = Dataset({'x': 0, 'y': 1, 'z': 2})
         assert_identical(expected, actual)
 
+    def test_combine_by_coords_non_monotonic_bystander_dim(self):
+        # GH3150: identical coordinates don't need to be monotonic
+        ycoord = ['a', 'c', 'b']
+        ds0 = Dataset({'data': (['x', 'y'], [[1, 2, 3], [4, 5, 6]])},
+                      coords={'x': [1, 2], 'y': ycoord})
+        ds1 = Dataset({'data': (['x', 'y'], [[7, 8, 9]])},
+                      coords={'x': [3], 'y': ycoord})
+        expected = Dataset(
+            {'data': (['x', 'y'], [[1, 2, 3], [4, 5, 6], [7, 8, 9]])},
+            coords={'x': [1, 2, 3], 'y': ycoord})
+        actual = combine_by_coords([ds1, ds0])
+        assert_identical(expected, actual)
+
     def test_check_for_impossible_ordering(self):
         ds0 = Dataset({'x': [0, 1, 5]})
         ds1 = Dataset({'x': [2, 3]})

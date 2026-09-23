@@ -41,6 +41,9 @@ Bug fixes
 - XFAIL several tests which are expected to fail on ARM systems
   due to a ``datetime`` issue in NumPy (:issue:`2334`).
   By `Graham Inggs <https://github.com/ginggs>`_.
+- :py:func:`~xarray.combine_by_coords` no longer requires coordinate
+  dimensions which do not vary between datasets to be monotonic
+  (:issue:`3150`).
 
 .. _whats-new.0.12.3:
 
