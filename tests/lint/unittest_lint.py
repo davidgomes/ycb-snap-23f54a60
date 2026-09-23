@@ -631,7 +631,10 @@ def test_pylint_home():
     if uhome == "~":
         expected = ".pylint.d"
     else:
-        expected = os.path.join(uhome, ".pylint.d")
+        expected = os.path.join(
+            os.environ.get("XDG_CACHE_HOME") or os.path.join(uhome, ".cache"),
+            "pylint",
+        )
     assert config.PYLINT_HOME == expected
 
     try:
