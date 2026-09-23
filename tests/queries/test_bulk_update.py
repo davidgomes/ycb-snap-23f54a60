@@ -95,6 +95,31 @@ class BulkUpdateNoteTests(TestCase):
         Note.objects.bulk_update(self.notes, ['note'])
         self.assertEqual(set(Note.objects.values_list('note', flat=True)), {'test'})
 
+    def test_return_value(self):
+        for note in self.notes:
+            note.note = 'test-%s' % note.id
+        rows_updated = Note.objects.bulk_update(self.notes, ['note'])
+        self.assertEqual(rows_updated, len(self.notes))
+
+    def test_return_value_batch_size(self):
+        rows_updated = Note.objects.bulk_update(self.notes, ['note'], batch_size=3)
+        self.assertEqual(rows_updated, len(self.notes))
+
+    def test_return_value_duplicates_in_same_batch(self):
+        rows_updated = Note.objects.bulk_update(self.notes + self.notes[:2], ['note'])
+        self.assertEqual(rows_updated, len(self.notes))
+
+    def test_return_value_duplicates_in_different_batches(self):
+        rows_updated = Note.objects.bulk_update(
+            self.notes + self.notes[:2], ['note'], batch_size=len(self.notes),
+        )
+        self.assertEqual(rows_updated, len(self.notes) + 2)
+
+    def test_return_value_deleted_objects(self):
+        Note.objects.filter(pk__in=[note.pk for note in self.notes[:3]]).delete()
+        rows_updated = Note.objects.bulk_update(self.notes, ['note'])
+        self.assertEqual(rows_updated, len(self.notes) - 3)
+
     # Tests that use self.notes go here, otherwise put them in another class.
 
 
@@ -125,7 +150,8 @@ class BulkUpdateTests(TestCase):
 
     def test_empty_objects(self):
         with self.assertNumQueries(0):
-            Note.objects.bulk_update([], ['note'])
+            rows_updated = Note.objects.bulk_update([], ['note'])
+        self.assertEqual(rows_updated, 0)
 
     def test_large_batch(self):
         Note.objects.bulk_create([
