@@ -508,6 +508,8 @@ def test_AssocOp_Function():
 def test_issue_10395():
     eq = x*Max(0, y)
     assert nfloat(eq) == eq
+    # arg order used to leave reprec unset and raise UnboundLocalError
+    assert Mul(Max(0, y), x, evaluate=False).evalf() == Mul(Max(0, y), x, evaluate=False)
     eq = x*Max(y, -1.1)
     assert nfloat(eq) == eq
     assert Max(y, 4).n() == Max(4.0, y)
