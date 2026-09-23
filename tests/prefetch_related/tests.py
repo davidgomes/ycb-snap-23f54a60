@@ -3,7 +3,7 @@ from unittest import mock
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import NotSupportedError, connection
-from django.db.models import Prefetch, QuerySet, prefetch_related_objects
+from django.db.models import Count, Prefetch, QuerySet, prefetch_related_objects
 from django.db.models.query import get_prefetcher
 from django.db.models.sql import Query
 from django.test import (
@@ -1981,6 +1981,32 @@ class PrefetchLimitTests(TestDataMixin, TestCase):
         for book in books:
             with self.subTest(book=book):
                 self.assertEqual(book.authors_sliced, list(book.authors.all())[1:])
+
+    @skipUnlessDBFeature("supports_over_clause")
+    def test_annotation_ordering(self):
+        authors = Author.objects.annotate(book_count=Count("books")).order_by(
+            "-book_count", "name"
+        )
+        with self.assertNumQueries(3):
+            books = list(
+                Book.objects.prefetch_related(
+                    Prefetch("first_time_authors", authors),
+                    Prefetch(
+                        "first_time_authors",
+                        authors[:2],
+                        to_attr="first_time_authors_sliced",
+                    ),
+                )
+            )
+        self.assertEqual(
+            books[0].first_time_authors_sliced, [self.author1, self.author3]
+        )
+        for book in books:
+            with self.subTest(book=book):
+                self.assertEqual(
+                    book.first_time_authors_sliced,
+                    list(book.first_time_authors.all())[:2],
+                )
 
     @skipIfDBFeature("supports_over_clause")
     def test_window_not_supported(self):

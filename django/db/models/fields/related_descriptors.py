@@ -99,9 +99,14 @@ def _filter_prefetch_queryset(queryset, field_name, instances):
                 "that support window functions."
             )
         low_mark, high_mark = queryset.query.low_mark, queryset.query.high_mark
-        order_by = [
-            expr for expr, _ in queryset.query.get_compiler(using=db).get_order_by()
-        ]
+        compiler = queryset.query.get_compiler(using=db)
+        order_by = []
+        for expr, (_, _, is_ref) in compiler.get_order_by():
+            # Window ordering cannot reference aliases of the SELECT clause.
+            if is_ref:
+                expr = expr.copy()
+                expr.set_source_expressions([expr.expression.source])
+            order_by.append(expr)
         window = Window(RowNumber(), partition_by=field_name, order_by=order_by)
         predicate &= GreaterThan(window, low_mark)
         if high_mark is not None:
