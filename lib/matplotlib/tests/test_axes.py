@@ -2859,12 +2859,33 @@ def test_stackplot():
     ax.set_xlim((0, 10))
     ax.set_ylim((0, 70))
 
-    # Reuse testcase from above for a labeled data test
+    # Reuse testcase from above for a test with labeled data and with colours
+    # from the Axes property cycle.
     data = {"x": x, "y1": y1, "y2": y2, "y3": y3}
     fig, ax = plt.subplots()
-    ax.stackplot("x", "y1", "y2", "y3", data=data)
+    ax.stackplot("x", "y1", "y2", "y3", data=data, colors=["C0", "C1", "C2"])
     ax.set_xlim((0, 10))
     ax.set_ylim((0, 70))
+
+
+def test_stackplot_colors_do_not_change_prop_cycle():
+    # Explicit colours, including cycle references, must not replace or advance
+    # the Axes property cycle. Unspecified colours still come from that cycle.
+    my_data = np.array([[1, 1, 1], [1, 2, 3], [4, 3, 2]])
+    fig, ax = plt.subplots()
+    expected = [ax._get_lines.get_next_color() for _ in range(5)]
+
+    fig, ax = plt.subplots()
+    cols = ax.stackplot([1, 2, 3], my_data, colors=['C2', 'C3', 'C4'])
+    assert [ax._get_lines.get_next_color() for _ in range(5)] == expected
+    assert [tuple(coll.get_facecolor()[0]) for coll in cols] == [
+        mcolors.to_rgba(c) for c in ('C2', 'C3', 'C4')]
+
+    fig, ax = plt.subplots()
+    cols = ax.stackplot([1, 2, 3], my_data)
+    assert [tuple(coll.get_facecolor()[0]) for coll in cols] == [
+        mcolors.to_rgba(c) for c in expected[:3]]
+    assert ax._get_lines.get_next_color() == expected[3]
 
 
 @image_comparison(['stackplot_test_baseline'], remove_text=True)
