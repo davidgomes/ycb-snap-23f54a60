@@ -2881,7 +2881,10 @@ class IndexVariable(Variable):
 
     def to_index_variable(self):
         """Return this variable as an xarray.IndexVariable"""
-        return self
+        # Always return a copy so callers can safely rewrite dims (e.g.
+        # Dataset.swap_dims) without mutating the original object.
+        # https://github.com/pydata/xarray/issues/6931
+        return self.copy()
 
     to_coord = utils.alias(to_index_variable, "to_coord")
 
