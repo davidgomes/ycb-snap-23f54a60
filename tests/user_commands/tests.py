@@ -49,6 +49,13 @@ class CommandTests(SimpleTestCase):
             management.call_command('dance', verbosity=0)
             self.assertEqual(translation.get_language(), 'fr')
 
+    def test_outputwrapper_flush(self):
+        out = StringIO()
+        with mock.patch.object(out, 'flush') as mocked_flush:
+            management.call_command('outputwrapper', stdout=out)
+        self.assertIn('Working...', out.getvalue())
+        self.assertIs(mocked_flush.called, True)
+
     def test_explode(self):
         """ An unknown command raises CommandError """
         with self.assertRaisesMessage(CommandError, "Unknown command: 'explode'"):
