@@ -263,3 +263,8 @@ def get_system_encoding():
 
 
 DEFAULT_LOCALE_ENCODING = get_system_encoding()
+
+
+def punycode(domain):
+    """Return the Punycode of the given domain if it's non-ASCII."""
+    return domain.encode('idna').decode('ascii')
