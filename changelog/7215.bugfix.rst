@@ -1,0 +1,1 @@
+Prevent ``unittest.TestCase.tearDown`` from being executed for skipped tests when running with ``--pdb``.
