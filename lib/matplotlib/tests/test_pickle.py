@@ -105,7 +105,7 @@ def test_complete(fig_test, fig_ref):
     # either case.  In order to keep the test independent of GUI toolkits,
     # run it with Agg and check that there's no reference to FigureCanvasAgg.
     assert "FigureCanvasAgg" not in [
-        arg for op, arg, pos in pickletools.genops(pkl.getbuffer())]
+        arg for op, arg, pos in pickletools.genops(pkl.getvalue())]
     loaded = pickle.loads(pkl.getbuffer())
     loaded.canvas.draw()
 
