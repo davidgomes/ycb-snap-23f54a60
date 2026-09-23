@@ -1106,3 +1106,12 @@ def test_multivariate_linear_function_simplification():
 
 def test_nonpolymonial_relations():
     assert Eq(cos(x), 0).simplify() == Eq(cos(x), 0)
+
+
+def test_issue_18188():
+    from sympy.sets.conditionset import ConditionSet
+    result1 = Eq(x*cos(x) - 3*sin(x), 0)
+    assert result1.as_set() == ConditionSet(x, Eq(x*cos(x) - 3*sin(x), 0), S.Reals)
+
+    result2 = Eq(x**2 + sqrt(x*2) + sin(x), 0)
+    assert result2.as_set() == ConditionSet(x, Eq(sqrt(2)*sqrt(x) + x**2 + sin(x), 0), S.Reals)
