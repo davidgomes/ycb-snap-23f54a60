@@ -1,0 +1,10 @@
+*mincnt* parameter consistent with and without *C* param for ``hexbin``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The *mincnt* parameter of `.Axes.hexbin` now behaves the same whether or not
+the *C* parameter is supplied: a hexagon is displayed if it contains at least
+*mincnt* data points.  Previously, when *C* was passed, a hexagon was only
+displayed if it contained strictly more than *mincnt* data points.
+
+The default behavior is unchanged: when *C* is supplied and *mincnt* is
+*None*, hexagons with at least one data point are displayed.
