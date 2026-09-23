@@ -390,10 +390,14 @@ class Similar:
 
     def run(self) -> None:
         """start looking for similarities and display results on stdout"""
+        if self.min_lines == 0:
+            return
         self._display_sims(self._compute_sims())
 
     def _compute_sims(self) -> List[Tuple[int, Set[LinesChunkLimits_T]]]:
         """compute similarities in appended files"""
+        if self.min_lines == 0:
+            return []
         no_duplicates: Dict[int, List[Set[LinesChunkLimits_T]]] = defaultdict(list)
 
         for commonality in self._iter_sims():
@@ -739,7 +743,10 @@ class SimilarChecker(BaseChecker, Similar, MapReduceMixin):
                 "default": DEFAULT_MIN_SIMILARITY_LINE,
                 "type": "int",
                 "metavar": "<int>",
-                "help": "Minimum lines number of a similarity.",
+                "help": (
+                    "Minimum lines number of a similarity. "
+                    "Set to 0 to disable duplicate code checking."
+                ),
             },
         ),
         (
@@ -825,11 +832,17 @@ class SimilarChecker(BaseChecker, Similar, MapReduceMixin):
 
         stream must implement the readlines method
         """
+        if self.min_lines == 0:
+            return
+
         with node.stream() as stream:
             self.append_stream(self.linter.current_name, stream, node.file_encoding)
 
     def close(self):
         """compute and display similarities on closing (i.e. end of parsing)"""
+        if self.min_lines == 0:
+            return
+
         total = sum(len(lineset) for lineset in self.linesets)
         duplicated = 0
         stats = self.stats
