@@ -4565,6 +4565,35 @@ class SchemaTests(TransactionTestCase):
             collation,
         )
 
+    @isolate_apps("schema")
+    @skipUnlessDBFeature("supports_collation_on_charfield")
+    def test_db_collation_foreign_key(self):
+        collation = connection.features.test_collations.get("non_default")
+        if not collation:
+            self.skipTest("Language collations are not supported.")
+
+        class Foo(Model):
+            id = CharField(primary_key=True, max_length=10, db_collation=collation)
+
+            class Meta:
+                app_label = "schema"
+
+        class Bar(Model):
+            foo = ForeignKey(Foo, CASCADE)
+
+            class Meta:
+                app_label = "schema"
+
+        self.isolated_local_models = [Foo, Bar]
+        with connection.schema_editor() as editor:
+            editor.create_model(Foo)
+            editor.create_model(Bar)
+
+        self.assertEqual(
+            self.get_column_collation(Bar._meta.db_table, "foo_id"),
+            collation,
+        )
+
     @skipUnlessDBFeature("supports_collation_on_charfield")
     def test_add_field_db_collation(self):
         collation = connection.features.test_collations.get("non_default")
