@@ -61,6 +61,11 @@ class IntEnum(enum.IntEnum):
     B = 2
 
 
+class DeconstructibleInstances:
+    def deconstruct(self):
+        return ('DeconstructibleInstances', [], {})
+
+
 class OperationWriterTests(SimpleTestCase):
 
     def test_empty_signature(self):
@@ -187,6 +192,10 @@ class WriterTests(SimpleTestCase):
     class NestedEnum(enum.IntEnum):
         A = 1
         B = 2
+
+    class NestedChoices(models.TextChoices):
+        X = 'X', 'X value'
+        Y = 'Y', 'Y value'
 
     def safe_exec(self, string, value=None):
         d = {}
@@ -593,6 +602,18 @@ class WriterTests(SimpleTestCase):
     def test_serialize_type_none(self):
         self.assertSerializedEqual(type(None))
 
+    def test_serialize_nested_class(self):
+        for nested_cls in [self.NestedEnum, self.NestedChoices]:
+            cls_name = nested_cls.__name__
+            with self.subTest(cls_name):
+                self.assertSerializedResultEqual(
+                    nested_cls,
+                    (
+                        "migrations.test_writer.WriterTests.%s" % cls_name,
+                        {'import migrations.test_writer'},
+                    ),
+                )
+
     def test_simple_migration(self):
         """
         Tests serializing a simple migration.
@@ -726,10 +747,6 @@ class WriterTests(SimpleTestCase):
         # Yes, it doesn't make sense to use a class as a default for a
         # CharField. It does make sense for custom fields though, for example
         # an enumfield that takes the enum class as an argument.
-        class DeconstructibleInstances:
-            def deconstruct(self):
-                return ('DeconstructibleInstances', [], {})
-
         string = MigrationWriter.serialize(models.CharField(default=DeconstructibleInstances))[0]
         self.assertEqual(string, "models.CharField(default=migrations.test_writer.DeconstructibleInstances)")
 
