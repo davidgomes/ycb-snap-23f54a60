@@ -18,6 +18,7 @@ from ..utils import (
     safe_sqr,
 )
 from ..utils._tags import _safe_tags
+from ..utils._set_output import _get_output_config
 from ..utils.validation import _check_feature_names_in, check_is_fitted
 
 
@@ -78,16 +79,21 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
         X_r : array of shape [n_samples, n_selected_features]
             The input samples with only the selected features.
         """
+        # Preserve X when X is a dataframe and the output is configured to
+        # be pandas, so that the dtypes of the selected columns are kept.
+        output_config_dense = _get_output_config("transform", estimator=self)["dense"]
+        preserve_X = hasattr(X, "iloc") and output_config_dense == "pandas"
+
         # note: we use _safe_tags instead of _get_tags because this is a
         # public Mixin.
-        X = self._validate_data(
+        X_validated = self._validate_data(
             X,
             dtype=None,
             accept_sparse="csr",
             force_all_finite=not _safe_tags(self, key="allow_nan"),
             reset=False,
         )
-        return self._transform(X)
+        return self._transform(X if preserve_X else X_validated)
 
     def _transform(self, X):
         """Reduce X to the selected features."""
@@ -98,9 +104,13 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
                 " too noisy or the selection test too strict.",
                 UserWarning,
             )
+            if hasattr(X, "iloc"):
+                return X.iloc[:, :0]
             return np.empty(0, dtype=X.dtype).reshape((X.shape[0], 0))
         if len(mask) != X.shape[1]:
             raise ValueError("X has a different shape than during fitting.")
+        if hasattr(X, "iloc"):
+            return X.iloc[:, mask]
         return X[:, safe_mask(X, mask)]
 
     def inverse_transform(self, X):
