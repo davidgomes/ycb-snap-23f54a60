@@ -121,6 +121,12 @@ class ChoicesTests(SimpleTestCase):
         self.assertIn('FR', YearInSchool)
         self.assertNotIn('XX', YearInSchool)
 
+    def test_str(self):
+        for test in [Gender, Suit, YearInSchool, Vehicle]:
+            for member in test:
+                with self.subTest(member=member):
+                    self.assertEqual(str(test[member.name]), str(member.value))
+
     def test_textchoices_blank_value(self):
         class BlankStr(models.TextChoices):
             EMPTY = '', '(Empty)'
