@@ -250,6 +250,10 @@ Changelog
   :class:`feature_extraction.text.VectorizerMixin` can now be pickled.
   :pr:`14430` by :user:`Dillon Niederhut <deniederhut>`.
 
+- |Fix| :func:`feature_extraction.text.strip_accents_unicode` now correctly
+  removes accents from strings that are in NFKD normalized form.
+  :pr:`15100` by :user:`Daniel Grady <DGrady>`.
+
 - |API| Deprecated unused `copy` param for
   :meth:`feature_extraction.text.TfidfVectorizer.transform` it will be
   removed in v0.24. :pr:`14520` by

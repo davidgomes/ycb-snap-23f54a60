@@ -130,10 +130,7 @@ def strip_accents_unicode(s):
         ASCII equivalent.
     """
     normalized = unicodedata.normalize('NFKD', s)
-    if normalized == s:
-        return s
-    else:
-        return ''.join([c for c in normalized if not unicodedata.combining(c)])
+    return ''.join([c for c in normalized if not unicodedata.combining(c)])
 
 
 def strip_accents_ascii(s):
