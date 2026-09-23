@@ -595,6 +595,69 @@ def test_min_count(dim_num, dtype, dask, func, aggdim):
     assert_dask_array(actual, dask)
 
 
+@pytest.mark.parametrize("dtype", [float, int, np.float32, np.bool_])
+@pytest.mark.parametrize("dask", [False, True])
+@pytest.mark.parametrize("func", ["sum", "prod"])
+def test_min_count_nd(dtype, dask, func):
+    if dask and not has_dask:
+        pytest.skip("requires dask")
+
+    min_count = 3
+    dim_num = 3
+    da = construct_dataarray(dim_num, dtype, contains_nan=True, dask=dask)
+    actual = getattr(da, func)(dim=["x", "y", "z"], skipna=True, min_count=min_count)
+    # Supplying all dims is equivalent to supplying `...` or `None`
+    expected = getattr(da, func)(dim=..., skipna=True, min_count=min_count)
+
+    assert_allclose(actual, expected)
+    assert_dask_array(actual, dask)
+
+    # Reducing a subset of dims keeps a dimension, so the valid-count is the
+    # product of the reduced axis lengths. Stacking those dims into one axis
+    # exercises the same count through the single-axis path.
+    actual_partial = getattr(da, func)(dim=["x", "y"], skipna=True, min_count=min_count)
+    stacked = da.stack(xy=("x", "y"))
+    expected_partial = getattr(stacked, func)(
+        dim="xy", skipna=True, min_count=min_count
+    )
+    assert_allclose(actual_partial, expected_partial)
+    assert_dask_array(actual_partial, dask)
+
+
+def test_min_count_multiple_dims_example():
+    # Reported case: min_count with every dimension named explicitly.
+    da = DataArray([[1.0, 2, 3], [4, 5, 6]])
+    assert_allclose(da.sum(["dim_0", "dim_1"], min_count=1), DataArray(21.0))
+    assert_allclose(da.prod(["dim_0", "dim_1"], min_count=1), DataArray(720.0))
+
+    da_nan = DataArray([[1.0, np.nan, 3.0], [4.0, 5.0, np.nan]])
+    assert_allclose(da_nan.sum(["dim_0", "dim_1"], min_count=1), DataArray(13.0))
+    assert_allclose(da_nan.sum(["dim_0", "dim_1"], min_count=5), DataArray(np.nan))
+    # 1 * 3 * 4 * 5, with NaNs skipped
+    assert_allclose(da_nan.prod(["dim_0", "dim_1"], min_count=4), DataArray(60.0))
+    assert_allclose(da_nan.prod(["dim_0", "dim_1"], min_count=5), DataArray(np.nan))
+
+    # Partial reduction: result keeps a dimension, so axis is a tuple.
+    # c=0 values are 1, 3, 5, nan (3 valid, sum 9, prod 15)
+    # c=1 values are nan, 4, 6, 8 (3 valid, sum 18, prod 192)
+    da_nd = DataArray(
+        [[[1.0, np.nan], [3.0, 4.0]], [[5.0, 6.0], [np.nan, 8.0]]],
+        dims=["a", "b", "c"],
+    )
+    assert_allclose(
+        da_nd.sum(["a", "b"], min_count=3), DataArray([9.0, 18.0], dims=["c"])
+    )
+    assert_allclose(
+        da_nd.sum(["a", "b"], min_count=4), DataArray([np.nan, np.nan], dims=["c"])
+    )
+    assert_allclose(
+        da_nd.prod(["a", "b"], min_count=3), DataArray([15.0, 192.0], dims=["c"])
+    )
+    assert_allclose(
+        da_nd.prod(["a", "b"], min_count=4), DataArray([np.nan, np.nan], dims=["c"])
+    )
+
+
 @pytest.mark.parametrize("func", ["sum", "prod"])
 def test_min_count_dataset(func):
     da = construct_dataarray(2, dtype=float, contains_nan=True, dask=False)
@@ -606,14 +669,15 @@ def test_min_count_dataset(func):
 
 @pytest.mark.parametrize("dtype", [float, int, np.float32, np.bool_])
 @pytest.mark.parametrize("dask", [False, True])
+@pytest.mark.parametrize("skipna", [False, True])
 @pytest.mark.parametrize("func", ["sum", "prod"])
-def test_multiple_dims(dtype, dask, func):
+def test_multiple_dims(dtype, dask, skipna, func):
     if dask and not has_dask:
         pytest.skip("requires dask")
     da = construct_dataarray(3, dtype, contains_nan=True, dask=dask)
 
-    actual = getattr(da, func)(("x", "y"))
-    expected = getattr(getattr(da, func)("x"), func)("y")
+    actual = getattr(da, func)(("x", "y"), skipna=skipna)
+    expected = getattr(getattr(da, func)("x", skipna=skipna), func)("y", skipna=skipna)
     assert_allclose(actual, expected)
 
 

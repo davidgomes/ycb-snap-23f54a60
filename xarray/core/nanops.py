@@ -26,22 +26,24 @@ def _maybe_null_out(result, axis, mask, min_count=1):
     """
     xarray version of pandas.core.nanops._maybe_null_out
     """
-    if hasattr(axis, "__len__"):  # if tuple or list
-        raise ValueError(
-            "min_count is not available for reduction with more than one dimensions."
-        )
-
     if axis is not None and getattr(result, "ndim", False):
-        null_mask = (mask.shape[axis] - mask.sum(axis) - min_count) < 0
+        # axis may be a tuple when reducing over more than one dimension.
+        # The number of elements reduced is the product of those axis lengths.
+        null_mask = (np.take(mask.shape, axis).prod() - mask.sum(axis) - min_count) < 0
         if null_mask.any():
             dtype, fill_value = dtypes.maybe_promote(result.dtype)
             result = result.astype(dtype)
             result[null_mask] = fill_value
 
-    elif getattr(result, "dtype", None) not in dtypes.NAT_TYPES:
-        null_mask = mask.size - mask.sum()
-        if null_mask < min_count:
-            result = np.nan
+    else:
+        # Scalar reduction. Skip datetime-like results (their NA value is NaT).
+        # Do not use ``dtype in dtypes.NAT_TYPES``: NaT compares equal to some
+        # non-datetime dtypes, including float64.
+        result_dtype = getattr(result, "dtype", None)
+        if result_dtype is None or result_dtype.kind not in "mM":
+            null_mask = mask.size - mask.sum()
+            if null_mask < min_count:
+                result = np.nan
 
     return result
 
