@@ -69,6 +69,11 @@ class Choices(enum.Enum, metaclass=ChoicesMeta):
         return str(self.value)
 
 
+# Set after the class body so EnumMeta does not treat this as a member.
+# Templates call callables with no arguments; Choices types require a value.
+Choices.do_not_call_in_templates = True
+
+
 class IntegerChoices(int, Choices):
     """Class for creating enumerated integer choices."""
     pass

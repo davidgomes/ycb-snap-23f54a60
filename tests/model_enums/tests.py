@@ -4,6 +4,7 @@ import ipaddress
 import uuid
 
 from django.db import models
+from django.template import Context, Template
 from django.test import SimpleTestCase
 from django.utils.functional import Promise
 from django.utils.translation import gettext_lazy as _
@@ -148,6 +149,17 @@ class ChoicesTests(SimpleTestCase):
             for member in test:
                 with self.subTest(member=member):
                     self.assertEqual(str(test[member.name]), str(member.value))
+
+    def test_do_not_call_in_templates(self):
+        for choice_enum in [Suit, YearInSchool, Vehicle, Gender]:
+            with self.subTest(choice_enum=choice_enum):
+                self.assertIs(choice_enum.do_not_call_in_templates, True)
+        template = Template('{% if student.year_in_school == YearInSchool.FRESHMAN %}yes{% endif %}')
+        context = Context({
+            'student': {'year_in_school': YearInSchool.FRESHMAN},
+            'YearInSchool': YearInSchool,
+        })
+        self.assertEqual(template.render(context), 'yes')
 
 
 class Separator(bytes, models.Choices):
