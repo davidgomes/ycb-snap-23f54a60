@@ -1855,15 +1855,14 @@ def where(cond, x, y, keep_attrs=None):
     Dataset.where, DataArray.where :
         equivalent methods
     """
+    from .dataarray import DataArray
+    from .dataset import Dataset
+
     if keep_attrs is None:
         keep_attrs = _get_keep_attrs(default=False)
-    if keep_attrs is True:
-        # keep the attributes of x, the second parameter, by default to
-        # be consistent with the `where` method of `DataArray` and `Dataset`
-        keep_attrs = lambda attrs, context: getattr(x, "attrs", {})
 
     # alignment for three arguments is complicated, so don't support it yet
-    return apply_ufunc(
+    result = apply_ufunc(
         duck_array_ops.where,
         cond,
         x,
@@ -1873,6 +1872,28 @@ def where(cond, x, y, keep_attrs=None):
         dask="allowed",
         keep_attrs=keep_attrs,
     )
+
+    # keep the attributes of x, the second parameter, by default to
+    # be consistent with the `where` method of `DataArray` and `Dataset`.
+    # A single attrs callable passed to apply_ufunc would also be applied to
+    # every data variable and coordinate, so rebuild each level from x instead.
+    if keep_attrs is True and hasattr(result, "attrs"):
+        if isinstance(result, Dataset):
+            if isinstance(x, Dataset):
+                result.attrs = x.attrs
+                x_data_vars = x.data_vars
+            else:
+                result.attrs = {}
+                x_data_vars = {x.name: x} if isinstance(x, DataArray) else {}
+            for name, var in result.data_vars.items():
+                var.attrs = x_data_vars[name].attrs if name in x_data_vars else {}
+        else:
+            result.attrs = getattr(x, "attrs", {})
+        x_coords = getattr(x, "coords", {})
+        for name, coord in getattr(result, "coords", {}).items():
+            coord.attrs = x_coords[name].attrs if name in x_coords else {}
+
+    return result
 
 
 @overload
