@@ -5,6 +5,11 @@ What's New in Pylint 2.14.4?
 ----------------------------
 Release date: TBA
 
+* Fixed an issue where scanning ``.`` directory recursively with ``--ignore-paths=^path/to/dir``
+  did not ignore the ``path/to/dir`` directory.
+
+  Closes #6964
+
 * Fixed regression that didn't allow quoted ``init-hooks`` in option files.
 
   Closes #7006
