@@ -365,6 +365,33 @@ class CaseInsensitiveMixin:
         return rhs, rhs_params
 
 
+class KeyTransformIn(lookups.In):
+    def resolve_expression_parameter(self, compiler, connection, sql, param):
+        sql, params = super().resolve_expression_parameter(
+            compiler, connection, sql, param,
+        )
+        # On backends without a native JSON type, extracted keys compare equal
+        # to JSON text only when the RHS is wrapped the same way as
+        # KeyTransformExact. Apply that per value so expressions and
+        # subqueries keep their own SQL.
+        if (
+            not hasattr(param, 'as_sql') and
+            not connection.features.has_native_json_field
+        ):
+            if connection.vendor == 'oracle':
+                value = json.loads(param)
+                if isinstance(value, (list, dict)):
+                    sql = "JSON_QUERY(%s, '$.value')"
+                else:
+                    sql = "JSON_VALUE(%s, '$.value')"
+                params = (json.dumps({'value': value}),)
+            elif connection.vendor in {'sqlite', 'mysql'}:
+                sql = "JSON_EXTRACT(%s, '$')"
+                if connection.vendor == 'mysql' and connection.mysql_is_mariadb:
+                    sql = 'JSON_UNQUOTE(%s)' % sql
+        return sql, params
+
+
 class KeyTransformIsNull(lookups.IsNull):
     # key__isnull=False is the same as has_key='key'
     def as_oracle(self, compiler, connection):
@@ -479,6 +506,7 @@ class KeyTransformGte(KeyTransformNumericLookupMixin, lookups.GreaterThanOrEqual
     pass
 
 
+KeyTransform.register_lookup(KeyTransformIn)
 KeyTransform.register_lookup(KeyTransformExact)
 KeyTransform.register_lookup(KeyTransformIExact)
 KeyTransform.register_lookup(KeyTransformIsNull)
