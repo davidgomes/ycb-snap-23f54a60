@@ -73,6 +73,12 @@ False negatives fixed
 Other bug fixes
 ===============
 
+* Fixed an issue where ``--recursive=y`` did not honor ``ignore-paths`` for paths that
+  were not yet normalized (for example ``./src/gen`` versus ``src/gen``, or mixed
+  separators on Windows).
+
+  Closes #6964
+
 
 Other Changes
 =============
