@@ -2,7 +2,8 @@
 
 from __future__ import print_function, division
 
-from functools import wraps
+from functools import wraps, reduce
+from operator import mul
 
 from sympy.core import (
     S, Basic, Expr, I, Integer, Add, Mul, Dummy, Tuple
@@ -5949,6 +5950,14 @@ def _symbolic_factor_list(expr, opt, method):
                         other.append((f, k))
 
                 factors.append((_factors_product(other), exp))
+
+    if method == 'sqf':
+        exps = []
+        for _, k in factors:
+            if k not in exps:
+                exps.append(k)
+        factors = [(reduce(mul, (f for f, j in factors if j == k)), k)
+                   for k in exps]
 
     return coeff, factors
 
