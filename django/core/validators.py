@@ -92,6 +92,7 @@ class URLValidator(RegexValidator):
         r'\Z', re.IGNORECASE)
     message = _('Enter a valid URL.')
     schemes = ['http', 'https', 'ftp', 'ftps']
+    unsafe_chars = frozenset('\t\r\n')
 
     def __init__(self, schemes=None, **kwargs):
         super().__init__(**kwargs)
@@ -100,6 +101,10 @@ class URLValidator(RegexValidator):
 
     def __call__(self, value):
         if not isinstance(value, str):
+            raise ValidationError(self.message, code=self.code, params={'value': value})
+        # urlsplit() silently strips these characters on Python versions with
+        # the bpo-43882 fix, so they must be rejected before splitting.
+        if self.unsafe_chars.intersection(value):
             raise ValidationError(self.message, code=self.code, params={'value': value})
         # Check if the scheme is valid.
         scheme = value.split('://')[0].lower()
