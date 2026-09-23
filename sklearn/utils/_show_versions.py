@@ -46,6 +46,7 @@ def _get_deps_info():
         "numpy",
         "scipy",
         "Cython",
+        "joblib",
         "pandas",
         "matplotlib",
     ]
