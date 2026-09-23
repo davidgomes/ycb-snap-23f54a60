@@ -6603,6 +6603,12 @@ def test_integrate(dask):
     with pytest.raises(ValueError):
         da.integrate("x2d")
 
+    with pytest.warns(FutureWarning):
+        da.integrate(dim="x")
+
+    with pytest.raises(ValueError, match="Cannot pass both 'dim' and 'coord'"):
+        da.integrate(coord="x", dim="x")
+
 
 @pytest.mark.parametrize("dask", [True, False])
 @pytest.mark.parametrize("which_datetime", ["np", "cftime"])
