@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 import matplotlib.transforms as mtransforms
 from matplotlib.testing.decorators import check_figures_equal, image_comparison
 from matplotlib.testing._markers import needs_usetex
-from matplotlib.text import Text, Annotation
+from matplotlib.text import Text, Annotation, OffsetFrom
 
 pyparsing_version = parse_version(pyparsing.__version__)
 
@@ -912,6 +912,27 @@ def test_annotate_offset_fontsize():
     points_coords, fontsize_coords = [ann.get_window_extent() for ann in anns]
     fig.canvas.draw()
     assert str(points_coords) == str(fontsize_coords)
+
+
+@check_figures_equal(extensions=["png"])
+def test_annotate_and_offsetfrom_copy_input(fig_test, fig_ref):
+    ax = fig_test.add_subplot()
+    l, = ax.plot([0, 2], [0, 2])
+    of_xy = np.array([.5, .5])
+    ax.annotate("foo", textcoords=OffsetFrom(l, of_xy), xytext=(10, 0),
+                xy=(0, 0))  # xy is unused.
+    of_xy[:] = 1
+    an_xy = np.array([.5, .5])
+    ax.annotate("bar", xy=an_xy, xytext=(.3, .7),
+                arrowprops=dict(arrowstyle="->"))
+    an_xy[:] = 2
+
+    ax = fig_ref.add_subplot()
+    l, = ax.plot([0, 2], [0, 2])
+    ax.annotate("foo", textcoords=OffsetFrom(l, [.5, .5]), xytext=(10, 0),
+                xy=(0, 0))  # xy is unused.
+    ax.annotate("bar", xy=(.5, .5), xytext=(.3, .7),
+                arrowprops=dict(arrowstyle="->"))
 
 
 def test_set_antialiased():
