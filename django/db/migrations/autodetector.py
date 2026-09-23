@@ -563,6 +563,14 @@ class MigrationAutodetector:
                 if isinstance(base, str) and "." in base:
                     base_app_label, base_name = base.split(".", 1)
                     dependencies.append((base_app_label, base_name, None, True))
+                    # A field moved onto this subclass in the same change still
+                    # exists on the base until RemoveField runs. CreateModel
+                    # must follow that removal or the subclass clashes with the
+                    # inherited field (#30483).
+                    for name in model_state.fields:
+                        base_field_key = (base_app_label, base_name.lower(), name)
+                        if base_field_key in self.old_field_keys and base_field_key not in self.new_field_keys:
+                            dependencies.append((base_app_label, base_name, name, False))
             # Depend on the other end of the primary key if it's a relation
             if primary_key_rel:
                 dependencies.append((

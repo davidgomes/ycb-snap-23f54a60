@@ -2184,6 +2184,32 @@ class AutodetectorTests(TestCase):
         self.assertOperationAttributes(changes, 'thirdapp', 0, 0, name="CustomUser")
         self.assertOperationAttributes(changes, 'thirdapp', 0, 1, name="Aardvark")
 
+    def test_create_model_with_field_removed_from_base_model(self):
+        """
+        A field moved from a base model onto a new subclass is removed before
+        the subclass is created, so the subclass does not clash with the
+        inherited field.
+        """
+        before = [
+            ModelState("app", "Readable", [
+                ("id", models.AutoField(primary_key=True)),
+                ("title", models.CharField(max_length=200)),
+            ]),
+        ]
+        after = [
+            ModelState("app", "Readable", [
+                ("id", models.AutoField(primary_key=True)),
+            ]),
+            ModelState("app", "Book", [
+                ("title", models.CharField(max_length=200)),
+            ], bases=("app.Readable",)),
+        ]
+        changes = self.get_changes(before, after)
+        self.assertNumberMigrations(changes, "app", 1)
+        self.assertOperationTypes(changes, "app", 0, ["RemoveField", "CreateModel"])
+        self.assertOperationAttributes(changes, "app", 0, 0, name="title", model_name="readable")
+        self.assertOperationAttributes(changes, "app", 0, 1, name="Book")
+
     def test_bases_first(self):
         """Bases of other models come first."""
         changes = self.get_changes([], [self.aardvark_based_on_author, self.author_name])
