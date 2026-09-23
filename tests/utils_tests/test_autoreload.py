@@ -16,7 +16,6 @@ from unittest import mock, skip, skipIf
 
 import pytz
 
-import django.__main__
 from django.apps.registry import Apps
 from django.test import SimpleTestCase
 from django.test.utils import extend_sys_path
@@ -157,16 +156,23 @@ class TestIterModulesAndFiles(SimpleTestCase):
 
 
 class TestChildArguments(SimpleTestCase):
-    @mock.patch('sys.argv', [django.__main__.__file__, 'runserver'])
     @mock.patch('sys.warnoptions', [])
     def test_run_as_module(self):
-        self.assertEqual(
-            autoreload.get_child_arguments(),
-            [sys.executable, '-m', 'django', 'runserver']
-        )
+        for module in ['django', 'pkg_other_than_django']:
+            argv = ['%s/__main__.py' % module, 'runserver']
+            spec = mock.Mock()
+            spec.parent = module
+            with self.subTest(module=module):
+                with mock.patch('sys.argv', argv):
+                    with mock.patch.object(sys.modules['__main__'], '__spec__', spec, create=True):
+                        self.assertEqual(
+                            autoreload.get_child_arguments(),
+                            [sys.executable, '-m', module, 'runserver']
+                        )
 
     @mock.patch('sys.argv', [__file__, 'runserver'])
     @mock.patch('sys.warnoptions', ['error'])
+    @mock.patch.object(sys.modules['__main__'], '__spec__', None, create=True)
     def test_warnoptions(self):
         self.assertEqual(
             autoreload.get_child_arguments(),
@@ -174,6 +180,7 @@ class TestChildArguments(SimpleTestCase):
         )
 
     @mock.patch('sys.warnoptions', [])
+    @mock.patch.object(sys.modules['__main__'], '__spec__', None, create=True)
     def test_exe_fallback(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             exe_path = Path(tmpdir) / 'django-admin.exe'
@@ -185,6 +192,7 @@ class TestChildArguments(SimpleTestCase):
                 )
 
     @mock.patch('sys.warnoptions', [])
+    @mock.patch.object(sys.modules['__main__'], '__spec__', None, create=True)
     def test_entrypoint_fallback(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             script_path = Path(tmpdir) / 'django-admin-script.py'
@@ -197,6 +205,7 @@ class TestChildArguments(SimpleTestCase):
 
     @mock.patch('sys.argv', ['does-not-exist', 'runserver'])
     @mock.patch('sys.warnoptions', [])
+    @mock.patch.object(sys.modules['__main__'], '__spec__', None, create=True)
     def test_raises_runtimeerror(self):
         msg = 'Script does-not-exist does not exist.'
         with self.assertRaisesMessage(RuntimeError, msg):
@@ -435,7 +444,8 @@ class RestartWithReloaderTests(SimpleTestCase):
             script.touch()
             argv = [str(script), 'runserver']
             mock_call = self.patch_autoreload(argv)
-            autoreload.restart_with_reloader()
+            with mock.patch.object(sys.modules['__main__'], '__spec__', None, create=True):
+                autoreload.restart_with_reloader()
             self.assertEqual(mock_call.call_count, 1)
             self.assertEqual(
                 mock_call.call_args[0][0],
@@ -446,7 +456,9 @@ class RestartWithReloaderTests(SimpleTestCase):
         main = '/usr/lib/pythonX.Y/site-packages/django/__main__.py'
         argv = [main, 'runserver']
         mock_call = self.patch_autoreload(argv)
-        with mock.patch('django.__main__.__file__', main):
+        spec = mock.Mock()
+        spec.parent = 'django'
+        with mock.patch.object(sys.modules['__main__'], '__spec__', spec, create=True):
             autoreload.restart_with_reloader()
             self.assertEqual(mock_call.call_count, 1)
             self.assertEqual(mock_call.call_args[0][0], [self.executable, '-Wall', '-m', 'django'] + argv[1:])
