@@ -220,6 +220,10 @@ tables of contents.  The ``toctree`` directive is the central element.
    .. versionchanged:: 1.3
       Added "caption" and "name" option.
 
+   .. versionchanged:: 5.2
+      Added support for the special names ``genindex``, ``modindex`` and
+      ``search`` as toctree entries.
+
 Special names
 ^^^^^^^^^^^^^
 
@@ -231,7 +235,8 @@ The special document names (and pages generated for them) are:
 * ``genindex``, ``modindex``, ``search``
 
   These are used for the general index, the Python module index, and the search
-  page, respectively.
+  page, respectively.  They can also be listed as entries of a
+  :rst:dir:`toctree`.
 
   The general index is populated with entries from modules, all
   index-generating :ref:`object descriptions <basic-domain-markup>`, and from

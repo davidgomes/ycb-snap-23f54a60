@@ -3,6 +3,8 @@ import re
 
 import pytest
 
+from sphinx import addnodes
+
 
 @pytest.mark.sphinx(testroot='toctree-glob')
 def test_relations(app, status, warning):
@@ -28,6 +30,25 @@ def test_singlehtml_toctree(app, status, warning):
         app.builder._get_local_toctree('index')
     except AttributeError:
         pytest.fail('Unexpected AttributeError in app.builder.fix_refuris')
+
+
+@pytest.mark.sphinx('html', testroot='toctree-index')
+def test_toctree_index(app, status, warning):
+    app.build()
+    assert 'toctree contains reference' not in warning.getvalue()
+
+    toctree = list(app.env.get_doctree('index').findall(addnodes.toctree))[1]
+    assert toctree['entries'] == [(None, 'genindex'), (None, 'modindex'),
+                                  ('Search Page', 'search')]
+    assert toctree['includefiles'] == []
+
+    content = (app.outdir / 'index.html').read_text(encoding='utf8')
+    assert re.search(r'<a class="reference internal" href="genindex.html">Index</a>',
+                     content)
+    assert re.search(r'<a class="reference internal" href="py-modindex.html">'
+                     r'Module Index</a>', content)
+    assert re.search(r'<a class="reference internal" href="search.html">Search Page</a>',
+                     content)
 
 
 @pytest.mark.sphinx(testroot='toctree', srcdir="numbered-toctree")

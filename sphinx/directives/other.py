@@ -77,6 +77,7 @@ class TocTree(SphinxDirective):
         return ret
 
     def parse_content(self, toctree: addnodes.toctree) -> List[Node]:
+        generated_docnames = frozenset(self.env.domains['std'].initial_data['labels'])
         suffixes = self.config.source_suffix
 
         # glob target documents
@@ -117,6 +118,8 @@ class TocTree(SphinxDirective):
                 # absolutize filenames
                 docname = docname_join(self.env.docname, docname)
                 if url_re.match(ref) or ref == 'self':
+                    toctree['entries'].append((title, ref))
+                elif docname not in self.env.found_docs and ref in generated_docnames:
                     toctree['entries'].append((title, ref))
                 elif docname not in self.env.found_docs:
                     if excluded(self.env.doc2path(docname, False)):

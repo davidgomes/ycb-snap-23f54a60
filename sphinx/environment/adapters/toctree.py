@@ -1,6 +1,6 @@
 """Toctree adapter for sphinx.environment."""
 
-from typing import TYPE_CHECKING, Any, Iterable, List, Optional, cast
+from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Tuple, cast
 
 from docutils import nodes
 from docutils.nodes import Element, Node
@@ -74,6 +74,8 @@ class TocTree:
         # interactions between marking and pruning the tree (see bug #1046).
 
         toctree_ancestors = self.get_toctree_ancestors(docname)
+        generated_docnames: Dict[str, Tuple[str, str, str]] = \
+            self.env.domains['std'].initial_data['labels']
         included = Matcher(self.env.config.include_patterns)
         excluded = Matcher(self.env.config.exclude_patterns)
 
@@ -138,6 +140,17 @@ class TocTree:
                         para = addnodes.compact_paragraph('', '', reference)
                         item = nodes.list_item('', para)
                         # don't show subitems
+                        toc = nodes.bullet_list('', item)
+                    elif ref in generated_docnames and ref not in self.env.tocs:
+                        docname, _, sectionname = generated_docnames[ref]
+                        if not title:
+                            title = str(sectionname)
+                        reference = nodes.reference('', '', internal=True,
+                                                    refuri=docname,
+                                                    anchorname='',
+                                                    *[nodes.Text(title)])
+                        para = addnodes.compact_paragraph('', '', reference)
+                        item = nodes.list_item('', para)
                         toc = nodes.bullet_list('', item)
                     else:
                         if ref in parents:
