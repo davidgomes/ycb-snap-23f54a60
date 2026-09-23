@@ -365,7 +365,7 @@ class DataVariables(Mapping[Any, "DataArray"]):
         )
 
     def __len__(self) -> int:
-        return len(self._dataset._variables) - len(self._dataset._coord_names)
+        return len(self._dataset._variables.keys() - self._dataset._coord_names)
 
     def __contains__(self, key: Hashable) -> bool:
         return key in self._dataset._variables and key not in self._dataset._coord_names
@@ -4177,7 +4177,7 @@ class Dataset(
         }
         variables.update(new_variables)
 
-        coord_names = set(new_variables) | self._coord_names
+        coord_names = self._coord_names - set(drop_variables) | set(new_variables)
 
         return self._replace(variables, coord_names=coord_names, indexes=indexes)
 
