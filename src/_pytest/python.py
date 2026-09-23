@@ -286,7 +286,11 @@ class PyobjMixin(PyobjContext):
             parts.append(name)
         parts.reverse()
         s = ".".join(parts)
-        return s.replace(".[", "[")
+        # Do not rewrite ".[" to "[". Parametrized node names already include
+        # the brackets (e.g. test_boo[..[]). A global replace also corrupts
+        # parameter ids that contain ".[", which breaks failure headlines and
+        # consumers such as VS Code test discovery.
+        return s
 
     def reportinfo(self):
         # XXX caching?

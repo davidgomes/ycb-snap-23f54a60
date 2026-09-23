@@ -1,0 +1,1 @@
+Fixed test report headlines dropping a leading ``.`` from parameter ids that contain ``.[`` (for example ``test_boo[..[]`` was shown as ``test_boo[.[]``), which also broke VS Code test discovery.

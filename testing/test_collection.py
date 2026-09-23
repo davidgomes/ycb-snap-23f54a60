@@ -738,6 +738,19 @@ class Test_genitems:
         ids = [x.getmodpath() for x in items]
         assert ids == ["MyTestSuite.x_test", "TestCase.test_y"]
 
+    def test_getmodpath_preserves_param_id_with_dot_bracket(self, testdir):
+        """Parameter ids containing '.[' must survive in report headlines."""
+        p = testdir.makepyfile(
+            """
+            import pytest
+            @pytest.mark.parametrize("a", ["..["])
+            def test_boo(a):
+                pass
+        """
+        )
+        items, reprec = testdir.inline_genitems(p)
+        assert [x.getmodpath() for x in items] == ["test_boo[..[]"]
+
 
 def test_matchnodes_two_collections_same_file(testdir):
     testdir.makeconftest(
