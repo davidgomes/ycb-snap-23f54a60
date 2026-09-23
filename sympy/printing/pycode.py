@@ -331,6 +331,18 @@ class MpmathPrinter(PythonCodePrinter):
         args = str(tuple(map(int, e._mpf_)))
         return '{func}({args})'.format(func=self._module_format('mpmath.mpf'), args=args)
 
+    def _print_Rational(self, e):
+        # Python ``p/q`` is a binary float (or, on Python 2 without
+        # ``from __future__ import division``, a truncated int). Either way
+        # the rational is no longer exact when mpmath later consumes it.
+        # Build it from mpf integers so the division happens at the current
+        # working precision (e.g. the dps nsolve sets before calling).
+        return '{0}({1})/{0}({2})'.format(
+            self._module_format('mpmath.mpf'),
+            e.p,
+            e.q,
+        )
+
 
     def _print_uppergamma(self, e):
         return "{0}({1}, {2}, {3})".format(

@@ -38,8 +38,12 @@ def test_PythonCodePrinter():
 
 
 def test_MpmathPrinter():
+    from sympy import Rational
     p = MpmathPrinter()
     assert p.doprint(sign(x)) == 'mpmath.sign(x)'
+    # Rationals must not be emitted as Python ``p/q`` (binary float).
+    assert p.doprint(Rational(232, 3)) == 'mpmath.mpf(232)/mpmath.mpf(3)'
+    assert p.doprint(Rational(-1, 2)) == 'mpmath.mpf(-1)/mpmath.mpf(2)'
 
 
 def test_NumPyPrinter():
