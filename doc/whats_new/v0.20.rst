@@ -50,7 +50,7 @@ Changelog
 
 - |Fix| Fixed a bug in :class:`linear_model.MultiTaskElasticNet` and
   :class:`linear_model.MultiTaskLasso` which were breaking when
-  ``warm_start = True``.   :issue:`12360` by :user:`Aakanksha Joshi <joaak>`.
+  ``warm_start = True``. :issue:`12360` by :user:`Aakanksha Joshi <joaak>`.
 
 :mod:`sklearn.mixture`
 ......................
@@ -58,7 +58,7 @@ Changelog
 - |Fix| Fixed a bug in :class:`mixture.GaussianMixture` and
   :class:`mixture.BayesianGaussianMixture` where ``fit_predict`` and
   ``fit(X).predict(X)`` could return different labels when ``n_init > 1``.
-  :pr:`13142`.
+  :issue:`13142`.
 
 :mod:`sklearn.preprocessing`
 ............................
