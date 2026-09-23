@@ -1905,6 +1905,30 @@ class ExistsTests(TestCase):
         )
         self.assertNotIn('ORDER BY', captured_sql)
 
+    def test_negated_empty_exists(self):
+        manager = Manager.objects.create()
+        other = Manager.objects.create()
+        qs = Manager.objects.filter(
+            ~Exists(Manager.objects.none()),
+            pk=manager.pk,
+        )
+        self.assertSequenceEqual(qs, [manager])
+        self.assertNotIn(other, qs)
+        self.assertIn('WHERE', str(qs.query))
+
+    def test_select_negated_empty_exists(self):
+        manager = Manager.objects.create()
+        qs = Manager.objects.annotate(
+            not_exists=~Exists(Manager.objects.none()),
+        ).filter(pk=manager.pk)
+        self.assertSequenceEqual(qs, [manager])
+        self.assertIs(qs.get().not_exists, True)
+
+    def test_filter_empty_exists(self):
+        manager = Manager.objects.create()
+        qs = Manager.objects.filter(Exists(Manager.objects.none()), pk=manager.pk)
+        self.assertSequenceEqual(qs, [])
+
 
 class FieldTransformTests(TestCase):
 

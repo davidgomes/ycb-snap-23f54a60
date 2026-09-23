@@ -1211,13 +1211,25 @@ class Exists(Subquery):
 
     def as_sql(self, compiler, connection, template=None, **extra_context):
         query = self.query.exists(using=connection.alias)
-        sql, params = super().as_sql(
-            compiler,
-            connection,
-            template=template,
-            query=query,
-            **extra_context,
-        )
+        try:
+            sql, params = super().as_sql(
+                compiler,
+                connection,
+                template=template,
+                query=query,
+                **extra_context,
+            )
+        except EmptyResultSet:
+            if self.negated:
+                # Negation is applied inside Exists, so an empty subquery must
+                # not propagate as "matches nothing". NOT EXISTS (empty) is
+                # always true; keep sibling WHERE predicates.
+                # Oracle cannot select a boolean literal, so use a comparison.
+                features = compiler.connection.features
+                if not features.supports_boolean_expr_in_select_clause:
+                    return '1=1', ()
+                return compiler.compile(Value(True))
+            raise
         if self.negated:
             sql = 'NOT {}'.format(sql)
         return sql, params
