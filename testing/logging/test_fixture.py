@@ -50,6 +50,34 @@ def test_change_level_undo(testdir):
     result.stdout.no_fnmatch_line("*log from test2*")
 
 
+def test_change_level_undos_handler_level(testdir):
+    """Ensure that 'set_level' is undone after the end of the test (handler).
+
+    Issue #7569. Tests the handler level specifically.
+    """
+    testdir.makepyfile(
+        """
+        import logging
+
+        def test1(caplog):
+            assert caplog.handler.level == 0
+            caplog.set_level(41)
+            caplog.set_level(42)
+            assert caplog.handler.level == 42
+
+        def test2(caplog):
+            assert caplog.handler.level == 0
+
+        def test3(caplog):
+            assert caplog.handler.level == 0
+            caplog.set_level(43)
+            assert caplog.handler.level == 43
+    """
+    )
+    result = testdir.runpytest()
+    result.assert_outcomes(passed=3)
+
+
 def test_with_statement(caplog):
     with caplog.at_level(logging.INFO):
         logger.debug("handler DEBUG level")
