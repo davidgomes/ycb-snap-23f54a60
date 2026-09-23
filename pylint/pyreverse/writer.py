@@ -19,7 +19,7 @@
 import os
 
 from pylint.graph import DotBackend
-from pylint.pyreverse.utils import is_exception
+from pylint.pyreverse.utils import get_annotation_label, is_exception
 from pylint.pyreverse.vcgutils import VCGPrinter
 
 
@@ -135,10 +135,19 @@ class DotWriter(DiagramWriter):
             label = r"{}|{}\l|".format(label, r"\l".join(obj.attrs))
             for func in obj.methods:
                 if func.args.args:
-                    args = [arg.name for arg in func.args.args if arg.name != "self"]
+                    args = [
+                        f"{arg.name}: {get_annotation_label(ann)}" if ann else arg.name
+                        for arg, ann in zip(func.args.args, func.args.annotations)
+                        if arg.name != "self"
+                    ]
                 else:
                     args = []
-                label = r"{}{}({})\l".format(label, func.name, ", ".join(args))
+                return_type = (
+                    f": {get_annotation_label(func.returns)}" if func.returns else ""
+                )
+                label = r"{}{}({}){}\l".format(
+                    label, func.name, ", ".join(args), return_type
+                )
             label = "{%s}" % label
         if is_exception(obj.node):
             return dict(fontcolor="red", label=label, shape="record")

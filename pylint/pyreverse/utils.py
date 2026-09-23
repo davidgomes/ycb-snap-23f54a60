@@ -19,6 +19,9 @@
 import os
 import re
 import sys
+from typing import Optional, Tuple, Union
+
+import astroid
 
 RCFILE = ".pyreverserc"
 
@@ -213,3 +216,105 @@ class LocalsVisitor(ASTWalker):
         if methods[1] is not None:
             return methods[1](node)
         return None
+
+
+def get_annotation_label(ann: astroid.node_classes.NodeNG) -> str:
+    """return the text to display for the annotation node `ann`"""
+    if isinstance(ann, astroid.Const) and isinstance(ann.value, str):
+        # string annotations are forward references, e.g. "MyClass"
+        return ann.value
+    return ann.as_string()
+
+
+def _get_argument_annotation(
+    arguments: astroid.Arguments, name: str
+) -> Tuple[
+    Optional[astroid.node_classes.NodeNG], Optional[astroid.node_classes.NodeNG]
+]:
+    """return the annotation and the default value of the argument `name`"""
+    annotated_args = zip(
+        arguments.posonlyargs + arguments.args + arguments.kwonlyargs,
+        arguments.posonlyargs_annotations
+        + arguments.annotations
+        + arguments.kwonlyargs_annotations,
+    )
+    ann = next((ann for arg, ann in annotated_args if arg.name == name), None)
+    try:
+        default = arguments.default_value(name)
+    except astroid.NoDefault:
+        default = None
+    return ann, default
+
+
+def _get_annotation_and_default(
+    node: astroid.node_classes.NodeNG,
+) -> Tuple[
+    Optional[astroid.node_classes.NodeNG], Optional[astroid.node_classes.NodeNG]
+]:
+    """return the annotation of the assignment target `node` and the value
+    assigned to it by default"""
+    if isinstance(node.parent, astroid.AnnAssign):
+        return node.parent.annotation, node.parent.value
+    if isinstance(node, astroid.AssignName) and isinstance(
+        node.parent, astroid.Arguments
+    ):
+        return _get_argument_annotation(node.parent, node.name)
+    if (
+        isinstance(node, astroid.AssignAttr)
+        and isinstance(node.parent, astroid.Assign)
+        and isinstance(node.parent.value, astroid.Name)
+    ):
+        # ``self.attr = name`` takes the annotation of ``name``, e.g. a parameter
+        _, assignments = node.parent.value.lookup(node.parent.value.name)
+        if len(assignments) == 1:
+            return _get_annotation_and_default(assignments[0])
+    return None, None
+
+
+def get_annotation(
+    node: Union[astroid.AssignAttr, astroid.AssignName]
+) -> Optional[astroid.Name]:
+    """return a node whose name is the annotation label of `node`, or None if
+    `node` is not annotated
+
+    The label of an annotation whose value defaults to None is wrapped in
+    ``Optional``.
+    """
+    ann, default = _get_annotation_and_default(node)
+    if ann is None:
+        return None
+    label = get_annotation_label(ann)
+    if (
+        isinstance(default, astroid.Const)
+        and default.value is None
+        and not label.startswith(("Optional[", "typing.Optional["))
+    ):
+        label = f"Optional[{label}]"
+    return astroid.Name(
+        name=label, lineno=ann.lineno, col_offset=ann.col_offset, parent=ann.parent
+    )
+
+
+def infer_node(node: Union[astroid.AssignAttr, astroid.AssignName]) -> set:
+    """return a set containing the annotation of `node` if it exists,
+    otherwise a set of the types inferred for `node`
+
+    An annotation naming a class is resolved to that class, so that it is
+    handled like an inferred type, e.g. to find associations.
+    """
+    ann = get_annotation(node)
+    if ann is None:
+        try:
+            return set(node.infer())
+        except astroid.InferenceError:
+            return set()
+    # the label node sits where the annotation was written, so a plain class
+    # name resolves like the annotation would, while a label like
+    # ``Optional[str]`` is not a valid name and fails to infer
+    try:
+        inferred = set(ann.infer())
+    except astroid.InferenceError:
+        return {ann}
+    if all(isinstance(value, astroid.ClassDef) for value in inferred):
+        return inferred
+    return {ann}
