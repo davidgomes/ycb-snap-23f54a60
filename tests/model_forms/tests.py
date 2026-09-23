@@ -209,6 +209,12 @@ class ModelFormBaseTest(TestCase):
         instance = construct_instance(form, Person(), fields=())
         self.assertEqual(instance.name, '')
 
+    def test_empty_fields_to_model_to_dict(self):
+        """
+        An argument of fields=[] to model_to_dict should return an empty dictionary.
+        """
+        self.assertEqual(model_to_dict(Person(name='John Doe'), fields=[]), {})
+
     def test_blank_with_null_foreign_key_field(self):
         """
         #13776 -- ModelForm's with models having a FK set to null=False and
