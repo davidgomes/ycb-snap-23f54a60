@@ -30,7 +30,9 @@ def test_defaults(app, status, warning):
     # images should fail
     assert "Not Found for url: https://www.google.com/image.png" in content
     assert "Not Found for url: https://www.google.com/image2.png" in content
-    assert len(content.splitlines()) == 5
+    # looking for local file should fail
+    assert "[broken] path/to/notfound" in content
+    assert len(content.splitlines()) == 6
 
 
 @pytest.mark.sphinx('linkcheck', testroot='linkcheck', freshenv=True)
@@ -47,8 +49,8 @@ def test_defaults_json(app, status, warning):
                  "info"]:
         assert attr in row
 
-    assert len(content.splitlines()) == 8
-    assert len(rows) == 8
+    assert len(content.splitlines()) == 10
+    assert len(rows) == 10
     # the output order of the rows is not stable
     # due to possible variance in network latency
     rowsby = {row["uri"]:row for row in rows}
@@ -67,9 +69,18 @@ def test_defaults_json(app, status, warning):
     assert dnerow['status'] == 'broken'
     assert dnerow['code'] == 0
     assert dnerow['uri'] == 'https://localhost:7777/doesnotexist'
+    assert rowsby['conf.py']['status'] == 'working'
+    assert rowsby['path/to/notfound'] == {
+        'filename': 'links.txt',
+        'lineno': 15,
+        'status': 'broken',
+        'code': 0,
+        'uri': 'path/to/notfound',
+        'info': '',
+    }
     assert rowsby['https://www.google.com/image2.png'] == {
         'filename': 'links.txt',
-        'lineno': 16,
+        'lineno': 18,
         'status': 'broken',
         'code': 0,
         'uri': 'https://www.google.com/image2.png',
@@ -91,6 +102,7 @@ def test_defaults_json(app, status, warning):
                    'linkcheck_ignore': [
                        'https://localhost:7777/doesnotexist',
                        'http://www.sphinx-doc.org/en/1.7/intro.html#',
+                       'path/to/notfound',
                        'https://www.google.com/image.png',
                        'https://www.google.com/image2.png']
                    })
