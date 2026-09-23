@@ -9,7 +9,7 @@ from sympy.core.function import Lambda
 from sympy.core.mul import _keep_coeff
 from sympy.core.symbol import Symbol
 from sympy.printing.str import StrPrinter
-from sympy.printing.precedence import precedence
+from sympy.printing.precedence import precedence, PRECEDENCE
 
 
 class requires:
@@ -487,8 +487,22 @@ class CodePrinter(StrPrinter):
 
         a = a or [S.One]
 
-        a_str = [self.parenthesize(x, prec) for x in a]
-        b_str = [self.parenthesize(x, prec) for x in b]
+        if sign == "-" and not a[0].is_Rational:
+            # Unary minus does not have a SymPy class, and hence there's no
+            # precedence weight associated with it. Python's unary minus has
+            # an operator precedence between multiplication and exponentiation
+            # (e.g. ``-x % y`` means ``(-x) % y``), so we use this to compute a
+            # weight for the factor following it. A rational coefficient is
+            # printed as a division, which is unaffected by the sign.
+            first_prec = 0.5*(PRECEDENCE["Pow"] + PRECEDENCE["Mul"])
+        else:
+            first_prec = prec
+
+        # With the sign split off, the remaining factors are joined as in a
+        # positive product.
+        a_str = [self.parenthesize(a[0], first_prec)] + \
+                [self.parenthesize(x, PRECEDENCE["Mul"]) for x in a[1:]]
+        b_str = [self.parenthesize(x, PRECEDENCE["Mul"]) for x in b]
 
         # To parenthesize Pow with exp = -1 and having more than one Symbol
         for item in pow_paren:
