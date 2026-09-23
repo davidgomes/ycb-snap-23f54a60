@@ -1289,6 +1289,16 @@ class PythonDomain(Domain):
             matches.append((newname, self.objects[newname]))
         return matches
 
+    def process_field_xref(self, pnode: pending_xref) -> None:
+        """Attach the current module and class so info-field types resolve
+        like explicit cross-reference roles.
+
+        Without this, ``:type:`` and ``:rtype:`` have no ``py:module`` context
+        and an unqualified name is matched in every module.
+        """
+        pnode['py:module'] = self.env.ref_context.get('py:module')
+        pnode['py:class'] = self.env.ref_context.get('py:class')
+
     def resolve_xref(self, env: BuildEnvironment, fromdocname: str, builder: Builder,
                      type: str, target: str, node: pending_xref, contnode: Element
                      ) -> Element:

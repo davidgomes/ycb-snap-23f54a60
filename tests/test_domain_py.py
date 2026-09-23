@@ -489,6 +489,45 @@ def test_pyobject_prefix(app):
     assert doctree[1][1][3].astext().strip() == 'FooBar.say()'    # not stripped
 
 
+def test_info_field_type_uses_current_module(app):
+    text = (".. py:class:: mod.A\n"
+            ".. py:class:: mod.submod.A\n"
+            "\n"
+            ".. py:currentmodule:: mod\n"
+            "\n"
+            ".. py:function:: f()\n"
+            "\n"
+            "   :param A a:\n"
+            "   :rtype: A\n"
+            "\n"
+            ".. py:currentmodule:: mod.submod\n"
+            "\n"
+            ".. py:function:: g()\n"
+            "\n"
+            "   :param A a:\n"
+            "   :rtype: A\n")
+    doctree = restructuredtext.parse(app, text)
+    domain = app.env.get_domain('py')
+
+    type_xrefs = [node for node in doctree.traverse(pending_xref)
+                  if node['reftarget'] == 'A']
+    assert [(node.get('py:module'), node.get('py:class')) for node in type_xrefs] == [
+        ('mod', None),
+        ('mod', None),
+        ('mod.submod', None),
+        ('mod.submod', None),
+    ]
+
+    resolved = []
+    for node in type_xrefs:
+        matches = domain.find_obj(app.env, node.get('py:module'), node.get('py:class'),
+                                  node['reftarget'], node['reftype'],
+                                  1 if node.hasattr('refspecific') else 0)
+        assert len(matches) == 1
+        resolved.append(matches[0][0])
+    assert resolved == ['mod.A', 'mod.A', 'mod.submod.A', 'mod.submod.A']
+
+
 def test_pydata(app):
     text = (".. py:module:: example\n"
             ".. py:data:: var\n"
