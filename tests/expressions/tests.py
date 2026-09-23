@@ -815,6 +815,14 @@ class BasicExpressionsTests(TestCase):
             Employee.objects.filter(Exists(is_poc) | Q(salary__lt=15)),
             [self.example_inc.ceo, self.max],
         )
+        self.assertCountEqual(
+            Employee.objects.filter(Q(salary__gte=30) & Exists(is_ceo)),
+            [self.max],
+        )
+        self.assertCountEqual(
+            Employee.objects.filter(Q(salary__lt=15) | Exists(is_poc)),
+            [self.example_inc.ceo, self.max],
+        )
 
 
 class IterableLookupInnerExpressionsTests(TestCase):
