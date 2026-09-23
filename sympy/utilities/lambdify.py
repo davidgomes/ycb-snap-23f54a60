@@ -958,6 +958,10 @@ def _recursive_to_string(doprint, arg):
         if isinstance(arg, list):
             left, right = "[]"
         elif isinstance(arg, tuple):
+            # A trailing comma is required so a length-1 tuple stays a tuple
+            # in the generated Python (`(1,)`), not an integer (`(1)`).
+            if len(arg) == 1:
+                return "(%s,)" % _recursive_to_string(doprint, arg[0])
             left, right = "()"
         else:
             raise NotImplementedError("unhandled type: %s, %s" % (type(arg), arg))
