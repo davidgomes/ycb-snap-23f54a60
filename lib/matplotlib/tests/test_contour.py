@@ -823,3 +823,11 @@ def test_deprecated_apis():
         assert_array_equal(cs.tcolors, [c.get_edgecolor() for c in colls])
     with pytest.warns(mpl.MatplotlibDeprecationWarning, match="tlinewidths"):
         assert cs.tlinewidths == [c.get_linewidth() for c in colls]
+
+
+def test_contour_set_paths():
+    cs = plt.contour(np.arange(16).reshape((4, 4)))
+    new_paths = [mpl.path.Path(np.array([[0, 0], [1, 1]])) for _ in cs.get_paths()]
+    cs.set_paths(new_paths)
+    assert cs.get_paths() == new_paths
+    assert cs.stale

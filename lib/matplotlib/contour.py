@@ -1113,6 +1113,19 @@ class ContourSet(ContourLabeler, mcoll.Collection):
                              if len(vertices) else empty_path)
         return paths
 
+    def set_paths(self, paths):
+        """
+        Set the `.Path`\\s that this `.ContourSet` draws.
+
+        Parameters
+        ----------
+        paths : sequence of `~.path.Path`
+            One path per contour level (line contours) or per interval
+            (filled contours), in the same order as ``levels``.
+        """
+        self._paths = list(paths)
+        self.stale = True
+
     def _get_lowers_and_uppers(self):
         """
         Return ``(lowers, uppers)`` for filled contours.
