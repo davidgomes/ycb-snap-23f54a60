@@ -406,6 +406,11 @@ class CommandTests(SimpleTestCase):
         with self.assertRaisesMessage(CommandError, msg):
             management.call_command("subparser_dest", subcommand="foo", bar=12)
 
+    def test_subparser_missing_argument(self):
+        msg = "Error: the following arguments are required: bar"
+        with self.assertRaisesMessage(CommandError, msg):
+            management.call_command("subparser", "foo")
+
     def test_create_parser_kwargs(self):
         """BaseCommand.create_parser() passes kwargs to CommandParser."""
         epilog = "some epilog text"
@@ -467,6 +472,29 @@ class CommandRunTests(AdminScriptTestCase):
         out, err = self.run_manage(["set_option", "--skip-checks", "--set", "foo"])
         self.assertNoOutput(err)
         self.assertEqual(out.strip(), "Set foo")
+
+    def test_subparser_error_formatting(self):
+        self.write_settings("settings.py", apps=["user_commands"])
+        out, err = self.run_manage(["subparser", "foo", "twelve"])
+        self.assertNoOutput(out)
+        err_lines = err.splitlines()
+        self.assertEqual(len(err_lines), 2)
+        self.assertEqual(
+            err_lines[1],
+            "manage.py subparser foo: error: argument bar: invalid int value: 'twelve'",
+        )
+
+    def test_subparser_non_django_error_formatting(self):
+        self.write_settings("settings.py", apps=["user_commands"])
+        out, err = self.run_manage(["subparser_vanilla", "foo", "seven"])
+        self.assertNoOutput(out)
+        err_lines = err.splitlines()
+        self.assertEqual(len(err_lines), 2)
+        self.assertEqual(
+            err_lines[1],
+            "manage.py subparser_vanilla foo: error: argument bar: invalid int value: "
+            "'seven'",
+        )
 
 
 class UtilsTests(SimpleTestCase):
