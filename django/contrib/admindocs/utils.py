@@ -34,7 +34,13 @@ def trim_docstring(docstring):
         return ''
     # Convert tabs to spaces and split into lines
     lines = docstring.expandtabs().splitlines()
-    indent = min(len(line) - len(line.lstrip()) for line in lines if line.lstrip())
+    # Find minimum indentation of any non-blank lines after the first line.
+    # The first line doesn't count: its indentation is 0 when the docstring
+    # text starts on the opening line (see PEP 257).
+    indent = min(
+        (len(line) - len(line.lstrip()) for line in lines[1:] if line.lstrip()),
+        default=0,
+    )
     trimmed = [lines[0].lstrip()] + [line[indent:].rstrip() for line in lines[1:]]
     return "\n".join(trimmed).strip()
 

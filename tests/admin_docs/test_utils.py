@@ -44,6 +44,39 @@ class TestUtils(AdminDocsSimpleTestCase):
         )
         self.assertEqual(trim_docstring_output, trimmed_docstring)
 
+    def test_trim_docstring_first_line_not_empty(self):
+        """
+        Docstrings that start on the opening line must still be dedented.
+
+        The first line has no indentation, so it must not be included when
+        computing the common indent. Otherwise later lines stay indented and
+        docutils treats them as content of the ``default-role`` directive.
+        """
+        docstring = (
+            'test tests something.\n'
+            '\n'
+            '    **Context**\n'
+            '\n'
+            '    ``RequestContext``\n'
+            '    '
+        )
+        self.assertEqual(
+            trim_docstring(docstring),
+            'test tests something.\n\n**Context**\n\n``RequestContext``',
+        )
+        # A single-line docstring (and one whose only other line is the
+        # indented closing quotes) has no indent to compute.
+        self.assertEqual(trim_docstring('test tests something.'), 'test tests something.')
+        self.assertEqual(trim_docstring('test tests something.\n    '), 'test tests something.')
+
+        title, body, metadata = parse_docstring(docstring)
+        self.assertEqual(title, 'test tests something.')
+        self.assertEqual(body, '**Context**\n\n``RequestContext``')
+        self.assertEqual(metadata, {})
+        body_output = parse_rst(body, 'view', 'view:test')
+        self.assertNotIn('default-role', body_output)
+        self.assertIn('RequestContext', body_output)
+
     def test_parse_docstring(self):
         title, description, metadata = parse_docstring(self.docstring)
         docstring_title = (
