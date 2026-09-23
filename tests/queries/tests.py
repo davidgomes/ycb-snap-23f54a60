@@ -6,7 +6,7 @@ from operator import attrgetter
 
 from django.core.exceptions import EmptyResultSet, FieldError
 from django.db import DEFAULT_DB_ALIAS, connection
-from django.db.models import Count, F, Q
+from django.db.models import Count, Exists, F, OuterRef, Q
 from django.db.models.sql.constants import LOUTER
 from django.db.models.sql.where import NothingNode, WhereNode
 from django.test import SimpleTestCase, TestCase, skipUnlessDBFeature
@@ -1998,6 +1998,28 @@ class ExistsSql(TestCase):
         id, name = connection.ops.quote_name('id'), connection.ops.quote_name('name')
         self.assertNotIn(id, qstr)
         self.assertNotIn(name, qstr)
+
+    def test_exists_outerref_exclude(self):
+        category = NamedCategory.objects.create(name='category')
+        other_category = NamedCategory.objects.create(name='other')
+        tag = Tag.objects.create(name='tag', category=category)
+        note = Note.objects.create(note='note', misc='misc')
+        item = Item.objects.create(
+            name='item', created=datetime.datetime.now(), creator=Author.objects.create(
+                name='author', num=1, extra=ExtraInfo.objects.create(info='info'),
+            ), note=note,
+        )
+        item.tags.add(tag)
+        inner_querysets = {
+            'exclude': Item.objects.exclude(tags__category_id=OuterRef('pk')),
+            'negated Q': Item.objects.filter(~Q(tags__category_id=OuterRef('pk'))),
+        }
+        for label, inner_qs in inner_querysets.items():
+            with self.subTest(label):
+                qs = NamedCategory.objects.annotate(
+                    foo=Exists(inner_qs),
+                ).filter(foo=True)
+                self.assertSequenceEqual(qs, [other_category])
 
     def test_ticket_18414(self):
         Article.objects.create(name='one', created=datetime.datetime.now())
