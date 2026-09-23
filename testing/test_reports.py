@@ -126,6 +126,45 @@ class TestReportSerialization:
             assert isinstance(rep_entries[i], ReprEntryNative)
             assert rep_entries[i].lines == a_entries[i].lines
 
+    def test_chained_exceptions(self, testdir):
+        """Exception serialization must keep the full chain (pytest-xdist)."""
+        testdir.makepyfile(
+            """
+            def test_chained_exception_with_from():
+                try:
+                    try:
+                        raise ValueError(11)
+                    except Exception as e1:
+                        raise ValueError(12) from e1
+                except Exception as e2:
+                    raise ValueError(13) from e2
+
+            def test_chained_exception_without_from():
+                try:
+                    try:
+                        raise ValueError(21)
+                    except Exception:
+                        raise ValueError(22)
+                except Exception:
+                    raise ValueError(23)
+            """
+        )
+        reprec = testdir.inline_run()
+        reports = reprec.getreports("pytest_runtest_logreport")
+        failed = [r for r in reports if r.failed and r.when == "call"]
+        assert len(failed) == 2
+        for rep in failed:
+            d = rep._to_json()
+            assert d["longrepr"]["chain"]
+            a = TestReport._from_json(d)
+            assert a.longreprtext == rep.longreprtext
+        assert "The above exception was the direct cause" in failed[0].longreprtext
+        assert "ValueError: 11" in failed[0].longreprtext
+        assert "ValueError: 12" in failed[0].longreprtext
+        assert "During handling of the above exception" in failed[1].longreprtext
+        assert "ValueError: 21" in failed[1].longreprtext
+        assert "ValueError: 22" in failed[1].longreprtext
+
     def test_itemreport_outcomes(self, testdir):
         """
         This test came originally from test_remote.py in xdist (ca03269).

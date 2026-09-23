@@ -1,0 +1,2 @@
+The exception serialization format used by ``pytest-xdist`` now includes
+chained exceptions, so workers report the full cause and context tracebacks.
