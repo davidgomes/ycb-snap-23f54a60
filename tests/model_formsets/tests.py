@@ -411,6 +411,64 @@ class ModelFormsetTest(TestCase):
         formset = AuthorFormSet(queryset=qs)
         self.assertSequenceEqual(formset.get_queryset(), [a1, a2, a3])
 
+    def test_edit_only_prevents_new_objects(self):
+        charles = Author.objects.create(name='Charles Baudelaire')
+        AuthorFormSet = modelformset_factory(Author, fields="__all__", edit_only=True)
+        data = {
+            'form-TOTAL_FORMS': '2',
+            'form-INITIAL_FORMS': '1',
+            'form-MAX_NUM_FORMS': '0',
+            'form-0-id': str(charles.pk),
+            'form-0-name': 'Charles',
+            'form-1-id': '',
+            'form-1-name': 'Arthur Rimbaud',
+        }
+        formset = AuthorFormSet(data, queryset=Author.objects.all())
+        self.assertIs(formset.is_valid(), True)
+        saved = formset.save()
+        charles.refresh_from_db()
+        self.assertEqual(charles.name, 'Charles')
+        self.assertEqual(Author.objects.count(), 1)
+        self.assertEqual(saved, [charles])
+        self.assertEqual(formset.new_objects, [])
+        self.assertEqual(formset.changed_objects, [(charles, ['name'])])
+
+        # commit=False must not stage a new instance either.
+        formset = AuthorFormSet(data, queryset=Author.objects.all())
+        self.assertIs(formset.is_valid(), True)
+        self.assertEqual(formset.save(commit=False), [])
+        self.assertEqual(formset.new_objects, [])
+        self.assertEqual(Author.objects.count(), 1)
+
+    def test_edit_only_inline_formset(self):
+        author = Author.objects.create(name='Charles Baudelaire')
+        book = Book.objects.create(author=author, title='Les Fleurs du mal')
+        BookFormSet = inlineformset_factory(
+            Author, Book, fields='__all__', edit_only=True, extra=0,
+        )
+        data = {
+            'book_set-TOTAL_FORMS': '2',
+            'book_set-INITIAL_FORMS': '1',
+            'book_set-MAX_NUM_FORMS': '0',
+            'book_set-0-id': str(book.pk),
+            'book_set-0-title': 'Les Fleurs du mal',
+            'book_set-0-author': str(author.pk),
+            'book_set-1-id': '',
+            'book_set-1-title': 'Le Spleen de Paris',
+            'book_set-1-author': str(author.pk),
+        }
+        formset = BookFormSet(data, instance=author)
+        self.assertIs(formset.is_valid(), True)
+        formset.save()
+        self.assertEqual(Book.objects.count(), 1)
+        self.assertEqual(formset.new_objects, [])
+
+    def test_edit_only_defaults_to_false(self):
+        AuthorFormSet = modelformset_factory(Author, fields="__all__")
+        self.assertIs(AuthorFormSet.edit_only, False)
+        BookFormSet = inlineformset_factory(Author, Book, fields="__all__")
+        self.assertIs(BookFormSet.edit_only, False)
+
     def test_min_num(self):
         # Test the behavior of min_num with model formsets. It should be
         # added to extra.

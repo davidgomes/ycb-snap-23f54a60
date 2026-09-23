@@ -52,7 +52,7 @@ Model Form API reference. For introductory material about model forms, see the
 ``modelformset_factory``
 ========================
 
-.. function:: modelformset_factory(model, form=ModelForm, formfield_callback=None, formset=BaseModelFormSet, extra=1, can_delete=False, can_order=False, max_num=None, fields=None, exclude=None, widgets=None, validate_max=False, localized_fields=None, labels=None, help_texts=None, error_messages=None, min_num=None, validate_min=False, field_classes=None, absolute_max=None, can_delete_extra=True, renderer=None)
+.. function:: modelformset_factory(model, form=ModelForm, formfield_callback=None, formset=BaseModelFormSet, extra=1, can_delete=False, can_order=False, max_num=None, fields=None, exclude=None, widgets=None, validate_max=False, localized_fields=None, labels=None, help_texts=None, error_messages=None, min_num=None, validate_min=False, field_classes=None, absolute_max=None, can_delete_extra=True, renderer=None, edit_only=False)
 
     Returns a ``FormSet`` class for the given ``model`` class.
 
@@ -69,6 +69,14 @@ Model Form API reference. For introductory material about model forms, see the
 
     See :ref:`model-formsets` for example usage.
 
+    If ``edit_only`` is ``True``, :meth:`BaseModelFormSet.save()
+    <django.forms.models.BaseModelFormSet.save>` will not create new model
+    instances from extra forms. See :ref:`model-formsets-edit-only`.
+
+    .. versionchanged:: 4.1
+
+        The ``edit_only`` argument was added.
+
     .. versionchanged:: 4.0
 
         The ``renderer`` argument was added.
@@ -76,7 +84,7 @@ Model Form API reference. For introductory material about model forms, see the
 ``inlineformset_factory``
 =========================
 
-.. function:: inlineformset_factory(parent_model, model, form=ModelForm, formset=BaseInlineFormSet, fk_name=None, fields=None, exclude=None, extra=3, can_order=False, can_delete=True, max_num=None, formfield_callback=None, widgets=None, validate_max=False, localized_fields=None, labels=None, help_texts=None, error_messages=None, min_num=None, validate_min=False, field_classes=None, absolute_max=None, can_delete_extra=True, renderer=None)
+.. function:: inlineformset_factory(parent_model, model, form=ModelForm, formset=BaseInlineFormSet, fk_name=None, fields=None, exclude=None, extra=3, can_order=False, can_delete=True, max_num=None, formfield_callback=None, widgets=None, validate_max=False, localized_fields=None, labels=None, help_texts=None, error_messages=None, min_num=None, validate_min=False, field_classes=None, absolute_max=None, can_delete_extra=True, renderer=None, edit_only=False)
 
     Returns an ``InlineFormSet`` using :func:`modelformset_factory` with
     defaults of ``formset=``:class:`~django.forms.models.BaseInlineFormSet`,
@@ -86,6 +94,13 @@ Model Form API reference. For introductory material about model forms, see the
     the ``parent_model``, you must specify a ``fk_name``.
 
     See :ref:`inline-formsets` for example usage.
+
+    ``edit_only`` is passed to :func:`modelformset_factory`. When ``True``,
+    the formset will not create new child objects.
+
+    .. versionchanged:: 4.1
+
+        The ``edit_only`` argument was added.
 
     .. versionchanged:: 4.0
 

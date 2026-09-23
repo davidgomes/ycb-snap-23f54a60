@@ -953,8 +953,31 @@ extra forms displayed.
 
 Also, ``extra=0`` doesn't prevent creation of new model instances as you can
 :ref:`add additional forms with JavaScript <understanding-the-managementform>`
-or send additional POST data. Formsets :ticket:`don't yet provide functionality
-<26142>` for an "edit only" view that prevents creation of new instances.
+or send additional POST data. Formsets don't provide an "edit only" view
+unless you set :ref:`edit_only <model-formsets-edit-only>` to ``True``.
+
+.. _model-formsets-edit-only:
+
+Preventing new object creation
+------------------------------
+
+.. versionadded:: 4.1
+
+Pass ``edit_only=True`` to :func:`~django.forms.models.modelformset_factory`
+or :func:`~django.forms.models.inlineformset_factory` to disallow creating new
+objects. Existing objects can still be changed or deleted, but data submitted
+for extra forms is ignored by :meth:`~django.forms.models.BaseModelFormSet.save`
+and no new instances are saved::
+
+    >>> AuthorFormSet = modelformset_factory(
+    ...     Author, fields=('name',), edit_only=True,
+    ... )
+    >>> formset = AuthorFormSet(queryset=Author.objects.order_by('name'))
+    >>> formset.save()  # never inserts new Author rows
+    []
+
+``edit_only`` defaults to ``False``. Setting ``extra=0`` only changes how many
+blank forms are rendered; it does not provide this guarantee.
 
 If the value of ``max_num`` is greater than the number of existing related
 objects, up to ``extra`` additional blank forms will be added to the formset,
