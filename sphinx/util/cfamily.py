@@ -37,6 +37,9 @@ identifier_re = re.compile(r'''(?x)
     )
     [a-zA-Z0-9_]*\b
 ''')
+udl_identifier_re = re.compile(r'''(?x)
+    [a-zA-Z_][a-zA-Z0-9_]*\b   # note, no word boundary in the beginning
+''')
 integer_literal_re = re.compile(r'[1-9][0-9]*')
 octal_literal_re = re.compile(r'0[0-7]*')
 hex_literal_re = re.compile(r'0[xX][0-9a-fA-F][0-9a-fA-F]*')

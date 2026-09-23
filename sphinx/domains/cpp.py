@@ -35,7 +35,7 @@ from sphinx.util.cfamily import (
     BaseParser, DefinitionError, UnsupportedMultiCharacterCharLiteral,
     identifier_re, anon_identifier_re, integer_literal_re, octal_literal_re,
     hex_literal_re, binary_literal_re, float_literal_re,
-    char_literal_re
+    char_literal_re, udl_identifier_re
 )
 from sphinx.util.docfields import Field, GroupedField
 from sphinx.util.docutils import SphinxDirective
@@ -880,6 +880,24 @@ class ASTCharLiteral(ASTLiteral):
                            env: "BuildEnvironment", symbol: "Symbol") -> None:
         txt = str(self)
         signode.append(nodes.Text(txt, txt))
+
+
+class ASTUserDefinedLiteral(ASTLiteral):
+    def __init__(self, literal: ASTLiteral, ident: ASTIdentifier):
+        self.literal = literal
+        self.ident = ident
+
+    def _stringify(self, transform: StringifyTransform) -> str:
+        return transform(self.literal) + transform(self.ident)
+
+    def get_id(self, version: int) -> str:
+        # mangle as the call operator""X(lit)
+        return 'clL_Zli{}E{}E'.format(self.ident.get_id(version), self.literal.get_id(version))
+
+    def describe_signature(self, signode: TextElement, mode: str,
+                           env: "BuildEnvironment", symbol: "Symbol") -> None:
+        self.literal.describe_signature(signode, mode, env, symbol)
+        self.ident.describe_signature(signode, "noneIsName", env, "", "", symbol)
 
 
 class ASTThisLiteral(ASTExpression):
@@ -4651,6 +4669,12 @@ class DefinitionParser(BaseParser):
         #  | boolean-literal -> "false" | "true"
         #  | pointer-literal -> "nullptr"
         #  | user-defined-literal
+        def _udl(literal: ASTLiteral) -> ASTLiteral:
+            if not self.match(udl_identifier_re):
+                return literal
+            ident = ASTIdentifier(self.matched_text)
+            return ASTUserDefinedLiteral(literal, ident)
+
         self.skip_ws()
         if self.skip_word('nullptr'):
             return ASTPointerLiteral()
@@ -4662,27 +4686,29 @@ class DefinitionParser(BaseParser):
                       integer_literal_re, octal_literal_re]:
             pos = self.pos
             if self.match(regex):
-                while self.current_char in 'uUlLfF':
-                    self.pos += 1
+                if self.match(udl_identifier_re):
+                    if all(c in 'uUlLfF' for c in self.matched_text):
+                        return ASTNumberLiteral(self.definition[pos:self.pos])
+                    self.pos -= len(self.matched_text)
+                    return _udl(ASTNumberLiteral(self.definition[pos:self.pos]))
                 return ASTNumberLiteral(self.definition[pos:self.pos])
 
         string = self._parse_string()
         if string is not None:
-            return ASTStringLiteral(string)
+            return _udl(ASTStringLiteral(string))
 
         # character-literal
         if self.match(char_literal_re):
             prefix = self.last_match.group(1)  # may be None when no prefix
             data = self.last_match.group(2)
             try:
-                return ASTCharLiteral(prefix, data)
+                charLit = ASTCharLiteral(prefix, data)
             except UnicodeDecodeError as e:
                 self.fail("Can not handle character literal. Internal error was: %s" % e)
             except UnsupportedMultiCharacterCharLiteral:
                 self.fail("Can not handle character literal"
                           " resulting in multiple decoded characters.")
-
-        # TODO: user-defined lit
+            return _udl(charLit)
         return None
 
     def _parse_fold_or_paren_expression(self) -> ASTExpression:

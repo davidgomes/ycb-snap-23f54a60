@@ -134,6 +134,11 @@ def test_expressions():
             raise DefinitionError("")
     # primary
     exprCheck('nullptr', 'LDnE')
+    # user-defined literals
+    exprCheck('1q_s', 'clL_Zli3q_sEL1EE')
+    exprCheck('1.5e-3_km', 'clL_Zli3_kmEL1.5e-3EE')
+    exprCheck('"abc"_s', 'clL_Zli2_sELA3_KcEE')
+    exprCheck("'a'_c", 'clL_Zli2_cEc97E')
     exprCheck('true', 'L1E')
     exprCheck('false', 'L0E')
     ints = ['5', '0', '075', '0x0123456789ABCDEF', '0XF', '0b1', '0B1']
