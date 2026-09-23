@@ -155,6 +155,20 @@ def test_should_stop(scores, n_iter_no_change, tol, stopping):
     assert gbdt._should_stop(scores) == stopping
 
 
+def test_early_stopping_classification_string_targets():
+    # Non-regression test for string class labels with early stopping.
+    # The scorer receives predictions in the original label space while y
+    # is integer-encoded during fit.
+    X = np.random.RandomState(0).randn(100, 10)
+    y = np.array(['x'] * 50 + ['y'] * 50, dtype=object)
+
+    gbrt = HistGradientBoostingClassifier(
+        n_iter_no_change=10, max_iter=20, random_state=0
+    )
+    gbrt.fit(X, y)
+    assert gbrt.score(X, y) > 0.5
+
+
 def test_binning_train_validation_are_separated():
     # Make sure training and validation data are binned separately.
     # See issue 13926
