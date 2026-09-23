@@ -1170,7 +1170,7 @@ generating choices. See :ref:`iterating-relationship-choices` for details.
         are derived and which is used to validate the user's selection. It's
         evaluated when the form is rendered.
 
-    ``ModelChoiceField`` also takes two optional arguments:
+    ``ModelChoiceField`` also takes some optional arguments:
 
     .. attribute:: empty_label
 
@@ -1225,6 +1225,16 @@ generating choices. See :ref:`iterating-relationship-choices` for details.
             <option value="obj2.name">Object2</option>
             ...
             </select>
+
+    .. attribute:: blank
+
+        .. versionadded:: 3.1
+
+        When using the :class:`~django.forms.RadioSelect` widget, this optional
+        boolean argument determines whether an empty choice is created. By
+        default, ``blank`` is ``False``, in which case no empty choice is
+        created. A ``ModelChoiceField`` generated from a model's
+        ``ForeignKey`` uses the model field's ``blank`` value.
 
     ``ModelChoiceField`` also has the attribute:
 

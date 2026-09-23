@@ -207,6 +207,11 @@ Forms
   now uses ``DATE_INPUT_FORMATS`` in addition to ``DATETIME_INPUT_FORMATS``
   when converting a field input to a ``datetime`` value.
 
+* :attr:`.ModelChoiceField.blank`, used with the
+  :class:`~django.forms.RadioSelect` widget, determines whether an empty choice
+  is created. Model forms no longer show an empty choice for a foreign key
+  rendered with ``RadioSelect`` if the model field has ``blank=False``.
+
 Generic Views
 ~~~~~~~~~~~~~
 
