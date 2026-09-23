@@ -172,6 +172,21 @@ class PickleabilityTestCase(TestCase):
         m2ms = pickle.loads(pickle.dumps(m2ms))
         self.assertSequenceEqual(m2ms, [m2m])
 
+    def test_annotation_values(self):
+        group = Group.objects.create(name='group')
+        Event.objects.create(title='event', group=group)
+        qs = Group.objects.values('name').annotate(num_events=models.Count('event'))
+        reloaded = Group.objects.all()
+        reloaded.query = pickle.loads(pickle.dumps(qs.query))
+        self.assertEqual(reloaded.get(), {'name': 'group', 'num_events': 1})
+
+    def test_values_list_query(self):
+        group = Group.objects.create(name='group')
+        qs = Group.objects.values_list('id', 'name')
+        reloaded = Group.objects.all()
+        reloaded.query = pickle.loads(pickle.dumps(qs.query))
+        self.assertEqual(reloaded.get(), {'id': group.id, 'name': 'group'})
+
     def test_pickle_exists_queryset_still_usable(self):
         group = Group.objects.create(name='group')
         Event.objects.create(title='event', group=group)
