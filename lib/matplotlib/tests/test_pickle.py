@@ -88,6 +88,8 @@ def _generate_complete_test_figure(fig_ref):
 
     plt.subplot(3, 3, 9)
     plt.errorbar(x, x * -0.5, xerr=0.2, yerr=0.4)
+    plt.legend(draggable=True)
+    plt.annotate("x", (0, 0)).draggable(True)
 
 
 @mpl.style.context("default")
@@ -260,6 +262,23 @@ def test_unpickle_canvas():
     out.seek(0)
     fig2 = pickle.load(out)
     assert fig2.canvas is not None
+
+
+def test_draggable_unpicklable_canvas():
+    from matplotlib.backend_bases import FigureCanvasBase
+
+    class UnpicklableCanvas(FigureCanvasBase):
+        def __reduce__(self):
+            raise TypeError("cannot pickle canvas")
+
+    fig = mfigure.Figure()
+    UnpicklableCanvas(fig)
+    ax = fig.add_subplot()
+    ax.plot([0, 1], label="line")
+    ax.legend(draggable=True)
+    ax.annotate("x", (0, 0)).draggable(True)
+    fig2 = pickle.loads(pickle.dumps(fig))
+    assert fig2.axes[0].get_legend()._draggable.canvas is fig2.canvas
 
 
 def test_mpl_toolkits():
