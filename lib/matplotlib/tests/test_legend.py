@@ -546,6 +546,15 @@ def test_window_extent_cached_renderer():
     leg2.get_window_extent()
 
 
+def test_subfigure_legend():
+    # Test that legend can be added to subfigure (#20723)
+    subfig = plt.figure().subfigures()
+    ax = subfig.subplots()
+    ax.plot([0, 1], [0, 1], label="line")
+    leg = subfig.legend()
+    assert leg.figure is subfig
+
+
 def test_legend_title_fontprop_fontsize():
     # test the title_fontsize kwarg
     plt.plot(range(10))
