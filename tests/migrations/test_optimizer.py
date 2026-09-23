@@ -822,6 +822,51 @@ class OptimizerTests(SimpleTestCase):
             ],
         )
 
+    def test_alter_field_alter_field(self):
+        """
+        Multiple AlterFields on the same field should collapse into the last.
+        """
+        self.assertOptimizesTo(
+            [
+                migrations.AlterField(
+                    "Foo", "title", models.CharField(max_length=128, null=True)
+                ),
+                migrations.AlterField(
+                    "Foo",
+                    "title",
+                    models.CharField(max_length=128, null=True, help_text="help"),
+                ),
+                migrations.AlterField(
+                    "Foo",
+                    "title",
+                    models.CharField(
+                        max_length=128, null=True, help_text="help", default=None
+                    ),
+                ),
+            ],
+            [
+                migrations.AlterField(
+                    "Foo",
+                    "title",
+                    models.CharField(
+                        max_length=128, null=True, help_text="help", default=None
+                    ),
+                ),
+            ],
+        )
+        self.assertDoesNotOptimize(
+            [
+                migrations.AlterField("Foo", "name", models.IntegerField()),
+                migrations.AlterField("Foo", "age", models.IntegerField()),
+            ],
+        )
+        self.assertDoesNotOptimize(
+            [
+                migrations.AlterField("Foo", "name", models.IntegerField()),
+                migrations.AlterField("Bar", "name", models.IntegerField()),
+            ],
+        )
+
     def _test_create_alter_foo_field(self, alter):
         """
         CreateModel, AlterFooTogether/AlterOrderWithRespectTo followed by an
