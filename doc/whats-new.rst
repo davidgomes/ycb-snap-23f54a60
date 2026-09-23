@@ -27,6 +27,8 @@ Breaking changes
 
 New Features
 ~~~~~~~~~~~~
+- :py:meth:`~xarray.DataArray.sum` and :py:meth:`~xarray.DataArray.prod` now support
+  ``min_count`` when reducing over more than one dimension (:issue:`4351`, :pull:`4356`).
 - Support multiple outputs in :py:func:`xarray.apply_ufunc` when using ``dask='parallelized'``. (:issue:`1815`, :pull:`4060`)
   By `Kai Mühlbauer <https://github.com/kmuehlbauer>`_.
 - :py:meth:`~xarray.DataArray.rolling` and :py:meth:`~xarray.Dataset.rolling`
