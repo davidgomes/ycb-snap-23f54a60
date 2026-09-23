@@ -1062,3 +1062,15 @@ def test_issue_16313():
     assert (l*x).is_real is False
     assert (l*x*x).is_real is None  # since x*x can be a real number
     assert (-x).is_positive is False
+
+def test_issue_16579():
+    for kw in ('rational', 'integer', 'even', 'odd', 'prime', 'composite'):
+        x = Symbol('x', **{kw: True})
+        assert x.is_finite is True
+        assert x.is_infinite is False
+    i = Symbol('i', infinite=True)
+    assert i.is_rational is False
+    assert i.is_integer is False
+    assert i.is_even is False
+    assert S.Infinity.is_rational is False
+    assert S.Infinity.is_integer is False
