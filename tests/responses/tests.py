@@ -144,6 +144,10 @@ class HttpResponseTests(SimpleTestCase):
             buf.write(content)
         self.assertEqual(r.content, content.encode(UTF8))
 
+    def test_memoryview_content(self):
+        response = HttpResponse(memoryview(b"My Content"))
+        self.assertEqual(response.content, b"My Content")
+
     def test_generator_cache(self):
         generator = ("{}".format(i) for i in range(10))
         response = HttpResponse(content=generator)
