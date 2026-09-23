@@ -8,7 +8,10 @@ class DatabaseClient(BaseDatabaseClient):
     def settings_to_cmd_args_env(cls, settings_dict, parameters):
         args = [cls.executable_name]
         env = None
-        db = settings_dict['OPTIONS'].get('db', settings_dict['NAME'])
+        db = settings_dict['OPTIONS'].get(
+            'database',
+            settings_dict['OPTIONS'].get('db', settings_dict['NAME']),
+        )
         user = settings_dict['OPTIONS'].get('user', settings_dict['USER'])
         password = settings_dict['OPTIONS'].get(
             'password',
