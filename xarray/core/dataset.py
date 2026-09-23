@@ -4177,7 +4177,7 @@ class Dataset(
         }
         variables.update(new_variables)
 
-        coord_names = set(new_variables) | self._coord_names
+        coord_names = self._coord_names - set(drop_variables) | set(new_variables)
 
         return self._replace(variables, coord_names=coord_names, indexes=indexes)
 
