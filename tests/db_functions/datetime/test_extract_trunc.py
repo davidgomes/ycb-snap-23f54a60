@@ -103,7 +103,7 @@ class DateFunctionTests(TestCase):
         self.create_model(start_datetime, end_datetime)
         self.create_model(end_datetime, start_datetime)
 
-        for lookup in ('year', 'iso_year'):
+        for lookup in ('year',):
             with self.subTest(lookup):
                 qs = DTModel.objects.filter(**{'start_datetime__%s__exact' % lookup: 2015})
                 self.assertEqual(qs.count(), 1)
@@ -140,7 +140,7 @@ class DateFunctionTests(TestCase):
         self.create_model(start_datetime, end_datetime)
         self.create_model(end_datetime, start_datetime)
 
-        for lookup in ('year', 'iso_year'):
+        for lookup in ('year',):
             with self.subTest(lookup):
                 qs = DTModel.objects.filter(**{'start_datetime__%s__gt' % lookup: 2015})
                 self.assertEqual(qs.count(), 1)
@@ -163,7 +163,7 @@ class DateFunctionTests(TestCase):
         self.create_model(start_datetime, end_datetime)
         self.create_model(end_datetime, start_datetime)
 
-        for lookup in ('year', 'iso_year'):
+        for lookup in ('year',):
             with self.subTest(lookup):
                 qs = DTModel.objects.filter(**{'start_datetime__%s__lt' % lookup: 2016})
                 self.assertEqual(qs.count(), 1)
@@ -370,6 +370,19 @@ class DateFunctionTests(TestCase):
             (week_1_day_2014_2015, 2015),
             (week_53_day_2015, 2015),
         ], lambda m: (m.start_datetime, m.extracted))
+
+        qs = DTModel.objects.filter(
+            start_datetime__iso_year=2015,
+        ).order_by('start_datetime').values_list('start_datetime', flat=True)
+        self.assertSequenceEqual(qs, [week_1_day_2014_2015, week_53_day_2015])
+        qs = DTModel.objects.filter(
+            start_datetime__iso_year__gt=2014,
+        ).order_by('start_datetime').values_list('start_datetime', flat=True)
+        self.assertSequenceEqual(qs, [week_1_day_2014_2015, week_53_day_2015])
+        qs = DTModel.objects.filter(
+            start_datetime__iso_year__lte=2014,
+        ).order_by('start_datetime').values_list('start_datetime', flat=True)
+        self.assertSequenceEqual(qs, [week_52_day_2014])
 
     def test_extract_month_func(self):
         start_datetime = datetime(2015, 6, 15, 14, 30, 50, 321)
