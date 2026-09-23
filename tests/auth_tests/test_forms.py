@@ -1,6 +1,7 @@
 import datetime
 import re
 from unittest import mock
+from urllib.parse import urljoin
 
 from django.contrib.auth.forms import (
     AdminPasswordChangeForm,
@@ -891,6 +892,17 @@ class UserChangeFormTest(TestDataMixin, TestCase):
         # ReadOnlyPasswordHashWidget needs the initial
         # value to render correctly
         self.assertEqual(form.initial["password"], form["password"].value())
+
+    def test_link_to_password_reset_in_helptext_via_to_field(self):
+        user = User.objects.get(username="testclient")
+        form = UserChangeForm(data={}, instance=user)
+        password_help_text = form.fields["password"].help_text
+        matches = re.search('<a href="(.*?)">', password_help_text)
+
+        # URL to UserChangeForm in admin via to_field (instead of pk).
+        admin_user_change_url = f"/admin/auth/user/{user.username}/change/"
+        joined_url = urljoin(admin_user_change_url, matches.group(1))
+        self.assertEqual(joined_url, f"/admin/auth/user/{user.pk}/password/")
 
     def test_custom_form(self):
         class CustomUserChangeForm(UserChangeForm):
