@@ -867,6 +867,35 @@ def test_autodoc_typehints_description_no_undoc(app):
 
 
 @pytest.mark.sphinx('text', testroot='ext-autodoc',
+                    confoverrides={'extensions': ['sphinx.ext.autodoc',
+                                                  'sphinx.ext.napoleon'],
+                                   'autodoc_typehints': "description",
+                                   'autodoc_typehints_description_target': 'documented',
+                                   'napoleon_numpy_docstring': False})
+def test_autodoc_typehints_description_no_undoc_with_napoleon(app):
+    (app.srcdir / 'index.rst').write_text(
+        '.. autofunction:: target.typehints_napoleon.decr\n'
+    )
+    app.build()
+    context = (app.outdir / 'index.txt').read_text()
+    assert ('target.typehints_napoleon.decr(a, b=1)\n'
+            '\n'
+            '   Decrement a by b.\n'
+            '\n'
+            '   Parameters:\n'
+            '      * **a** (*int*) -- First parameter.\n'
+            '\n'
+            '      * **b** (*int*) -- Second parameter.\n'
+            '\n'
+            '   Returns:\n'
+            '      The returned value.\n'
+            '\n'
+            '   Return type:\n'
+            '      int\n'
+            in context)
+
+
+@pytest.mark.sphinx('text', testroot='ext-autodoc',
                     confoverrides={'autodoc_typehints': "description"})
 def test_autodoc_typehints_description_with_documented_init(app):
     (app.srcdir / 'index.rst').write_text(
