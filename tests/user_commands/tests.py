@@ -70,6 +70,17 @@ class CommandTests(SimpleTestCase):
             dance.Command.requires_system_checks = '__all__'
         self.assertIn("CommandError", stderr.getvalue())
 
+    def test_execute_from_command_line_ignores_sys_argv_prog(self):
+        """
+        Preprocessing --settings/--pythonpath uses the program name from the
+        argv passed to execute_from_command_line(), not sys.argv[0].
+        """
+        with mock.patch('sys.argv', [None]):
+            out = StringIO()
+            with mock.patch('sys.stdout', out):
+                management.execute_from_command_line(['django-admin', 'help'])
+        self.assertIn("Type 'django-admin help <subcommand>'", out.getvalue())
+
     def test_no_translations_deactivate_translations(self):
         """
         When the Command handle method is decorated with @no_translations,
