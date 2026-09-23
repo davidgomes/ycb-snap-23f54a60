@@ -224,7 +224,7 @@ class OptimizerTests(SimpleTestCase):
     def _test_alter_alter_model(self, alter_foo, alter_bar):
         """
         Two AlterUniqueTogether/AlterIndexTogether/AlterOrderWithRespectTo
-        should collapse into the second.
+        /AlterField should collapse into the second.
         """
         self.assertOptimizesTo(
             [
@@ -258,6 +258,12 @@ class OptimizerTests(SimpleTestCase):
         self._test_alter_alter_model(
             migrations.AlterOrderWithRespectTo("Foo", "a"),
             migrations.AlterOrderWithRespectTo("Foo", "b"),
+        )
+
+    def test_alter_alter_field(self):
+        self._test_alter_alter_model(
+            migrations.AlterField("Foo", "name", models.IntegerField()),
+            migrations.AlterField("Foo", "name", models.IntegerField(help_text="help")),
         )
 
     def test_optimize_through_create(self):
