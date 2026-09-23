@@ -814,6 +814,20 @@ a.py:1:4: E0001: Parsing failed: 'invalid syntax (<unknown>, line 1)' (syntax-er
                 modify_sys_path()
             assert sys.path == paths[1:]
 
+            paths = [".", *default_paths]
+            sys.path = copy(paths)
+            with _test_environ_pythonpath():
+                modify_sys_path()
+            assert sys.path == paths[1:]
+
+            # Callers such as runpy may have inserted a path ahead of cwd.
+            # That entry must be preserved. https://github.com/PyCQA/pylint/issues/7276
+            paths = ["something", cwd, *default_paths]
+            sys.path = copy(paths)
+            with _test_environ_pythonpath():
+                modify_sys_path()
+            assert sys.path == paths
+
     @pytest.mark.parametrize(
         "args",
         [
