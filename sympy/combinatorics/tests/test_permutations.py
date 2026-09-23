@@ -419,3 +419,26 @@ def test_printing_non_cyclic():
     assert str(p3) == 'Permutation([0, 2, 1])'
     p4 = Permutation([0, 1, 3, 2, 4, 5, 6, 7])
     assert repr(p4) == 'Permutation([0, 1, 3, 2], size=8)'
+
+
+def test_Permutation_subclassing():
+    class CustomPermutation(Permutation):
+        pass
+
+    p = CustomPermutation([1, 2, 3, 0])
+    q = CustomPermutation(1, 2, size=4)
+    for x in (p, CustomPermutation(), CustomPermutation(3),
+            CustomPermutation(p, size=6), p*q, [0, 2, 1, 3]*p, ~p, p**2,
+            p^q, p.commutator(q), p.mul_inv(q), p + 1, p(0, 2),
+            p.next_lex(), p.next_nonlex(),
+            CustomPermutation.unrank_lex(4, 3),
+            CustomPermutation.unrank_nonlex(4, 3),
+            CustomPermutation.unrank_trotterjohnson(4, 3),
+            CustomPermutation.from_inversion_vector([1, 0, 1]),
+            CustomPermutation.from_sequence('cab'),
+            CustomPermutation.josephus(2, 4),
+            CustomPermutation.random(4)):
+        assert type(x) is CustomPermutation
+
+    assert type(Permutation([1, 0])) is Permutation
+    assert type(Permutation._af_new([1, 0])) is Permutation
