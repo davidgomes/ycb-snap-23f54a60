@@ -2389,16 +2389,34 @@ class MakeMigrationsTests(MigrationTestBase):
     def test_makemigrations_check(self):
         """
         makemigrations --check should exit with a non-zero status when
-        there are changes to an app requiring migrations.
+        there are changes to an app requiring migrations without creating them.
         """
-        with self.temporary_migration_module():
-            with self.assertRaises(SystemExit):
+        with self.temporary_migration_module() as tmpdir:
+            with self.assertRaises(SystemExit) as cm:
                 call_command("makemigrations", "--check", "migrations", verbosity=0)
+            self.assertFalse(os.path.exists(tmpdir))
+        self.assertEqual(cm.exception.code, 1)
 
         with self.temporary_migration_module(
             module="migrations.test_migrations_no_changes"
         ):
             call_command("makemigrations", "--check", "migrations", verbosity=0)
+
+    def test_makemigrations_check_dry_run(self):
+        """
+        makemigrations --check --dry-run displays the missing migrations
+        without creating them and exits with a non-zero status.
+        """
+        out = io.StringIO()
+        with self.temporary_migration_module() as tmpdir:
+            with self.assertRaises(SystemExit) as cm:
+                call_command(
+                    "makemigrations", "--check", "--dry-run", "migrations", stdout=out
+                )
+            self.assertFalse(os.path.exists(os.path.join(tmpdir, "0001_initial.py")))
+        self.assertEqual(cm.exception.code, 1)
+        self.assertIn("Migrations for 'migrations':", out.getvalue())
+        self.assertIn("- Create model ModelWithCustomBase", out.getvalue())
 
     def test_makemigrations_migration_path_output(self):
         """
