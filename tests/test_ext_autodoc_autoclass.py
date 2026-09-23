@@ -78,6 +78,61 @@ def test_decorators(app):
 
 
 @pytest.mark.sphinx('html', testroot='ext-autodoc')
+def test_instance_variable(app):
+    options = {'members': True}
+    actual = do_autodoc(app, 'class', 'target.instance_variable.Bar', options)
+    assert list(actual) == [
+        '',
+        '.. py:class:: Bar()',
+        '   :module: target.instance_variable',
+        '',
+        '',
+        '   .. py:attribute:: Bar.attr2',
+        '      :module: target.instance_variable',
+        '',
+        '      docstring bar',
+        '',
+        '',
+        '   .. py:attribute:: Bar.attr3',
+        '      :module: target.instance_variable',
+        '',
+        '      docstring bar',
+        '',
+    ]
+
+
+@pytest.mark.sphinx('html', testroot='ext-autodoc')
+def test_inherited_instance_variable(app):
+    options = {'members': True,
+               'inherited-members': True}
+    actual = do_autodoc(app, 'class', 'target.instance_variable.Bar', options)
+    assert list(actual) == [
+        '',
+        '.. py:class:: Bar()',
+        '   :module: target.instance_variable',
+        '',
+        '',
+        '   .. py:attribute:: Bar.attr1',
+        '      :module: target.instance_variable',
+        '',
+        '      docstring foo',
+        '',
+        '',
+        '   .. py:attribute:: Bar.attr2',
+        '      :module: target.instance_variable',
+        '',
+        '      docstring bar',
+        '',
+        '',
+        '   .. py:attribute:: Bar.attr3',
+        '      :module: target.instance_variable',
+        '',
+        '      docstring bar',
+        '',
+    ]
+
+
+@pytest.mark.sphinx('html', testroot='ext-autodoc')
 def test_slots_attribute(app):
     options = {"members": None}
     actual = do_autodoc(app, 'class', 'target.slots.Bar', options)

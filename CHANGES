@@ -53,6 +53,8 @@ Features added
 Bugs fixed
 ----------
 
+* #741: autodoc: inherited-members doesn't work for instance attributes on super
+  class
 * #7613: autodoc: autodoc does not respect __signature__ of the class
 * #4606: autodoc: the location of the warning is incorrect for inherited method
 * #8105: autodoc: the signature of class constructor is incorrect if the class
