@@ -454,6 +454,7 @@ class BaseModelAdmin(metaclass=forms.MediaDefiningClass):
 
         relation_parts = []
         prev_field = None
+        skipped_relation_part = None
         for part in lookup.split(LOOKUP_SEP):
             try:
                 field = model._meta.get_field(part)
@@ -461,6 +462,9 @@ class BaseModelAdmin(metaclass=forms.MediaDefiningClass):
                 # Lookups on nonexistent fields are ok, since they're ignored
                 # later.
                 break
+            if skipped_relation_part is not None:
+                relation_parts.append(skipped_relation_part)
+                skipped_relation_part = None
             # It is allowed to filter on values that would be found from local
             # model anyways. For example, if you filter on employee__department__id,
             # then the id value would be found already from employee__department_id.
@@ -469,6 +473,12 @@ class BaseModelAdmin(metaclass=forms.MediaDefiningClass):
                 and field not in prev_field.path_infos[-1].target_fields
             ):
                 relation_parts.append(part)
+            elif field.is_relation and not field.remote_field.parent_link:
+                # A relation used as the target of the previous relation (e.g.
+                # a OneToOneField primary key) is only redundant if the lookup
+                # doesn't span it. Parent links are always redundant since the
+                # parent's fields are also reachable from the child model.
+                skipped_relation_part = part
             if not getattr(field, "path_infos", None):
                 # This is not a relational field, so further parts
                 # must be transforms.
