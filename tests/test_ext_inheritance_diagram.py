@@ -3,6 +3,7 @@
 import os
 import re
 import sys
+import zlib
 
 import pytest
 
@@ -11,6 +12,7 @@ from sphinx.ext.inheritance_diagram import (
     InheritanceException,
     import_classes,
 )
+from sphinx.ext.intersphinx import load_mappings, normalize_intersphinx_mapping
 
 
 @pytest.mark.sphinx(buildername="html", testroot="inheritance")
@@ -135,12 +137,49 @@ def test_inheritance_diagram(app, status, warning):
         ]
 
 
+# An external inventory to test intersphinx links in inheritance diagrams
+subdir_inventory = b'''\
+# Sphinx inventory version 2
+# Project: subdir
+# Version: 1.0
+# The remainder of this file is compressed using zlib.
+''' + zlib.compress(b'''\
+subdir.other.Bob py:class 1 foo.html#subdir.other.Bob -
+''')
+
+
+def _check_inheritance_links(hrefs: list[str], *, svg: bool, outdir, imagedir: str) -> None:
+    """Every diagram link should land on a real document or an absolute URL."""
+    for href in hrefs:
+        if '://' in href:
+            # Absolute URLs (intersphinx) must not be prefixed with ../
+            assert href.startswith('https://example.org/')
+            continue
+        reluri = href.rsplit('#', 1)[0]
+        if svg:
+            # SVG links are relative to the image directory
+            abs_uri = (outdir / imagedir / reluri).resolve()
+        else:
+            abs_uri = (outdir / reluri).resolve()
+        assert abs_uri.exists(), href
+
+
 @pytest.mark.sphinx('html', testroot='ext-inheritance_diagram')
 @pytest.mark.usefixtures('if_graphviz_found')
-def test_inheritance_diagram_png_html(app, status, warning):
+def test_inheritance_diagram_png_html(tmp_path, app):
+    inv_file = tmp_path / 'inventory'
+    inv_file.write_bytes(subdir_inventory)
+    app.config.intersphinx_mapping = {
+        'https://example.org': str(inv_file),
+    }
+    app.config.intersphinx_cache_limit = 0
+    normalize_intersphinx_mapping(app, app.config)
+    load_mappings(app)
+
     app.builder.build_all()
 
     content = (app.outdir / 'index.html').read_text(encoding='utf8')
+    base_maps = re.findall('<map .*?</map>', content, re.DOTALL)
 
     pattern = ('<figure class="align-default" id="id1">\n'
                '<div class="graphviz">'
@@ -150,14 +189,48 @@ def test_inheritance_diagram_png_html(app, status, warning):
                'title="Permalink to this image">\xb6</a></p>\n</figcaption>\n</figure>\n')
     assert re.search(pattern, content, re.M)
 
+    subdir_content = (app.outdir / 'subdir/page1.html').read_text(encoding='utf8')
+    subdir_maps = re.findall('<map .*?</map>', subdir_content, re.DOTALL)
+    # Rebase subdir links onto the build root so existence checks share one root
+    subdir_maps = [re.sub('href="(\\S+)"', 'href="subdir/\\g<1>"', s) for s in subdir_maps]
+
+    assert base_maps, 'expected clickable PNG inheritance diagrams on the index page'
+    assert subdir_maps, 'expected clickable PNG inheritance diagrams in the subdirectory'
+
+    # Go through the clickmap for every PNG inheritance diagram
+    saw_intersphinx = False
+    for diagram_content in base_maps + subdir_maps:
+        # Verify that an intersphinx link was created via the external inventory
+        if 'subdir.other.Bob' in diagram_content:
+            assert 'https://example.org' in diagram_content
+            saw_intersphinx = True
+
+        _check_inheritance_links(
+            re.findall('href="(\\S+?)"', diagram_content),
+            svg=False,
+            outdir=app.outdir,
+            imagedir=app.builder.imagedir,
+        )
+    assert saw_intersphinx
+
 
 @pytest.mark.sphinx('html', testroot='ext-inheritance_diagram',
                     confoverrides={'graphviz_output_format': 'svg'})
 @pytest.mark.usefixtures('if_graphviz_found')
-def test_inheritance_diagram_svg_html(app, status, warning):
+def test_inheritance_diagram_svg_html(tmp_path, app):
+    inv_file = tmp_path / 'inventory'
+    inv_file.write_bytes(subdir_inventory)
+    app.config.intersphinx_mapping = {
+        'subdir': ('https://example.org', str(inv_file)),
+    }
+    app.config.intersphinx_cache_limit = 0
+    normalize_intersphinx_mapping(app, app.config)
+    load_mappings(app)
+
     app.builder.build_all()
 
     content = (app.outdir / 'index.html').read_text(encoding='utf8')
+    base_svgs = re.findall('<object data="(_images/inheritance-\\w+.svg?)"', content)
 
     pattern = ('<figure class="align-default" id="id1">\n'
                '<div class="graphviz">'
@@ -169,6 +242,31 @@ def test_inheritance_diagram_svg_html(app, status, warning):
                'title="Permalink to this image">\xb6</a></p>\n</figcaption>\n</figure>\n')
 
     assert re.search(pattern, content, re.M)
+
+    subdir_content = (app.outdir / 'subdir/page1.html').read_text(encoding='utf8')
+    subdir_svgs = re.findall(
+        '<object data="../(_images/inheritance-\\w+.svg?)"', subdir_content)
+
+    assert base_svgs, 'expected SVG inheritance diagrams on the index page'
+    assert subdir_svgs, 'expected SVG inheritance diagrams in the subdirectory'
+
+    # Go through every SVG inheritance diagram
+    saw_intersphinx = False
+    for diagram in base_svgs + subdir_svgs:
+        diagram_content = (app.outdir / diagram).read_text(encoding='utf8')
+
+        # Verify that an intersphinx link was created via the external inventory
+        if 'subdir.other.Bob' in diagram_content:
+            assert 'https://example.org' in diagram_content
+            saw_intersphinx = True
+
+        _check_inheritance_links(
+            re.findall('href="(\\S+?)"', diagram_content),
+            svg=True,
+            outdir=app.outdir,
+            imagedir=app.builder.imagedir,
+        )
+    assert saw_intersphinx
 
 
 @pytest.mark.sphinx('latex', testroot='ext-inheritance_diagram')
@@ -193,9 +291,10 @@ def test_inheritance_diagram_latex_alias(app, status, warning):
 
     doc = app.env.get_and_resolve_doctree('index', app)
     aliased_graph = doc.children[0].children[3]['graph'].class_info
-    assert len(aliased_graph) == 3
-    assert ('test.Baz', 'test.Baz', ['test.Bar'], None) in aliased_graph
-    assert ('test.Bar', 'test.Bar', ['alias.Foo'], None) in aliased_graph
+    assert len(aliased_graph) == 4
+    assert ('test.DocSubDir2', 'test.DocSubDir2', ['test.DocSubDir1'], None) in aliased_graph
+    assert ('test.DocSubDir1', 'test.DocSubDir1', ['test.DocHere'], None) in aliased_graph
+    assert ('test.DocHere', 'test.DocHere', ['alias.Foo'], None) in aliased_graph
     assert ('alias.Foo', 'alias.Foo', [], None) in aliased_graph
 
     content = (app.outdir / 'index.html').read_text(encoding='utf8')

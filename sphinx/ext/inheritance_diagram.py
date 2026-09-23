@@ -36,6 +36,7 @@ import inspect
 import re
 from collections.abc import Iterable
 from importlib import import_module
+from os import path
 from typing import Any, cast
 
 from docutils import nodes
@@ -406,19 +407,30 @@ def html_visit_inheritance_diagram(self: HTML5Translator, node: inheritance_diag
     name = 'inheritance%s' % graph_hash
 
     # Create a mapping from fully-qualified class names to URLs.
+    #
+    # URLs are relative to the document that embeds the diagram. For SVG,
+    # ``sphinx.ext.graphviz`` rewrites those links so they are relative to the
+    # image file (SVGs are loaded via ``<object>``, so the browser resolves
+    # links against the SVG, not the HTML page). Prepending ``../`` here
+    # assumes the image sits one directory below that page, which is only
+    # true for documents at the documentation root.
     graphviz_output_format = self.builder.env.config.graphviz_output_format.upper()
-    current_filename = self.builder.current_docname + self.builder.out_suffix
+    current_filename = path.basename(self.builder.current_docname + self.builder.out_suffix)
     urls = {}
     pending_xrefs = cast(Iterable[addnodes.pending_xref], node)
     for child in pending_xrefs:
         if child.get('refuri') is not None:
-            if graphviz_output_format == 'SVG':
-                urls[child['reftitle']] = "../" + child.get('refuri')
+            # Intersphinx sets reftitle to "(in <project> v<version>)" rather
+            # than the class name, so recover the name from the URI fragment.
+            if not child.get('internal', True):
+                refname = child['refuri'].rsplit('#', 1)[-1]
             else:
-                urls[child['reftitle']] = child.get('refuri')
+                refname = child['reftitle']
+
+            urls[refname] = child.get('refuri')
         elif child.get('refid') is not None:
             if graphviz_output_format == 'SVG':
-                urls[child['reftitle']] = '../' + current_filename + '#' + child.get('refid')
+                urls[child['reftitle']] = current_filename + '#' + child.get('refid')
             else:
                 urls[child['reftitle']] = '#' + child.get('refid')
 

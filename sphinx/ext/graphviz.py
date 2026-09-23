@@ -229,16 +229,24 @@ def fix_svg_relative_paths(self: SphinxTranslator, filepath: str) -> None:
         root.findall('.//svg:image[@xlink:href]', ns),
         root.findall('.//svg:a[@xlink:href]', ns),
     ):
-        scheme, hostname, url, query, fragment = urlsplit(element.attrib[href_name])
+        scheme, hostname, rel_uri, query, fragment = urlsplit(element.attrib[href_name])
         if hostname:
             # not a relative link
             continue
 
-        old_path = path.join(self.builder.outdir, url)
-        new_path = path.relpath(
-            old_path,
-            start=path.join(self.builder.outdir, self.builder.imgpath),
-        )
+        # Links inside the SVG were written relative to the current document.
+        # Resolve them from that document's directory, then re-express them
+        # relative to the image directory. Using the build root as the base
+        # mis-resolves links between siblings in a subdirectory.
+        docname = self.builder.env.path2doc(self.document['source'])
+        if docname is None:
+            # This shouldn't happen!
+            continue
+        doc_dir = self.builder.outdir.joinpath(docname).resolve().parent
+
+        old_path = doc_dir / rel_uri
+        img_path = doc_dir / self.builder.imgpath
+        new_path = path.relpath(old_path, start=img_path).replace(path.sep, '/')
         modified_url = urlunsplit((scheme, hostname, new_path, query, fragment))
 
         element.set(href_name, modified_url)
