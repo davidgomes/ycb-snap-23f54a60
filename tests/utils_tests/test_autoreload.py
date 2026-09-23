@@ -24,6 +24,7 @@ from django.utils import autoreload
 from django.utils.autoreload import WatchmanUnavailable
 
 from .test_module import __main__ as test_main
+from .test_module.child_module import grandchild_module
 from .utils import on_macos_with_hfs
 
 
@@ -180,6 +181,20 @@ class TestChildArguments(SimpleTestCase):
         self.assertEqual(
             autoreload.get_child_arguments(),
             [sys.executable, '-m', 'utils_tests.test_module', 'runserver'],
+        )
+
+    @mock.patch.dict(sys.modules, {'__main__': grandchild_module})
+    @mock.patch('sys.argv', [grandchild_module.__file__, 'runserver'])
+    @mock.patch('sys.warnoptions', [])
+    def test_run_as_non_package_module(self):
+        self.assertEqual(
+            autoreload.get_child_arguments(),
+            [
+                sys.executable,
+                '-m',
+                'utils_tests.test_module.child_module.grandchild_module',
+                'runserver',
+            ],
         )
 
     @mock.patch('sys.argv', [__file__, 'runserver'])

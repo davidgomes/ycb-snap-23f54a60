@@ -223,8 +223,16 @@ def get_child_arguments():
     # __spec__ is set when the server was started with the `-m` option,
     # see https://docs.python.org/3/reference/import.html#main-spec
     # __spec__ may not exist, e.g. when running in a Conda env.
+    # ``python -m pkg`` runs ``pkg/__main__.py`` (spec name ``pkg.__main__``)
+    # and must be restarted as ``-m pkg``. ``python -m pkg.mod`` runs a module
+    # file; spec.parent is only ``pkg``, so the full spec name is required.
     if getattr(__main__, '__spec__', None) is not None and __main__.__spec__.parent:
-        args += ['-m', __main__.__spec__.parent]
+        spec = __main__.__spec__
+        if spec.name == '__main__' or spec.name.endswith('.__main__'):
+            module_name = spec.parent
+        else:
+            module_name = spec.name
+        args += ['-m', module_name]
         args += sys.argv[1:]
     elif not py_script.exists():
         # sys.argv[0] may not exist for several reasons on Windows.
