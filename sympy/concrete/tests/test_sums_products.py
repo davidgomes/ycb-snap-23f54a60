@@ -570,7 +570,7 @@ def test_Sum_doit():
     # issue 2597
     nmax = symbols('N', integer=True, positive=True)
     pw = Piecewise((1, And(S(1) <= n, n <= nmax)), (0, True))
-    assert Sum(pw, (n, 1, nmax)).doit() == Sum(pw, (n, 1, nmax))
+    assert Sum(pw, (n, 1, nmax)).doit() == nmax
 
     q, s = symbols('q, s')
     assert summation(1/n**(2*s), (n, 1, oo)) == Piecewise((zeta(2*s), 2*s > 1),
@@ -994,3 +994,16 @@ def test_issue_10156():
     e = 2*y*Sum(2*cx*x**2, (x, 1, 9))
     assert e.factor() == \
         8*y**3*Sum(x, (x, 1, 3))*Sum(x**2, (x, 1, 9))
+
+
+def test_piecewise_cond_implied_by_limits():
+    i, j = symbols('i j', integer=True)
+    n = Symbol('n', integer=True, positive=True)
+    s = Sum(Sum(KroneckerDelta(i, j), (i, 0, n - 1)), (j, 0, n - 1))
+    assert s.doit() == n
+    s = Sum(Sum(j*KroneckerDelta(i, j), (i, 0, n - 1)), (j, 0, n - 1))
+    assert s.doit() == n**2/2 - n/2
+    # mi may be negative, so the condition cannot be dropped
+    mi = Symbol('mi', integer=True)
+    s = Sum(Sum(KroneckerDelta(i, j), (i, 0, mi)), (j, 0, mi))
+    assert s.doit() != mi + 1

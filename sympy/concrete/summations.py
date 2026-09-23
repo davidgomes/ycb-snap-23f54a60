@@ -3,7 +3,7 @@ from __future__ import print_function, division
 from sympy.concrete.expr_with_limits import AddWithLimits
 from sympy.concrete.expr_with_intlimits import ExprWithIntLimits
 from sympy.core.function import Derivative
-from sympy.core.relational import Eq
+from sympy.core.relational import Eq, Ge, Le
 from sympy.core.singleton import S
 from sympy.core.symbol import Dummy, Wild, Symbol
 from sympy.core.add import Add
@@ -866,6 +866,15 @@ def eval_sum(f, limits):
                     return None
                 newargs.append((newexpr, arg.cond))
             return f.func(*newargs)
+        if (b - a).is_nonnegative:
+            # a <= i <= b holds for every term of the summation, so these
+            # conditions can be dropped (not valid for Karr's b < a case)
+            in_range = {Le(a, i): S.true, Ge(i, a): S.true,
+                        Le(i, b): S.true, Ge(b, i): S.true}
+            newf = f.func(*[(arg.expr, arg.cond.xreplace(in_range))
+                            for arg in f.args])
+            if newf != f:
+                return eval_sum(newf, limits)
 
     if f.has(KroneckerDelta) and _has_simple_delta(f, limits[0]):
         return deltasummation(f, limits)
