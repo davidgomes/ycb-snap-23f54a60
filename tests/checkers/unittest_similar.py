@@ -502,3 +502,44 @@ def test_get_map_data() -> None:
         # There doesn't seem to be a faster way of doing this, yet.
         lines = (linespec.text for linespec in lineset_obj.stripped_lines)
         assert tuple(expected_lines) == tuple(lines)
+
+
+def test_set_duplicate_lines_to_zero() -> None:
+    output = StringIO()
+    with redirect_stdout(output), pytest.raises(SystemExit) as ex:
+        similar.Run(["--duplicates=0", SIMILAR1, SIMILAR2])
+    assert ex.value.code == 0
+    assert output.getvalue() == ""
+
+
+def test_pylint_min_similarity_lines_zero_disables_duplicate_code(monkeypatch) -> None:
+    """min-similarity-lines=0 must not run the duplicate-code checker."""
+
+    def fail_compute(_self):
+        raise AssertionError("_compute_sims ran despite min-similarity-lines=0")
+
+    monkeypatch.setattr(similar.Similar, "_compute_sims", fail_compute)
+
+    linter = PyLinter(reporter=Reporter())
+    linter.load_default_plugins()
+    linter.set_option("disable", "all")
+    linter.set_option("enable", "duplicate-code")
+    linter.global_set_option("min-similarity-lines", 0)
+    linter.check([SIMILAR1, SIMILAR2])
+    assert linter.stats["nb_duplicated_lines"] == 0
+    assert "duplicate-code" not in linter.stats["by_msg"]
+
+
+def test_pylint_positive_min_similarity_lines_still_reports_duplicate_code() -> None:
+    linter = PyLinter(reporter=Reporter())
+    linter.load_default_plugins()
+    linter.set_option("disable", "all")
+    linter.set_option("enable", "duplicate-code")
+    linter.global_set_option("min-similarity-lines", 4)
+    linter.check(
+        [
+            str(INPUT / "similar_lines_a.py"),
+            str(INPUT / "similar_lines_b.py"),
+        ]
+    )
+    assert linter.stats["by_msg"].get("duplicate-code", 0) >= 1
