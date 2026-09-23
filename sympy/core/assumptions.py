@@ -164,6 +164,7 @@ _assume_rules = FactRules([
 
     'integer        ->  rational',
     'rational       ->  real',
+    'rational       ->  finite',
     'rational       ->  algebraic',
     'algebraic      ->  complex',
     'real           ->  complex',
