@@ -376,6 +376,20 @@ class IntegerLessThan(IntegerFieldFloatRounding, LessThan):
 class In(FieldGetDbPrepValueIterableMixin, BuiltinLookup):
     lookup_name = 'in'
 
+    def get_prep_lookup(self):
+        # Limit queryset RHS to a single column before SQL compilation. GROUP BY
+        # is compiled before process_rhs(), so a queryset that still has
+        # default columns selected is emitted as a multi-column subquery
+        # ("subquery must return only one column") when the lookup is combined
+        # with an aggregate filter, e.g. Q(rel__in=qs) | Q(rel__count=0).
+        if (
+            not getattr(self.rhs, 'has_select_fields', True) and
+            hasattr(self.rhs, 'clear_select_clause')
+        ):
+            self.rhs.clear_select_clause()
+            self.rhs.add_fields(['pk'])
+        return super().get_prep_lookup()
+
     def process_rhs(self, compiler, connection):
         db_rhs = getattr(self.rhs, '_db', None)
         if db_rhs is not None and db_rhs != connection.alias:

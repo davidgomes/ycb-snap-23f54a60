@@ -45,6 +45,26 @@ def get_normalized_value(value, lhs):
 
 class RelatedIn(In):
     def get_prep_lookup(self):
+        if not isinstance(self.lhs, MultiColSource) and not self.rhs_is_direct_value():
+            # Select the related target column before compilation. In.get_prep_lookup()
+            # would otherwise always select the primary key, which is wrong when
+            # the relation targets a non-PK column. Doing this here (not in
+            # as_sql()) keeps GROUP BY and the IN subquery on the same column.
+            if (
+                not getattr(self.rhs, 'has_select_fields', True) and
+                hasattr(self.rhs, 'clear_select_clause') and
+                not getattr(self.lhs.field.target_field, 'primary_key', False)
+            ):
+                self.rhs.clear_select_clause()
+                if (getattr(self.lhs.output_field, 'primary_key', False) and
+                        self.lhs.output_field.model == self.rhs.model):
+                    # A case like Restaurant.objects.filter(place__in=restaurant_qs),
+                    # where place is a OneToOneField and the primary key of
+                    # Restaurant.
+                    target_field = self.lhs.field.name
+                else:
+                    target_field = self.lhs.field.target_field.name
+                self.rhs.add_fields([target_field], True)
         if not isinstance(self.lhs, MultiColSource) and self.rhs_is_direct_value():
             # If we get here, we are dealing with single-column relations.
             self.rhs = [get_normalized_value(val, self.lhs)[0] for val in self.rhs]
@@ -86,18 +106,6 @@ class RelatedIn(In):
                     AND)
             return root_constraint.as_sql(compiler, connection)
         else:
-            if (not getattr(self.rhs, 'has_select_fields', True) and
-                    not getattr(self.lhs.field.target_field, 'primary_key', False)):
-                self.rhs.clear_select_clause()
-                if (getattr(self.lhs.output_field, 'primary_key', False) and
-                        self.lhs.output_field.model == self.rhs.model):
-                    # A case like Restaurant.objects.filter(place__in=restaurant_qs),
-                    # where place is a OneToOneField and the primary key of
-                    # Restaurant.
-                    target_field = self.lhs.field.name
-                else:
-                    target_field = self.lhs.field.target_field.name
-                self.rhs.add_fields([target_field], True)
             return super().as_sql(compiler, connection)
 
 

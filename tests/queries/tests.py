@@ -3971,3 +3971,29 @@ class Ticket23622Tests(TestCase):
             set(Ticket23605A.objects.filter(qy).values_list('pk', flat=True))
         )
         self.assertSequenceEqual(Ticket23605A.objects.filter(qx), [a2])
+
+
+class RelatedInOrAggregateTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.category = NamedCategory.objects.create(name='cat')
+        cls.tag = Tag.objects.create(name='t', category=cls.category)
+        cls.note = Note.objects.create(note='n', misc='m')
+        cls.extra = ExtraInfo.objects.create(info='e', note=cls.note, value=1)
+        cls.author = Author.objects.create(name='au', num=1, extra=cls.extra)
+        cls.with_tag = Item.objects.create(
+            name='with', created=datetime.datetime(2020, 1, 1), creator=cls.author, note=cls.note,
+        )
+        cls.with_tag.tags.add(cls.tag)
+        cls.without_tag = Item.objects.create(
+            name='without', created=datetime.datetime(2020, 1, 2), creator=cls.author, note=cls.note,
+        )
+
+    def test_or_related_in_queryset_with_aggregate_filter(self):
+        # Q(rel__in=queryset) | Q(rel__count=0) must not put every related
+        # column into the GROUP BY subquery.
+        tags = Tag.objects.filter(pk=self.tag.pk)
+        qs = Item.objects.annotate(Count('tags')).filter(
+            Q(tags__in=tags) | Q(tags__count=0)
+        ).distinct()
+        self.assertCountEqual(qs, [self.with_tag, self.without_tag])
