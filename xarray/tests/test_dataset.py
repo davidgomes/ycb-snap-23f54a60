@@ -3055,6 +3055,16 @@ class TestDataset:
         x = y.to_unstacked_dataset("features")
         assert_identical(D, x)
 
+    def test_to_stacked_array_to_unstacked_dataset_single_dim(self):
+        # test when variables have only a single dimension
+        a, b = create_test_stacked_array()
+        sample_dims = ["x"]
+        D = xr.Dataset({"a": a.isel(y=0), "b": b.isel(y=0)})
+
+        y = D.to_stacked_array("features", sample_dims)
+        x = y.to_unstacked_dataset("features")
+        assert_identical(D, x)
+
     def test_update(self):
         data = create_test_data(seed=0)
         expected = data.copy()
