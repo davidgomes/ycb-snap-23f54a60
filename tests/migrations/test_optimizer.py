@@ -212,6 +212,34 @@ class OptimizerTests(SimpleTestCase):
             migrations.AlterIndexTogether("Foo", [["a", "c"]]),
         )
 
+    def test_alter_foo_together_through_other_together(self):
+        """
+        AlterUniqueTogether and AlterIndexTogether on the same model can
+        reduce through each other, so a remove-then-add pair collapses to the
+        final constraint.
+        """
+        self.assertOptimizesTo(
+            [
+                migrations.AlterUniqueTogether("Foo", set()),
+                migrations.AlterIndexTogether("Foo", set()),
+                migrations.AlterUniqueTogether("Foo", [["col"]]),
+                migrations.AlterIndexTogether("Foo", [["col"]]),
+            ],
+            [
+                migrations.AlterUniqueTogether("Foo", [["col"]]),
+                migrations.AlterIndexTogether("Foo", [["col"]]),
+            ],
+        )
+        # A field alteration between the removal and the addition must stay
+        # in place; the constraint has to be dropped before the field changes.
+        self.assertDoesNotOptimize(
+            [
+                migrations.AlterUniqueTogether("Foo", set()),
+                migrations.AlterField("Foo", "col", models.IntegerField()),
+                migrations.AlterUniqueTogether("Foo", [["col"]]),
+            ],
+        )
+
     def test_alter_alter_owrt_model(self):
         self._test_alter_alter_model(
             migrations.AlterOrderWithRespectTo("Foo", "a"),
