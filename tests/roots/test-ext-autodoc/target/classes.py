@@ -30,3 +30,14 @@ class Quux(List[Union[int, float]]):
 
 
 Alias = Foo
+
+#: docstring
+OtherAlias = Bar
+
+
+class AliasHolder:
+    #: int alias docstring
+    int_attr = int
+
+    string_attr = str
+    """A string type alias."""

@@ -1675,8 +1675,14 @@ class ClassDocumenter(DocstringSignatureMixin, ModuleLevelDocumenter):  # type: 
 
     def get_doc(self, ignore: int = None) -> Optional[List[List[str]]]:
         if self.doc_as_attr:
-            # Don't show the docstring of the class when it is an alias.
-            return None
+            # Don't show the docstring of the aliased class.
+            # A variable comment on the alias itself replaces the default
+            # "alias of ..." text (refs: #8061, #9218).
+            comment = self.get_variable_comment()
+            if comment:
+                return [comment]
+            else:
+                return None
 
         lines = getattr(self, '_new_docstrings', None)
         if lines is not None:
@@ -1721,13 +1727,35 @@ class ClassDocumenter(DocstringSignatureMixin, ModuleLevelDocumenter):  # type: 
         tab_width = self.directive.state.document.settings.tab_width
         return [prepare_docstring(docstring, ignore, tab_width) for docstring in docstrings]
 
+    def get_variable_comment(self) -> Optional[List[str]]:
+        """Return the comment documented on this alias, if any."""
+        if not self.objpath:
+            return None
+        try:
+            # Look in the module where the alias is defined.  The aliased
+            # class may live in another module (or be a builtin), whose
+            # analyzer does not contain this assignment's comment.
+            analyzer = ModuleAnalyzer.for_module(self.modname)
+            analyzer.analyze()
+            key = ('.'.join(self.objpath[:-1]), self.objpath[-1])
+            return list(analyzer.attr_docs.get(key, []))
+        except PycodeError:
+            return None
+
     def add_content(self, more_content: Optional[StringList], no_docstring: bool = False
                     ) -> None:
         if self.doc_as_attr:
-            try:
-                more_content = StringList([_('alias of %s') % restify(self.object)], source='')
-            except AttributeError:
-                pass  # Invalid class object is passed.
+            if self.get_variable_comment():
+                # Emit the alias comment from get_doc().  Drop the analyzer so
+                # a same-named attribute in the aliased class's module is not
+                # documented in its place, and do not append "alias of ...".
+                self.analyzer = None
+            else:
+                try:
+                    more_content = StringList([_('alias of %s') % restify(self.object)],
+                                              source='')
+                except AttributeError:
+                    pass  # Invalid class object is passed.
 
         super().add_content(more_content)
 

@@ -311,6 +311,7 @@ def test_class_doc_from_both(app):
     ]
 
 
+@pytest.mark.sphinx('html', testroot='ext-autodoc')
 def test_class_alias(app):
     def autodoc_process_docstring(*args):
         """A handler always raises an error.
@@ -326,4 +327,40 @@ def test_class_alias(app):
         '   :module: target.classes',
         '',
         '   alias of :class:`target.classes.Foo`',
+    ]
+
+
+@pytest.mark.sphinx('html', testroot='ext-autodoc')
+def test_class_alias_having_doccomment(app):
+    actual = do_autodoc(app, 'class', 'target.classes.OtherAlias')
+    assert list(actual) == [
+        '',
+        '.. py:attribute:: OtherAlias',
+        '   :module: target.classes',
+        '',
+        '   docstring',
+        '',
+    ]
+
+
+@pytest.mark.sphinx('html', testroot='ext-autodoc')
+def test_class_attr_alias_having_doccomment(app):
+    actual = do_autodoc(app, 'class', 'target.classes::AliasHolder.int_attr')
+    assert list(actual) == [
+        '',
+        '.. py:attribute:: AliasHolder.int_attr',
+        '   :module: target.classes',
+        '',
+        '   int alias docstring',
+        '',
+    ]
+
+    actual = do_autodoc(app, 'class', 'target.classes::AliasHolder.string_attr')
+    assert list(actual) == [
+        '',
+        '.. py:attribute:: AliasHolder.string_attr',
+        '   :module: target.classes',
+        '',
+        '   A string type alias.',
+        '',
     ]
