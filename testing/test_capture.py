@@ -531,6 +531,10 @@ class TestCaptureFixture(object):
         reprec.assertoutcome(passed=1)
 
     @needsosdup
+    def test_capfd_sys_stdout_mode(self, capfd):
+        assert "b" not in sys.stdout.mode
+
+    @needsosdup
     def test_capfdbinary(self, testdir):
         reprec = testdir.inline_runsource(
             """\
