@@ -1761,6 +1761,20 @@ class TestVariable(VariableSubclassobjects):
         actual = Variable(["x", "y"], [[1, 0, np.nan], [1, 1, 1]]).count("y")
         assert_identical(expected, actual)
 
+    def test_setitem_object_with_values_attr(self):
+        # GH2904: do not coerce objects that happen to have a ``values`` attribute
+        class HasValues(object):
+            values = 5
+
+        obj = HasValues()
+        v = Variable(["x"], np.array([None], dtype=object))
+        v[0] = obj
+        assert v.values[0] is obj
+
+        empty = set()
+        v[0] = empty
+        assert v.values[0] is empty
+
     def test_setitem(self):
         v = Variable(["x", "y"], [[0, 3, 2], [3, 4, 5]])
         v[0, 1] = 1

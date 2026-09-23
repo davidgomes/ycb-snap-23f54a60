@@ -217,8 +217,11 @@ def as_compatible_data(data, fastpath=False):
     if isinstance(data, timedelta):
         data = np.timedelta64(getattr(data, "value", data), "ns")
 
-    # we don't want nested self-described arrays
-    data = getattr(data, "values", data)
+    # Unwrap pandas / xarray containers only. Arbitrary objects may define a
+    # ``values`` attribute (for example lmfit results) that must be stored
+    # intact inside object-dtype arrays. See GH2904.
+    if isinstance(data, (pd.Series, pd.DataFrame, xr.DataArray)):
+        data = data.values
 
     if isinstance(data, np.ma.MaskedArray):
         mask = np.ma.getmaskarray(data)
