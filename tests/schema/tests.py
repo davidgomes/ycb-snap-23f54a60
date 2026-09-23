@@ -28,8 +28,9 @@ from .fields import (
 from .models import (
     Author, AuthorCharFieldWithIndex, AuthorTextFieldWithIndex,
     AuthorWithDefaultHeight, AuthorWithEvenLongerName, AuthorWithIndexedName,
-    AuthorWithIndexedNameAndBirthday, AuthorWithUniqueName,
-    AuthorWithUniqueNameAndBirthday, Book, BookForeignObj, BookWeak,
+    AuthorWithIndexedNameAndBirthday, AuthorWithUniqueAndIndexTogether,
+    AuthorWithUniqueName, AuthorWithUniqueNameAndBirthday, Book,
+    BookForeignObj, BookWeak,
     BookWithLongName, BookWithO2O, BookWithoutAuthor, BookWithSlug, IntegerPK,
     Node, Note, NoteRename, Tag, TagIndexed, TagM2MTest, TagUniqueRename,
     Thing, UniqueTest, new_apps,
@@ -49,7 +50,8 @@ class SchemaTests(TransactionTestCase):
 
     models = [
         Author, AuthorCharFieldWithIndex, AuthorTextFieldWithIndex,
-        AuthorWithDefaultHeight, AuthorWithEvenLongerName, Book, BookWeak,
+        AuthorWithDefaultHeight, AuthorWithEvenLongerName,
+        AuthorWithUniqueAndIndexTogether, Book, BookWeak,
         BookWithLongName, BookWithO2O, BookWithSlug, IntegerPK, Node, Note,
         Tag, TagIndexed, TagM2MTest, TagUniqueRename, Thing, UniqueTest,
     ]
@@ -2122,6 +2124,27 @@ class SchemaTests(TransactionTestCase):
         with connection.schema_editor() as editor:
             AuthorWithUniqueNameAndBirthday._meta.constraints = []
             editor.remove_constraint(AuthorWithUniqueNameAndBirthday, constraint)
+
+    @skipUnlessDBFeature('allows_multiple_constraints_on_same_fields')
+    def test_remove_index_together_does_not_remove_unique_together(self):
+        with connection.schema_editor() as editor:
+            editor.create_model(AuthorWithUniqueAndIndexTogether)
+        index_together = AuthorWithUniqueAndIndexTogether._meta.index_together
+        with connection.schema_editor() as editor:
+            editor.alter_index_together(
+                AuthorWithUniqueAndIndexTogether, index_together, [],
+            )
+        constraints = self.get_constraints(AuthorWithUniqueAndIndexTogether._meta.db_table)
+        unique_constraints = [
+            name for name, details in constraints.items()
+            if details['columns'] == ['name', 'birthday'] and details['unique']
+        ]
+        self.assertEqual(len(unique_constraints), 1)
+        indexes = [
+            name for name, details in constraints.items()
+            if details['columns'] == ['name', 'birthday'] and details['index'] and not details['unique']
+        ]
+        self.assertEqual(indexes, [])
 
     def test_index_together(self):
         """
