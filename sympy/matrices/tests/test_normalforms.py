@@ -77,5 +77,13 @@ def test_hermite_normal():
     assert hermite_normal_form(m) == hnf
 
     m = Matrix([[2, 7], [0, 0], [0, 0]])
+    hnf = Matrix([[1], [0], [0]])
+    assert hermite_normal_form(m) == hnf
+
+    m = Matrix([[1, 12], [0, 8], [0, 5]])
+    hnf = Matrix([[1, 0], [0, 8], [0, 5]])
+    assert hermite_normal_form(m) == hnf
+
+    m = Matrix(3, 0, [])
     hnf = Matrix(3, 0, [])
     assert hermite_normal_form(m) == hnf
