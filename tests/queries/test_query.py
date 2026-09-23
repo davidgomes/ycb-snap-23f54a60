@@ -15,6 +15,17 @@ from .models import Author, Item, ObjectC, Ranking
 
 
 class TestQuery(SimpleTestCase):
+    def test_resolve_lookup_value_preserves_iterable_type(self):
+        query = Query(Author)
+        self.assertEqual(
+            query.resolve_lookup_value([1, 2], can_reuse=True, allow_joins=True, simple_col=False),
+            [1, 2],
+        )
+        self.assertEqual(
+            query.resolve_lookup_value((1, 2), can_reuse=True, allow_joins=True, simple_col=False),
+            (1, 2),
+        )
+
     def test_simple_query(self):
         query = Query(Author)
         where = query.build_where(Q(num__gt=2))
