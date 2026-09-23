@@ -347,8 +347,8 @@ Migrations
   :mod:`pathlib`, and :class:`os.PathLike` instances.
 
 * To support frozen environments, migrations are now loaded from regular
-  packages that don't have a ``__file__`` attribute, e.g. in frozen Python
-  environments. Namespace packages are still ignored.
+  packages that don't have a ``__file__`` attribute. Namespace packages are
+  still ignored.
 
 Models
 ~~~~~~
