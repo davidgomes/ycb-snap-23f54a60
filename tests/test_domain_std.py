@@ -193,7 +193,7 @@ def test_glossary_warning(app, status, warning):
             "   term-case5\n"
             "   TERM-CASE5\n")
     restructuredtext.parse(app, text, "case5")
-    assert "duplicate term description of TERM-CASE5" not in warning.getvalue()
+    assert "case5.rst" not in warning.getvalue()
 
 
 def test_glossary_term_resolution(app):
@@ -212,7 +212,7 @@ def test_glossary_term_resolution(app):
 
     def resolve_any(target):
         results = domain.resolve_any_xref(app.env, 'index', app.builder, target,
-                                          pending_xref(), nodes.inline())
+                                          pending_xref(refexplicit=False), nodes.inline())
         return [(role, refnode['refid']) for role, refnode in results]
 
     # exact match wins over case-insensitive match
