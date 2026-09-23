@@ -1584,12 +1584,24 @@ default: %(va)s
         gs = GridSpec(nrows=nrows, ncols=ncols, figure=self,
                       wspace=wspace, hspace=hspace,
                       width_ratios=width_ratios,
-                      height_ratios=height_ratios)
+                      height_ratios=height_ratios,
+                      left=0, right=1, bottom=0, top=1)
 
         sfarr = np.empty((nrows, ncols), dtype=object)
         for i in range(ncols):
             for j in range(nrows):
                 sfarr[j, i] = self.add_subfigure(gs[j, i], **kwargs)
+
+        if not self.get_constrained_layout() and (wspace is not None or
+                                                  hspace is not None):
+            # Subfigures are initially placed from the gridspec ratios alone,
+            # leaving no space between them; only constrained layout later
+            # accounts for the spacing, so apply it here otherwise.
+            bottoms, tops, lefts, rights = gs.get_grid_positions(self)
+            for sfrow, bottom, top in zip(sfarr, bottoms, tops):
+                for sf, left, right in zip(sfrow, lefts, rights):
+                    bbox = Bbox.from_extents(left, bottom, right, top)
+                    sf._redo_transform_rel_fig(bbox=bbox)
 
         if squeeze:
             # Discarding unneeded dimensions that equal 1.  If we only have one
