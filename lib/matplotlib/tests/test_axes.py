@@ -6976,6 +6976,21 @@ def test_shared_axes_retick():
         assert ax.get_ylim() == axs[0, 0].get_ylim()
 
 
+@check_figures_equal(extensions=['png'])
+def test_shared_axes_clear(fig_test, fig_ref):
+    x = np.arange(0.0, 2*np.pi, 0.01)
+    y = np.sin(x)
+
+    axs = fig_ref.subplots(2, 2, sharex=True, sharey=True)
+    for ax in axs.flat:
+        ax.plot(x, y)
+
+    axs = fig_test.subplots(2, 2, sharex=True, sharey=True)
+    for ax in axs.flat:
+        ax.clear()
+        ax.plot(x, y)
+
+
 @pytest.mark.parametrize('ha', ['left', 'center', 'right'])
 def test_ylabel_ha_with_position(ha):
     fig = Figure()
