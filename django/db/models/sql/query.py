@@ -1702,7 +1702,12 @@ class Query(BaseExpression):
         handle.
         """
         filter_lhs, filter_rhs = filter_expr
-        if isinstance(filter_rhs, F):
+        if isinstance(filter_rhs, OuterRef):
+            # The rhs is already an outer reference. Nest it so the extra
+            # subquery created here consumes one resolution level and the
+            # original OuterRef still points at the outer query.
+            filter_expr = (filter_lhs, OuterRef(filter_rhs))
+        elif isinstance(filter_rhs, F):
             filter_expr = (filter_lhs, OuterRef(filter_rhs.name))
         # Generate the inner query.
         query = Query(self.model)
