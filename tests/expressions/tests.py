@@ -2,6 +2,7 @@ import datetime
 import pickle
 import unittest
 import uuid
+from collections import namedtuple
 from copy import deepcopy
 from decimal import Decimal
 from unittest import mock
@@ -883,6 +884,13 @@ class IterableLookupInnerExpressionsTests(TestCase):
             ],
             ordered=False
         )
+
+    def test_range_lookup_namedtuple(self):
+        EmployeeRange = namedtuple('EmployeeRange', ['minimum', 'maximum'])
+        qs = Company.objects.filter(
+            num_employees__range=EmployeeRange(minimum=51, maximum=100),
+        )
+        self.assertQuerysetEqual(qs, ['<Company: 99300 Ltd>'])
 
     @unittest.skipUnless(connection.vendor == 'sqlite',
                          "This defensive test only works on databases that don't validate parameter types")
