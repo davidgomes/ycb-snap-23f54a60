@@ -119,6 +119,67 @@ class OptimizerTests(SimpleTestCase):
             ]
         )
 
+    def test_create_model_and_remove_model_options(self):
+        """
+        AlterModelOptions that omit keys must clear those keys on CreateModel,
+        matching AlterModelOptions.state_forwards().
+        """
+        self.assertOptimizesTo(
+            [
+                migrations.CreateModel(
+                    'MyModel',
+                    fields=[],
+                    options={'verbose_name': 'My Model'},
+                ),
+                migrations.AlterModelOptions('MyModel', options={}),
+            ],
+            [migrations.CreateModel('MyModel', fields=[])],
+        )
+        self.assertOptimizesTo(
+            [
+                migrations.CreateModel(
+                    'MyModel',
+                    fields=[],
+                    options={
+                        'verbose_name': 'My Model',
+                        'verbose_name_plural': 'My Model plural',
+                    },
+                ),
+                migrations.AlterModelOptions(
+                    'MyModel',
+                    options={'verbose_name': 'My Model'},
+                ),
+            ],
+            [
+                migrations.CreateModel(
+                    'MyModel',
+                    fields=[],
+                    options={'verbose_name': 'My Model'},
+                ),
+            ],
+        )
+        # Options outside AlterModelOptions.ALTER_OPTION_KEYS are preserved.
+        self.assertOptimizesTo(
+            [
+                migrations.CreateModel(
+                    'MyModel',
+                    fields=[],
+                    options={
+                        'verbose_name': 'My Model',
+                        'db_table': 'my_model',
+                    },
+                ),
+                migrations.AlterModelOptions('MyModel', options={}),
+            ],
+            [
+                migrations.CreateModel(
+                    'MyModel',
+                    fields=[],
+                    options={'db_table': 'my_model'},
+                ),
+            ],
+        )
+
     def _test_create_alter_foo_delete_model(self, alter_foo):
         """
         CreateModel, AlterModelTable, AlterUniqueTogether/AlterIndexTogether/
