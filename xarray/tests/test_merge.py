@@ -231,6 +231,12 @@ class TestMergeMethod:
         assert expected.identical(ds2.merge(ds1, fill_value=fill_value))
         assert expected.identical(xr.merge([ds1, ds2], fill_value=fill_value))
 
+    def test_merge_dataarray(self):
+        ds = xr.Dataset({"a": 0})
+        da = xr.DataArray(data=1, name="b")
+
+        assert ds.merge(da).identical(xr.merge([ds, da]))
+
     def test_merge_no_conflicts(self):
         ds1 = xr.Dataset({"a": ("x", [1, 2]), "x": [0, 1]})
         ds2 = xr.Dataset({"a": ("x", [2, 3]), "x": [1, 2]})

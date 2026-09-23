@@ -797,7 +797,7 @@ def merge(
 
 def dataset_merge_method(
     dataset: "Dataset",
-    other: "CoercibleMapping",
+    other: Union["CoercibleMapping", "DataArray"],
     overwrite_vars: Union[Hashable, Iterable[Hashable]],
     compat: str,
     join: str,
@@ -805,9 +805,14 @@ def dataset_merge_method(
 ) -> _MergeResult:
     """Guts of the Dataset.merge method.
     """
+    from .dataarray import DataArray
+
     # we are locked into supporting overwrite_vars for the Dataset.merge
     # method due for backwards compatibility
     # TODO: consider deprecating it?
+
+    if isinstance(other, DataArray):
+        other = other.to_dataset()
 
     if isinstance(overwrite_vars, Iterable) and not isinstance(overwrite_vars, str):
         overwrite_vars = set(overwrite_vars)

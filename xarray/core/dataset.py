@@ -3547,7 +3547,7 @@ class Dataset(Mapping, ImplementsDatasetReduce, DataWithCoords):
 
     def merge(
         self,
-        other: "CoercibleMapping",
+        other: Union["CoercibleMapping", "DataArray"],
         inplace: bool = None,
         overwrite_vars: Union[Hashable, Iterable[Hashable]] = frozenset(),
         compat: str = "no_conflicts",
@@ -3564,7 +3564,8 @@ class Dataset(Mapping, ImplementsDatasetReduce, DataWithCoords):
         Parameters
         ----------
         other : Dataset or castable to Dataset
-            Dataset or variables to merge with this dataset.
+            Dataset or variables to merge with this dataset. If a DataArray
+            is passed, its name must be set.
         overwrite_vars : Hashable or iterable of Hashable, optional
             If provided, update variables of these name(s) without checking for
             conflicts in this dataset.
