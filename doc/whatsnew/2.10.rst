@@ -23,4 +23,8 @@ Other Changes
 
 * Performance of the Similarity checker has been improved.
 
+* The default for ``PYLINTHOME`` is now the standard ``XDG_CACHE_HOME`` (typically ``~/.cache/pylint``), via ``appdirs``.
+
+  Closes #3878
+
 * Added ``time.clock`` to deprecated functions/methods for python 3.3
