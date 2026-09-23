@@ -210,6 +210,11 @@ class QuerySet:
 
     @query.setter
     def query(self, value):
+        # values()/values_list() only store the selected columns on the Query.
+        # Recreating a queryset from a pickled query must yield dicts, otherwise
+        # model construction crashes on the partial row.
+        if value.values_select:
+            self._iterable_class = ValuesIterable
         self._query = value
 
     def as_manager(cls):

@@ -110,6 +110,20 @@ class PickleabilityTestCase(TestCase):
         self.assertEqual(original, reloaded)
         self.assertIs(reloaded.__class__, dynclass)
 
+    def test_values_query_recreated_from_pickled_query(self):
+        # Recreating a values()/values_list() queryset from a pickled Query
+        # must not try to build model instances from the partial rows.
+        qs = Happening.objects.values('name').annotate(total=models.Sum('number1'))
+        reloaded = Happening.objects.all()
+        reloaded.query = pickle.loads(pickle.dumps(qs.query))
+        self.assertEqual(list(reloaded), list(qs))
+        self.assertIsInstance(reloaded[0], dict)
+
+        qs = Happening.objects.values_list('name')
+        reloaded = Happening.objects.all()
+        reloaded.query = pickle.loads(pickle.dumps(qs.query))
+        self.assertEqual(list(reloaded), list(Happening.objects.values('name')))
+
     def test_specialized_queryset(self):
         self.assert_pickles(Happening.objects.values('name'))
         self.assert_pickles(Happening.objects.values('name').dates('when', 'year'))
