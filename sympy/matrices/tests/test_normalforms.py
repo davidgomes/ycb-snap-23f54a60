@@ -77,5 +77,18 @@ def test_hermite_normal():
     assert hermite_normal_form(m) == hnf
 
     m = Matrix([[2, 7], [0, 0], [0, 0]])
-    hnf = Matrix(3, 0, [])
+    hnf = Matrix([[1], [0], [0]])
     assert hermite_normal_form(m) == hnf
+
+
+def test_issue_23410():
+    A = Matrix([[1, 12], [0, 8], [0, 5]])
+    H = Matrix([[1, 0], [0, 8], [0, 5]])
+    assert hermite_normal_form(A) == H
+
+    # Row-style HNF via flip and transpose, as in issue 23410.
+    M = Matrix([[5, 8, 12], [0, 0, 1]])
+    flipped = Matrix([list(reversed(row)) for row in reversed(M.tolist())])
+    H = hermite_normal_form(flipped.T).T
+    row_hnf = Matrix([list(reversed(row)) for row in reversed(H.tolist())])
+    assert row_hnf == Matrix([[5, 8, 0], [0, 0, 1]])
