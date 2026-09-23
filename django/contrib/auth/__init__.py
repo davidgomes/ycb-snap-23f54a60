@@ -202,6 +202,20 @@ def get_user(request):
                 session_hash_verified = session_hash and constant_time_compare(
                     session_hash, user.get_session_auth_hash()
                 )
+                # If the current secret does not verify the session, try
+                # with the fallback secrets and stop when a matching one is
+                # found.
+                if not session_hash_verified and session_hash:
+                    if hasattr(user, "get_session_auth_fallback_hash"):
+                        session_hash_verified = any(
+                            constant_time_compare(session_hash, fallback_auth_hash)
+                            for fallback_auth_hash in user.get_session_auth_fallback_hash()
+                        )
+                    if session_hash_verified:
+                        request.session.cycle_key()
+                        request.session[HASH_SESSION_KEY] = (
+                            user.get_session_auth_hash()
+                        )
                 if not session_hash_verified:
                     request.session.flush()
                     user = None
