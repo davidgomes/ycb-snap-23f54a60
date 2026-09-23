@@ -340,6 +340,10 @@ inconsistency.
 Miscellaneous
 -------------
 
+* :func:`django.utils.html.escape` now uses :func:`html.escape` to escape
+  HTML. This converts ``'`` to ``&#x27;`` instead of the previous equivalent
+  decimal code ``&#39;``.
+
 * ``ContentType.__str__()`` now includes the model's ``app_label`` to
   disambiguate model's with the same name in different apps.
 
