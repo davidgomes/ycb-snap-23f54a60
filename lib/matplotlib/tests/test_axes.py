@@ -2876,21 +2876,21 @@ def test_stackplot_does_not_modify_prop_cycle():
     cols = ax.stackplot([1, 2, 3], [1, 1, 1], [1, 2, 3], [4, 3, 2],
                         colors=['C2', 'C3', 'C4'])
     for coll, spec in zip(cols, ['C2', 'C3', 'C4']):
-        assert_allclose(coll.get_facecolor(), mcolors.to_rgba(spec))
+        assert_allclose(np.ravel(coll.get_facecolor()), mcolors.to_rgba(spec))
     assert ax._get_lines.get_next_color() == cycle_colors[0]
 
     # A shorter list repeats, still without touching the cycle.
     cols = ax.stackplot([1, 2], [1, 1], [2, 2], [3, 3], colors=['C1', 'C5'])
-    assert_allclose(cols[0].get_facecolor(), mcolors.to_rgba('C1'))
-    assert_allclose(cols[2].get_facecolor(), mcolors.to_rgba('C1'))
+    assert_allclose(np.ravel(cols[0].get_facecolor()), mcolors.to_rgba('C1'))
+    assert_allclose(np.ravel(cols[2].get_facecolor()), mcolors.to_rgba('C1'))
     assert ax._get_lines.get_next_color() == cycle_colors[1]
 
     # Omitting colors still consumes the Axes property cycle.
     fig, ax = plt.subplots()
     ax.set_prop_cycle(color=['red', 'green', 'blue'])
     cols = ax.stackplot([1, 2], [1, 1], [2, 2])
-    assert_allclose(cols[0].get_facecolor(), mcolors.to_rgba('red'))
-    assert_allclose(cols[1].get_facecolor(), mcolors.to_rgba('green'))
+    assert_allclose(np.ravel(cols[0].get_facecolor()), mcolors.to_rgba('red'))
+    assert_allclose(np.ravel(cols[1].get_facecolor()), mcolors.to_rgba('green'))
     assert ax._get_lines.get_next_color() == 'blue'
 
 
