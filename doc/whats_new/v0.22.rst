@@ -384,6 +384,10 @@ Changelog
   where one test set could be `n_classes` larger than another. Test sets should
   now be near-equally sized. :pr:`14704` by `Joel Nothman`_.
 
+- |Fix| :class:`model_selection.RepeatedKFold` and
+  :class:`model_selection.RepeatedStratifiedKFold` now have a correct
+  ``__repr__`` showing their parameters. :pr:`14983`.
+
 :mod:`sklearn.multioutput`
 ..........................
 
