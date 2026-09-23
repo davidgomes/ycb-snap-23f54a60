@@ -263,11 +263,11 @@ class Query(BaseExpression):
         elif len(self.annotation_select) == 1:
             return next(iter(self.annotation_select.values())).output_field
 
+    values_called = False
+
     @property
     def has_select_fields(self):
-        return bool(
-            self.select or self.annotation_select_mask or self.extra_select_mask
-        )
+        return bool(self.select or self.values_called)
 
     @cached_property
     def base_table(self):
@@ -2381,6 +2381,7 @@ class Query(BaseExpression):
         self._extra_select_cache = None
 
     def set_values(self, fields):
+        self.values_called = True
         self.select_related = False
         self.clear_deferred_loading()
         self.clear_select_fields()
