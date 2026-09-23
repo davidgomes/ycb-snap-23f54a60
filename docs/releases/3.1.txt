@@ -162,6 +162,12 @@ Models
 
 * ...
 
+Pagination
+~~~~~~~~~~
+
+* :class:`~django.core.paginator.Paginator` can now be iterated over to yield
+  its pages, e.g. ``for page in paginator:``.
+
 Requests and Responses
 ~~~~~~~~~~~~~~~~~~~~~~
 

@@ -265,6 +265,14 @@ class PaginationTests(SimpleTestCase):
         """
         self.assertIsInstance(Paginator([1, 2, 3], 2).page_range, type(range(0)))
 
+    def test_paginator_iteration(self):
+        paginator = Paginator([1, 2, 3], 2)
+        page_iterator = iter(paginator)
+        for page, expected in enumerate(([1, 2], [3]), start=1):
+            with self.subTest(page=page):
+                self.assertEqual(expected, list(next(page_iterator)))
+        self.assertRaises(StopIteration, next, page_iterator)
+
     def test_get_page(self):
         """
         Paginator.get_page() returns a valid page even with invalid page
