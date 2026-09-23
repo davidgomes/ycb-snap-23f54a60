@@ -24,6 +24,9 @@ class DecimalFieldTests(TestCase):
         msg = '“abc” value must be a decimal number.'
         with self.assertRaisesMessage(ValidationError, msg):
             f.to_python('abc')
+        msg = '“{}” value must be a decimal number.'
+        with self.assertRaisesMessage(ValidationError, msg):
+            f.to_python({})
 
     def test_default(self):
         f = models.DecimalField(default=Decimal('0.00'))
