@@ -2,7 +2,7 @@ import datetime
 
 from django import forms
 from django.core.exceptions import ValidationError
-from django.forms.models import ModelChoiceIterator
+from django.forms.models import ModelChoiceIterator, ModelChoiceIteratorValue
 from django.forms.widgets import CheckboxSelectMultiple
 from django.template import Context, Template
 from django.test import TestCase
@@ -278,6 +278,13 @@ class ModelChoiceFieldTests(TestCase):
 
         field = CustomModelChoiceField(Category.objects.all())
         self.assertIsInstance(field.choices, CustomModelChoiceIterator)
+
+    def test_model_choice_iterator_value_is_hashable(self):
+        value = ModelChoiceIteratorValue(self.c1.pk, self.c1)
+        show_fields = {self.c1.pk: ['name']}
+        self.assertEqual(hash(value), hash(self.c1.pk))
+        self.assertIn(value, show_fields)
+        self.assertEqual(show_fields[value], ['name'])
 
     def test_choice_iterator_passes_model_to_widget(self):
         class CustomCheckboxSelectMultiple(CheckboxSelectMultiple):
