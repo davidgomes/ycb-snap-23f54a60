@@ -107,3 +107,10 @@ def test_check_homomorphism():
     b = Permutation(1,3)
     G = PermutationGroup([a, b])
     raises(ValueError, lambda: homomorphism(G, G, [a], [a]))
+
+
+def test_perm_group_identity_homomorphism():
+    D3 = DihedralGroup(3)
+    T = homomorphism(D3, D3, D3.generators, D3.generators)
+    assert T.is_isomorphism()
+    assert all(T(g) == g for g in D3.elements)
