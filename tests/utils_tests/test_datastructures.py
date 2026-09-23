@@ -2,6 +2,7 @@
 Tests for stuff in django.utils.datastructures.
 """
 
+import collections.abc
 import copy
 import pickle
 
@@ -17,6 +18,11 @@ class OrderedSetTests(SimpleTestCase):
     def test_init_with_iterable(self):
         s = OrderedSet([1, 2, 3])
         self.assertEqual(list(s.dict.keys()), [1, 2, 3])
+
+    def test_reversed(self):
+        s = reversed(OrderedSet([1, 2, 3]))
+        self.assertIsInstance(s, collections.abc.Iterator)
+        self.assertEqual(list(s), [3, 2, 1])
 
     def test_remove(self):
         s = OrderedSet()
