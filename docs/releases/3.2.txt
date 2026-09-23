@@ -245,7 +245,10 @@ Models
 Requests and Responses
 ~~~~~~~~~~~~~~~~~~~~~~
 
-* ...
+* :meth:`HttpResponse.delete_cookie() <django.http.HttpResponse.delete_cookie>`
+  now accepts a ``samesite`` argument to preserve the cookie's ``SameSite``
+  flag when expiring it. Cookies deleted with ``samesite='none'`` are also
+  marked ``Secure``, which browsers require for ``SameSite=None``.
 
 Security
 ~~~~~~~~
