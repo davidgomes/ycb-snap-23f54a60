@@ -237,6 +237,23 @@ class FilteredRelationTests(TestCase):
             [self.author1],
         )
 
+    def test_multiple_filtered_relations_same_relation(self):
+        qs = Author.objects.annotate(
+            book_alice=FilteredRelation(
+                "book", condition=Q(book__title__iexact="poem by alice")
+            ),
+            book_jane=FilteredRelation(
+                "book", condition=Q(book__title__iexact="the book by jane a")
+            ),
+        ).values_list("book_alice__title", "book_jane__title")
+        self.assertEqual(str(qs.query).count("JOIN"), 2)
+        self.assertCountEqual(
+            qs.filter(pk=self.author1.pk), [("Poem by Alice", None)]
+        )
+        self.assertCountEqual(
+            qs.filter(pk=self.author2.pk), [(None, "The book by Jane A")]
+        )
+
     def test_exclude_relation_with_join(self):
         self.assertSequenceEqual(
             Author.objects.annotate(
