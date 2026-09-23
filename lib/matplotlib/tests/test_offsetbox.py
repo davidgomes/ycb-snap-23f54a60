@@ -12,8 +12,8 @@ import matplotlib.lines as mlines
 from matplotlib.backend_bases import MouseButton, MouseEvent
 
 from matplotlib.offsetbox import (
-    AnchoredOffsetbox, AnnotationBbox, AnchoredText, DrawingArea, OffsetBox,
-    OffsetImage, TextArea, _get_packed_offsets)
+    AnchoredOffsetbox, AnnotationBbox, AnchoredText, DrawingArea, HPacker,
+    OffsetBox, OffsetImage, TextArea, _get_aligned_offsets, _get_packed_offsets)
 
 
 @image_comparison(['offsetbox_clipping'], remove_text=True)
@@ -86,6 +86,30 @@ def test_offsetbox_clip_children():
     assert not fig.stale
     da.clip_children = True
     assert fig.stale
+
+
+def test_get_aligned_offsets_top_bottom():
+    # HPacker vertical alignment: y grows upward, so "top" lifts shorter boxes
+    # and "bottom" keeps them on the lower edge. These were previously swapped.
+    boxes = [(20, 0), (30, 0)]
+    _, _, top = _get_aligned_offsets(boxes, None, align="top")
+    _, _, bottom = _get_aligned_offsets(boxes, None, align="bottom")
+    assert_allclose(top, [10, 0])
+    assert_allclose(bottom, [0, 0])
+
+
+def test_hpacker_align_top_bottom():
+    fig, ax = plt.subplots()
+    renderer = fig.canvas.get_renderer()
+    short = DrawingArea(10, 20)
+    tall = DrawingArea(10, 30)
+    top = HPacker(children=[short, tall], pad=0, sep=0, align="top")
+    bottom = HPacker(children=[short, tall], pad=0, sep=0, align="bottom")
+    _, _, _, _, top_offsets = top.get_extent_offsets(renderer)
+    _, _, _, _, bottom_offsets = bottom.get_extent_offsets(renderer)
+    assert_allclose([oy for _, oy in top_offsets], [10, 0])
+    assert_allclose([oy for _, oy in bottom_offsets], [0, 0])
+    plt.close(fig)
 
 
 def test_offsetbox_loc_codes():
