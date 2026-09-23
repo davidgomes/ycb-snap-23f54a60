@@ -325,7 +325,12 @@ def test_implemented_function_evalf():
     assert str(f(2)) == "f(2)"
     assert f(2).evalf() == 3
     assert f(x).evalf() == f(x)
+    f = implemented_function('f', lambda x: x**2)
+    g = implemented_function('g', lambda x: 2*x)
+    assert f(g(2)).evalf() == 16
+    assert f(g(x)).evalf() == f(g(x))
     del f._imp_     # XXX: due to caching _imp_ would influence all other tests
+    del g._imp_
 
 
 def test_evaluate_false():
