@@ -57,6 +57,14 @@ class RequestsTestCase(unittest.TestCase):
         assert pr.url == req.url
         assert pr.body == 'life=42'
 
+    def test_no_content_length(self):
+        get_req = requests.Request('GET', 'http://example.com/').prepare()
+        self.assertTrue('Content-Length' not in get_req.headers)
+        head_req = requests.Request('HEAD', 'http://example.com/').prepare()
+        self.assertTrue('Content-Length' not in head_req.headers)
+        post_req = requests.Request('POST', 'http://example.com/').prepare()
+        self.assertEqual(post_req.headers['Content-Length'], '0')
+
 
     def test_path_is_not_double_encoded(self):
         request = requests.Request('GET', "http://0.0.0.0/get/test case").prepare()
