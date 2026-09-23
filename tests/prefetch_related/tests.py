@@ -909,7 +909,7 @@ class CustomPrefetchTests(TestCase):
             pk=self.house1.pk,
         ).prefetch_related(
             Prefetch('main_room', queryset=Room.objects.prefetch_related(
-                Prefetch('main_room_of', queryset=House.objects.only('address')),
+                Prefetch('main_room_of', queryset=House.objects.defer('name')),
             )),
         )
         with self.assertNumQueries(3):
