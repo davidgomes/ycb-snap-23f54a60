@@ -176,7 +176,20 @@ def test_expressions():
         exprCheck(p + "'\\U0001f34c'", t + "127820")
         exprCheck(p + "'\\U0001F34C'", t + "127820")
 
-    # TODO: user-defined lit
+    # user-defined literals
+    for i in ints:
+        exprCheck(i + '_udl', 'clL_Zli4_udlEL' + i + 'EE')
+        exprCheck(i + 'uludl', 'clL_Zli5uludlEL' + i + 'EE')
+    for f in ['5e42', '5.0', '.5', '5.']:
+        exprCheck(f + '_udl', 'clL_Zli4_udlEL' + f + 'EE')
+        exprCheck(f + 'fudl', 'clL_Zli4fudlEL' + f + 'EE')
+    exprCheck('0xA.Bp-F_udl', 'clL_Zli4_udlEL0xA.Bp-FEE')
+    exprCheck('6.62607015e-34q_J', 'clL_Zli3q_JEL6.62607015e-34EE')
+    for s in ['"abc"', '"abc\\"cba"']:
+        exprCheck(s + '_udl', 'clL_Zli4_udlELA%d_KcEE' % (len(s) - 2))
+    exprCheck("'a'_udl", 'clL_Zli4_udlEc97E')
+    exprCheck("u8'a'_udl", 'clL_Zli4_udlEc97E')
+
     exprCheck('(... + Ns)', '(... + Ns)', id4='flpl2Ns')
     exprCheck('(Ns + ...)', '(Ns + ...)', id4='frpl2Ns')
     exprCheck('(Ns + ... + 0)', '(Ns + ... + 0)', id4='fLpl2NsL0E')
