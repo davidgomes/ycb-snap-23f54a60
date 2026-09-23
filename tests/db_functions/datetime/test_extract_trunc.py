@@ -1133,6 +1133,17 @@ class DateFunctionWithTimeZoneTests(DateFunctionTests):
         self.assertEqual(model.melb_year.year, 2016)
         self.assertEqual(model.pacific_year.year, 2015)
 
+        model = DTModel.objects.annotate(
+            melb_date=TruncDate('start_datetime', tzinfo=melb),
+            pacific_date=TruncDate('start_datetime', tzinfo=pacific),
+            melb_time=TruncTime('start_datetime', tzinfo=melb),
+            pacific_time=TruncTime('start_datetime', tzinfo=pacific),
+        ).order_by('start_datetime').get()
+        self.assertEqual(model.melb_date, start_datetime.astimezone(melb).date())
+        self.assertEqual(model.pacific_date, start_datetime.astimezone(pacific).date())
+        self.assertEqual(model.melb_time, start_datetime.astimezone(melb).time())
+        self.assertEqual(model.pacific_time, start_datetime.astimezone(pacific).time())
+
     def test_trunc_ambiguous_and_invalid_times(self):
         sao = pytz.timezone('America/Sao_Paulo')
         utc = pytz.timezone('UTC')

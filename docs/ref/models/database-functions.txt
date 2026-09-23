@@ -623,7 +623,7 @@ that deal with date-parts can be used with ``DateField``::
 ``DateTimeField`` truncation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. class:: TruncDate(expression, **extra)
+.. class:: TruncDate(expression, tzinfo=None, **extra)
 
     .. attribute:: lookup_name = 'date'
     .. attribute:: output_field = DateField()
@@ -632,7 +632,7 @@ that deal with date-parts can be used with ``DateField``::
 truncate function. It's also registered as a transform on  ``DateTimeField`` as
 ``__date``.
 
-.. class:: TruncTime(expression, **extra)
+.. class:: TruncTime(expression, tzinfo=None, **extra)
 
     .. attribute:: lookup_name = 'time'
     .. attribute:: output_field = TimeField()
