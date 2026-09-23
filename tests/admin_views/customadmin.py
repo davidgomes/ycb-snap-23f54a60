@@ -59,6 +59,7 @@ site.register(models.Section, inlines=[base_admin.ArticleInline], search_fields=
 site.register(models.Thing, base_admin.ThingAdmin)
 site.register(models.Fabric, base_admin.FabricAdmin)
 site.register(models.ChapterXtra1, base_admin.ChapterXtra1Admin)
+site.register(models.ReadOnlyRelatedField, base_admin.ReadOnlyRelatedFieldAdmin)
 site.register(User, UserLimitedAdmin)
 site.register(models.UndeletableObject, base_admin.UndeletableObjectAdmin)
 site.register(models.Simple, base_admin.AttributeErrorRaisingAdmin)
