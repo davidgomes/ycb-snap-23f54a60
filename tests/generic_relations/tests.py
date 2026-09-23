@@ -96,6 +96,33 @@ class GenericRelationsTests(TestCase):
         # shouldn't had changed the tag
         self.assertEqual(tag.tag, "stinky")
 
+    async def test_generic_async_acreate(self):
+        await self.bacon.tags.acreate(tag="orange")
+        self.assertEqual(await self.bacon.tags.acount(), 3)
+
+    async def test_generic_async_aget_or_create(self):
+        tag, created = await self.bacon.tags.aget_or_create(tag="orange")
+        self.assertIs(created, True)
+        self.assertEqual(await self.bacon.tags.acount(), 3)
+        tag, created = await self.bacon.tags.aget_or_create(
+            id=self.fatty.id, defaults={"tag": "orange"}
+        )
+        self.assertIs(created, False)
+        self.assertEqual(tag, self.fatty)
+        self.assertEqual(await self.bacon.tags.acount(), 3)
+
+    async def test_generic_async_aupdate_or_create(self):
+        tag, created = await self.bacon.tags.aupdate_or_create(
+            id=self.fatty.id, defaults={"tag": "orange"}
+        )
+        self.assertIs(created, False)
+        self.assertEqual(tag.tag, "orange")
+        self.assertEqual(await self.bacon.tags.acount(), 2)
+        tag, created = await self.bacon.tags.aupdate_or_create(tag="pink")
+        self.assertIs(created, True)
+        self.assertEqual(await self.bacon.tags.acount(), 3)
+        self.assertEqual(tag.tag, "pink")
+
     def test_generic_relations_m2m_mimic(self):
         """
         Objects with declared GenericRelations can be tagged directly -- the
