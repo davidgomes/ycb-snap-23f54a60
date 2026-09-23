@@ -908,6 +908,11 @@ def test_diophantine_permute_sign():
     assert len(diophantine(eq, permute=True)) == 62000
     soln = set([(-1, -1), (-1, 2), (1, -2), (1, 1)])
     assert diophantine(10*x**2 + 12*x*y + 12*y**2 - 34, permute=True) == soln
+    soln = set([(-3, -2), (-3, 2), (-2, -3), (-2, 3), (2, -3), (2, 3),
+        (3, -2), (3, 2)])
+    eq = x**4 + y**4 - 2**4 - 3**4
+    assert diophantine(eq, syms=(x, y), permute=True) == soln
+    assert diophantine(eq, syms=(y, x), permute=True) == soln
 
 
 @XFAIL
