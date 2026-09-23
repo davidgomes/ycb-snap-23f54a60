@@ -41,6 +41,13 @@ class BaseModelValidationTests(ValidationAssertions, TestCase):
         mtv = ModelToValidate(number=10, name='Some Name', parent_id=parent.pk)
         self.assertIsNone(mtv.full_clean())
 
+    def test_FK_validates_using_base_manager(self):
+        # Archived authors are filtered out by the default manager, but
+        # ForeignKey validation uses the base manager.
+        author = Author.objects.create(name='Randy', archived=True)
+        article = Article(title='My Article', author=author)
+        self.assertIsNone(article.full_clean())
+
     def test_limited_FK_raises_error(self):
         # The limit_choices_to on the parent field says that a parent object's
         # number attribute must be 10, so this should fail validation.
