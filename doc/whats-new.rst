@@ -47,6 +47,8 @@ Bug fixes
   pandas when decoding times outside the range that can be represented with
   nanosecond-precision values (:issue:`6716`, :pull:`6717`).
   By `Spencer Clark <https://github.com/spencerkclark>`_.
+- :py:attr:`Dataset.chunks` and :py:attr:`Dataset.chunksizes` no longer load
+  lazily indexed (e.g. zarr-backed) data into memory (:issue:`6538`, :pull:`6721`).
 
 Documentation
 ~~~~~~~~~~~~~
