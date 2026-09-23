@@ -332,8 +332,15 @@ Miscellaneous
 
 * Because accessing the language in the session rather than in the cookie is
   deprecated, ``LocaleMiddleware`` no longer looks for the user's language in
-  the session and :func:`django.contrib.auth.logout` no longer preserves the
+  the   session and :func:`django.contrib.auth.logout` no longer preserves the
   session's language after logout.
+
+* On MySQL, SQLite, and Oracle, datetime lookups and functions (e.g.
+  ``__date``, ``__year``, :class:`~django.db.models.functions.Trunc`, and
+  :class:`~django.db.models.functions.Extract`) now convert values from the
+  database's :setting:`TIME_ZONE <DATABASE-TIME_ZONE>` instead of from UTC to
+  the current time zone. No conversion is performed when both time zones are
+  the same.
 
 .. _deprecated-features-3.0:
 
