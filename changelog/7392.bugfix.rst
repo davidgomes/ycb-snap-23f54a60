@@ -1,1 +1,1 @@
-Fix the reported location of tests skipped with ``pytest.mark.skip`` when using ``--runxfail``.
+Fixed the reported location of tests skipped with ``pytest.mark.skip`` when using ``--runxfail``.
