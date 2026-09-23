@@ -8,8 +8,10 @@
     :license: BSD, see LICENSE for details.
 """
 
+import http.server
 import json
 import re
+import threading
 from unittest import mock
 import pytest
 
@@ -160,3 +162,30 @@ def test_linkcheck_request_headers(app, status, warning):
                 assert headers["X-Secret"] == "open sesami"
             else:
                 assert headers["Accept"] == "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8"
+
+
+class InternalServerErrorHandler(http.server.BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_error(500, "Internal Server Error")
+
+    def log_message(self, format, *args):
+        pass
+
+
+@pytest.mark.sphinx('linkcheck', testroot='linkcheck-localserver', freshenv=True)
+def test_raises_for_invalid_status(app, status, warning):
+    server = http.server.HTTPServer(("localhost", 7777), InternalServerErrorHandler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        app.builder.build_all()
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join()
+    content = (app.outdir / 'output.txt').read_text()
+    assert content == (
+        "index.rst:1: [broken] http://localhost:7777/#anchor: "
+        "500 Server Error: Internal Server Error "
+        "for url: http://localhost:7777/\n"
+    )
