@@ -555,6 +555,28 @@ class TestFixtures(TestCase):
         ):
             management.call_command("loaddata", "absolute.json", verbosity=0)
 
+    @override_settings(
+        FIXTURE_DIRS=[
+            os.path.join(_cur_dir, "fixtures_1"),
+            Path(_cur_dir) / "fixtures_1",
+        ]
+    )
+    def test_fixture_dirs_with_duplicates_pathlib(self):
+        with self.assertRaisesMessage(
+            ImproperlyConfigured, "settings.FIXTURE_DIRS contains duplicates."
+        ):
+            management.call_command("loaddata", "absolute.json", verbosity=0)
+
+    @override_settings(FIXTURE_DIRS=[Path(_cur_dir) / "fixtures"])
+    def test_fixture_dirs_with_default_fixture_path_pathlib(self):
+        msg = (
+            "'%s' is a default fixture directory for the '%s' app "
+            "and cannot be listed in settings.FIXTURE_DIRS."
+            % (os.path.join(_cur_dir, "fixtures"), "fixtures_regress")
+        )
+        with self.assertRaisesMessage(ImproperlyConfigured, msg):
+            management.call_command("loaddata", "absolute.json", verbosity=0)
+
     @override_settings(FIXTURE_DIRS=[os.path.join(_cur_dir, "fixtures")])
     def test_fixture_dirs_with_default_fixture_path(self):
         """
