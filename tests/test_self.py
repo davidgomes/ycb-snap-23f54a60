@@ -1228,14 +1228,64 @@ class TestRunTC:
         assert not ex.value.code % 2
 
     def test_regression_recursive(self):
+        """Tests if error is raised when linter is executed over directory not using --recursive=y"""
         self._test_output(
             [join(HERE, "regrtest_data", "directory", "subdirectory"), "--recursive=n"],
             expected_output="No such file or directory",
         )
 
     def test_recursive(self):
+        """Tests if running linter over directory using --recursive=y"""
         self._runtest(
             [join(HERE, "regrtest_data", "directory", "subdirectory"), "--recursive=y"],
+            code=0,
+        )
+
+    @pytest.mark.parametrize("ignore_value", ["ignored_subdirectory", "failing.py"])
+    def test_ignore_recursive(self, ignore_value: str) -> None:
+        """Tests recursive run of linter ignoring directory using --ignore parameter.
+
+        Ignored directory contains files yielding lint errors. If directory is not ignored
+        test would fail due these errors.
+        """
+        self._runtest(
+            [
+                join(HERE, "regrtest_data", "directory"),
+                "--recursive=y",
+                f"--ignore={ignore_value}",
+            ],
+            code=0,
+        )
+
+    @pytest.mark.parametrize("ignore_pattern_value", ["ignored_.*", "failing.*"])
+    def test_ignore_pattern_recursive(self, ignore_pattern_value: str) -> None:
+        """Tests recursive run of linter ignoring directory using --ignore-patterns parameter.
+
+        Ignored directory contains files yielding lint errors. If directory is not ignored
+        test would fail due these errors.
+        """
+        self._runtest(
+            [
+                join(HERE, "regrtest_data", "directory"),
+                "--recursive=y",
+                f"--ignore-patterns={ignore_pattern_value}",
+            ],
+            code=0,
+        )
+
+    @pytest.mark.parametrize("ignore_path_value", [".*ignored.*", ".*failing.*"])
+    def test_ignore_path_recursive(self, ignore_path_value: str) -> None:
+        """Tests recursive run of linter ignoring directory using --ignore-paths parameter.
+
+        Ignored directory contains files yielding lint errors. If directory is not ignored
+        test would fail due these errors.
+        """
+        self._runtest(
+            [
+                join(HERE, "regrtest_data", "directory"),
+                "--recursive=y",
+                f"--ignore-paths={ignore_path_value}",
+            ],
             code=0,
         )
 
@@ -1249,7 +1299,7 @@ class TestRunTC:
                 if not os.path.basename(path) == "regrtest_data"
             ]
             with _test_cwd():
-                os.chdir(join(HERE, "regrtest_data", "directory"))
+                os.chdir(join(HERE, "regrtest_data", "directory", "subdirectory"))
                 self._runtest(
                     [".", "--recursive=y"],
                     code=0,

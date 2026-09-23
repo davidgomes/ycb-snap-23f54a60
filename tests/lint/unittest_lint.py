@@ -864,6 +864,79 @@ def test_by_module_statement_value(initialized_linter: PyLinter) -> None:
         assert module_stats["statement"] == linter2.stats.statement
 
 
+@pytest.mark.parametrize(
+    "ignore_parameter,ignore_parameter_value",
+    [
+        ("--ignore", "failing.py"),
+        ("--ignore", "ignored_subdirectory"),
+        ("--ignore-patterns", "failing.*"),
+        ("--ignore-patterns", "ignored_*"),
+        ("--ignore-paths", ".*directory/ignored.*"),
+        ("--ignore-paths", ".*ignored.*/failing.*"),
+    ],
+)
+def test_recursive_ignore(ignore_parameter, ignore_parameter_value) -> None:
+    """Ignored files and directories are skipped during recursive discovery."""
+    run = Run(
+        [
+            "--recursive",
+            "y",
+            ignore_parameter,
+            ignore_parameter_value,
+            join(REGRTEST_DATA_DIR, "directory"),
+        ],
+        exit=False,
+    )
+
+    linted_files = run.linter._iterate_file_descrs(
+        tuple(run.linter._discover_files([join(REGRTEST_DATA_DIR, "directory")]))
+    )
+    linted_file_paths = [file_item.filepath for file_item in linted_files]
+
+    ignored_file = os.path.abspath(
+        join(REGRTEST_DATA_DIR, "directory", "ignored_subdirectory", "failing.py")
+    )
+    assert ignored_file not in linted_file_paths
+
+    for regrtest_data_module in (
+        ("directory", "subdirectory", "subsubdirectory", "module.py"),
+        ("directory", "subdirectory", "module.py"),
+        ("directory", "package", "module.py"),
+        ("directory", "package", "subpackage", "module.py"),
+    ):
+        module = os.path.abspath(join(REGRTEST_DATA_DIR, *regrtest_data_module))
+        assert module in linted_file_paths
+
+
+def test_recursive_ignore_dot_directory() -> None:
+    """``--ignore``, ``--ignore-paths`` and ``--ignore-patterns`` skip dot directories.
+
+    Regression test for the reported ``.a/foo.py`` case.
+    """
+    with tempdir():
+        os.makedirs(".a")
+        with open(os.path.join(".a", "foo.py"), "w", encoding="utf-8") as stream:
+            stream.write("import re\n")
+        with open("bar.py", "w", encoding="utf-8") as stream:
+            stream.write("import re\n")
+
+        cases = (
+            ["--ignore=.a"],
+            # ``ignore-paths`` is a regex matched from the start of the path.
+            # A bare ``.a`` also matches ``bar.py`` (``ba``), so require the
+            # directory name to end or be followed by a separator.
+            ["--ignore-paths=.a(/|$)"],
+            ["--ignore-patterns=^\\.a"],
+        )
+        for extra in cases:
+            reporter = testutils.GenericTestReporter()
+            Run(["--recursive=y", *extra, "."], reporter=reporter, exit=False)
+            paths = [message.path for message in reporter.messages]
+            assert paths, extra
+            assert all("foo.py" not in path for path in paths), (extra, paths)
+            assert any(path.endswith("bar.py") for path in paths), (extra, paths)
+
+
 def test_import_sibling_module_from_namespace(initialized_linter: PyLinter) -> None:
     """If the parent directory above `namespace` is on sys.path, ensure that
     modules under `namespace` can import each other without raising `import-error`."""
