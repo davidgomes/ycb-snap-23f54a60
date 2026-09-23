@@ -207,7 +207,8 @@ class Collection(artist.Artist, cm.ScalarMappable):
         return self._paths
 
     def set_paths(self, paths):
-        raise NotImplementedError
+        self._paths = paths
+        self.stale = True
 
     def get_transforms(self):
         return self._transforms
