@@ -112,6 +112,13 @@ class TestStrCategoryConverter:
             actual = self.cc.convert(data, self.unit, self.ax)
         np.testing.assert_allclose(actual, np.array([1., 2., 3.]))
 
+    @pytest.mark.parametrize("value", [[], np.array([])],
+                             ids=["list", "ndarray"])
+    def test_convert_empty(self, value):
+        actual = self.cc.convert(value, self.unit, self.ax)
+        assert actual.dtype == float
+        assert actual.size == 0
+
     @pytest.mark.parametrize("fvals", fvalues, ids=fids)
     def test_convert_fail(self, fvals):
         with pytest.raises(TypeError):
@@ -305,6 +312,13 @@ def test_overriding_units_in_plot(fig_test, fig_ref):
         # assert that we have not re-set the units attribute at all
         assert x_units is ax.xaxis.units
         assert y_units is ax.yaxis.units
+
+
+def test_no_deprecation_on_empty_data():
+    fig, ax = plt.subplots()
+    ax.xaxis.update_units(["a", "b"])
+    ax.plot([], [])
+    ax.convert_xunits([])
 
 
 def test_hist():
