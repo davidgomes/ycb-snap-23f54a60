@@ -201,6 +201,11 @@ Forms
   to access model instances. See :ref:`iterating-relationship-choices` for
   details.
 
+* The blank option for :class:`~django.forms.ModelChoiceField` is omitted when
+  the widget is :class:`~django.forms.RadioSelect` and ``blank`` is ``False``.
+  A radio group already has an unselected state, so ``"---------"`` is not
+  presented as a choice for a required foreign key.
+
 * :class:`django.forms.DateTimeField` now accepts dates in a subset of ISO 8601
   datetime formats, including optional timezone (e.g. ``2019-10-10T06:47``,
   ``2019-10-10T06:47:23+04:00``, or ``2019-10-10T06:47:23Z``). Additionally, it
