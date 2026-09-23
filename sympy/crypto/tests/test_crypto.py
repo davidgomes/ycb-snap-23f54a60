@@ -247,11 +247,13 @@ def test_encode_morse():
     assert encode_morse(' ', sep='`') == '``'
     assert encode_morse(' ', sep='``') == '````'
     assert encode_morse('!@#$%^&*()_+') == '-.-.--|.--.-.|...-..-|-.--.|-.--.-|..--.-|.-.-.'
+    assert encode_morse('12345') == '.----|..---|...--|....-|.....'
 
 
 def test_decode_morse():
     assert decode_morse('-.-|.|-.--') == 'KEY'
     assert decode_morse('.-.|..-|-.||') == 'RUN'
+    assert decode_morse('.----|-----') == '10'
     raises(KeyError, lambda: decode_morse('.....----'))
 
 
