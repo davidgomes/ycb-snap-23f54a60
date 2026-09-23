@@ -38,6 +38,7 @@ from seaborn._core.rules import categorical_order
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
+    from seaborn._core.plot import Plot
     from seaborn._core.properties import Property
     from numpy.typing import ArrayLike, NDArray
 
@@ -100,6 +101,10 @@ class Scale:
         self, data: Series, prop: Property, axis: Axis | None = None,
     ) -> Scale:
         raise NotImplementedError()
+
+    def _finalize(self, p: Plot, axis: Axis) -> None:
+        """Perform scale-specific axis tweaks after adding artists."""
+        pass
 
     def __call__(self, data: Series) -> ArrayLike:
 
@@ -226,6 +231,19 @@ class Nominal(Scale):
             new._legend = units_seed, list(stringify(units_seed))
 
         return new
+
+    def _finalize(self, p: Plot, axis: Axis) -> None:
+
+        ax = axis.axes
+        name = axis.axis_name
+        axis.grid(False, which="both")
+        if name not in p._limits:
+            nticks = len(axis.get_major_ticks())
+            lo, hi = -.5, nticks - .5
+            if name == "y":
+                lo, hi = hi, lo
+            set_lim = getattr(ax, f"set_{name}lim")
+            set_lim(lo, hi, auto=None)
 
     def tick(self, locator: Locator | None = None):
         """
