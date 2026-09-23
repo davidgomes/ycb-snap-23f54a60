@@ -977,6 +977,18 @@ class ContourSet(ContourLabeler, mcoll.Collection):
                 self.axes.add_collection(col)
         return self._old_style_split_collections
 
+    def set_paths(self, paths):
+        """
+        Set the paths of the contour levels.
+
+        Parameters
+        ----------
+        paths : list of `.Path`
+            One path per contour level, in the same order as `get_paths`.
+        """
+        self._paths = paths
+        self.stale = True
+
     def get_transform(self):
         """Return the `.Transform` instance used by this ContourSet."""
         if self._transform is None:
