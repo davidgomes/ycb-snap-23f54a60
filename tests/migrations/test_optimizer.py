@@ -822,6 +822,45 @@ class OptimizerTests(SimpleTestCase):
             ],
         )
 
+    def test_alter_field_alter_field(self):
+        """
+        Multiple AlterField operations on the same field reduce to the last one.
+        """
+        self.assertOptimizesTo(
+            [
+                migrations.AlterField(
+                    "Book", "title", models.CharField(max_length=128, null=True)
+                ),
+                migrations.AlterField(
+                    "Book",
+                    "title",
+                    models.CharField(max_length=128, null=True, help_text="help"),
+                ),
+                migrations.AlterField(
+                    "Book",
+                    "title",
+                    models.CharField(
+                        max_length=128, null=True, help_text="help", default=None
+                    ),
+                ),
+            ],
+            [
+                migrations.AlterField(
+                    "Book",
+                    "title",
+                    models.CharField(
+                        max_length=128, null=True, help_text="help", default=None
+                    ),
+                ),
+            ],
+        )
+        self.assertDoesNotOptimize(
+            [
+                migrations.AlterField("Foo", "age", models.IntegerField()),
+                migrations.AlterField("Foo", "name", models.CharField(max_length=100)),
+            ]
+        )
+
     def _test_create_alter_foo_field(self, alter):
         """
         CreateModel, AlterFooTogether/AlterOrderWithRespectTo followed by an
