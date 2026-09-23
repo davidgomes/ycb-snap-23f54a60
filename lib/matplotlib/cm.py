@@ -146,6 +146,10 @@ class ColormapRegistry(Mapping):
                                "that was already in the registry.")
 
         self._cmaps[name] = cmap.copy()
+        # The registered copy must carry the registered name, so that lookups
+        # by ``cmap.name`` (e.g. via rcParams["image.cmap"]) resolve.
+        if self._cmaps[name].name != name:
+            self._cmaps[name].name = name
 
     def unregister(self, name):
         """
