@@ -301,6 +301,10 @@ class Query(BaseExpression):
         obj.table_map = self.table_map.copy()
         obj.where = self.where.clone()
         obj.annotations = self.annotations.copy()
+        if self.combined_queries:
+            obj.combined_queries = tuple([
+                query.clone() for query in self.combined_queries
+            ])
         if self.annotation_select_mask is None:
             obj.annotation_select_mask = None
         else:
@@ -1777,6 +1781,8 @@ class Query(BaseExpression):
 
     def set_empty(self):
         self.where.add(NothingNode(), AND)
+        for query in self.combined_queries:
+            query.set_empty()
 
     def is_empty(self):
         return any(isinstance(c, NothingNode) for c in self.where.children)
