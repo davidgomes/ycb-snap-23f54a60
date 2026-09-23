@@ -442,6 +442,28 @@ class AggregateTestCase(TestCase):
         implicit = list(Author.objects.annotate(Count('book')))
         self.assertCountEqual(explicit, implicit)
 
+    def test_order_by_random_does_not_split_aggregation(self):
+        # order_by('?') compiles to a random function call. That call is not a
+        # column reference and must not be added to GROUP BY.
+        qs = Author.objects.annotate(rc=Count('book_contact_set')).order_by('?')
+        self.assertEqual(
+            dict(qs.values_list('name', 'rc')),
+            {
+                'Adrian Holovaty': 1,
+                'Jacob Kaplan-Moss': 0,
+                'Brad Dayley': 1,
+                'James Bennett': 1,
+                'Jeffrey Forcier': 1,
+                'Paul Bissex': 0,
+                'Wesley J. Chun': 0,
+                'Peter Norvig': 2,
+                'Stuart Russell': 0,
+            },
+        )
+        group_by = str(qs.query).split('ORDER BY', 1)[0]
+        self.assertNotIn('RAND()', group_by)
+        self.assertNotIn('RANDOM()', group_by)
+
     def test_annotate_ordering(self):
         books = Book.objects.values('rating').annotate(oldest=Max('authors__age')).order_by('oldest', 'rating')
         self.assertEqual(
