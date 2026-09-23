@@ -452,6 +452,10 @@ Miscellaneous
 * Providing a non-local remote field in the :attr:`.ForeignKey.to_field`
   argument now raises :class:`~django.core.exceptions.FieldError`.
 
+* :class:`~django.forms.ModelChoiceField` no longer includes a blank choice
+  when its widget is a :class:`~django.forms.RadioSelect` and ``blank`` is
+  ``False`` (the default). Pass ``blank=True`` to include an empty option.
+
 .. _deprecated-features-3.1:
 
 Features deprecated in 3.1
