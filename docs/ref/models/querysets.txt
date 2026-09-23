@@ -4023,6 +4023,22 @@ attribute:
     ``prefetch_related`` calls which store the cached result within a
     ``QuerySet`` instance.
 
+The ``queryset`` argument may also be sliced to limit the number of related
+objects fetched for each instance. The slice is applied per instance, so the
+following fetches, at most, the three most voted choices of each question:
+
+    >>> top_choices = Choice.objects.order_by('-votes')[:3]
+    >>> prefetch = Prefetch('choice_set', queryset=top_choices, to_attr='top_choices')
+    >>> Question.objects.prefetch_related(prefetch)
+
+Slicing requires a database backend that supports window functions (all
+built-in backends do, except SQLite < 3.25), otherwise ``NotSupportedError`` is
+raised.
+
+.. versionchanged:: 4.2
+
+    Support for sliced querysets was added.
+
 ``prefetch_related_objects()``
 ------------------------------
 
