@@ -1306,6 +1306,30 @@ class OtherModelTests(SimpleTestCase):
 
         self.assertEqual(ShippingMethod.check(), [])
 
+    def test_field_name_clash_with_m2m_through_fields_list(self):
+        class Parent(models.Model):
+            name = models.CharField(max_length=256)
+
+        class ProxyParent(Parent):
+            class Meta:
+                proxy = True
+
+        class Child(models.Model):
+            parent = models.ForeignKey(Parent, models.CASCADE)
+            many_to_many_field = models.ManyToManyField(
+                Parent,
+                through='ManyToManyModel',
+                through_fields=['child', 'parent'],
+                related_name='something',
+            )
+
+        class ManyToManyModel(models.Model):
+            parent = models.ForeignKey(Parent, models.CASCADE, related_name='+')
+            child = models.ForeignKey(Child, models.CASCADE, related_name='+')
+            second_child = models.ForeignKey(Child, models.CASCADE, null=True, default=None)
+
+        self.assertEqual(ProxyParent.check(), [])
+
     def test_onetoone_with_parent_model(self):
         class Place(models.Model):
             pass
