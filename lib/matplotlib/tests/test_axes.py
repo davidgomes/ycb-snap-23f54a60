@@ -1803,6 +1803,19 @@ def test_bar_color_none_alpha():
         assert rect.get_edgecolor() == (1, 0, 0, 0.3)
 
 
+@check_figures_equal(extensions=["png"])
+def test_bar_all_nan(fig_test, fig_ref):
+    mpl.style.use("mpl20")
+    ax_test = fig_test.subplots()
+    ax_ref = fig_ref.subplots()
+
+    ax_test.bar([np.nan], [np.nan])
+    ax_test.bar([1], [1])
+
+    ax_ref.bar([1], [1]).remove()
+    ax_ref.bar([1], [1])
+
+
 def test_bar_edgecolor_none_alpha():
     ax = plt.gca()
     rects = ax.bar([1, 2], [2, 4], alpha=0.3, color='r', edgecolor='none')
