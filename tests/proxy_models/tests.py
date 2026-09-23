@@ -390,6 +390,12 @@ class ProxyModelTests(TestCase):
             repr(resp), "<ProxyImprovement: ProxyImprovement:improve that>"
         )
 
+    def test_select_related_only(self):
+        user = ProxyTrackerUser.objects.create(name="Joe Doe", status="test")
+        issue = Issue.objects.create(summary="New issue", assignee=user)
+        qs = Issue.objects.select_related("assignee").only("assignee__status")
+        self.assertEqual(qs.get(), issue)
+
     def test_proxy_load_from_fixture(self):
         management.call_command("loaddata", "mypeople.json", verbosity=0)
         p = MyPerson.objects.get(pk=100)
