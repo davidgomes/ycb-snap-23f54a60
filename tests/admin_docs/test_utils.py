@@ -44,6 +44,15 @@ class TestUtils(AdminDocsSimpleTestCase):
         )
         self.assertEqual(trim_docstring_output, trimmed_docstring)
 
+    def test_trim_docstring_first_line_not_empty(self):
+        # The first line of a docstring is not indented in source, so it must
+        # not pull the common indent down to zero.
+        docstring = 'test tests something.\n\n    More detail.\n'
+        self.assertEqual(
+            trim_docstring(docstring),
+            'test tests something.\n\nMore detail.',
+        )
+
     def test_parse_docstring(self):
         title, description, metadata = parse_docstring(self.docstring)
         docstring_title = (
