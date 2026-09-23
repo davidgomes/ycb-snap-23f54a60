@@ -434,6 +434,85 @@ class RequestsTestCase(unittest.TestCase):
         assert b'name="stuff"' in prep.body
         assert b'name="b\'stuff\'"' not in prep.body
 
+    def test_unicode_method_name(self):
+        # A unicode method must be stored as a native string. On Python 2,
+        # httplib concatenates that request line with the raw body; a unicode
+        # method plus a non-ASCII multipart body raises UnicodeDecodeError.
+        import socket
+        import threading
+        from io import BytesIO
+        from requests.compat import builtin_str
+
+        payload = b'\xcf' * 64
+        received = {}
+        ready = threading.Event()
+
+        def serve():
+            srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            srv.bind(('127.0.0.1', 0))
+            srv.listen(1)
+            received['port'] = srv.getsockname()[1]
+            ready.set()
+            conn, _addr = srv.accept()
+            conn.settimeout(5)
+            try:
+                data = b''
+                while b'\r\n\r\n' not in data:
+                    chunk = conn.recv(65536)
+                    if not chunk:
+                        break
+                    data += chunk
+                head, rest = data.split(b'\r\n\r\n', 1)
+                length = 0
+                for line in head.split(b'\r\n'):
+                    if line.lower().startswith(b'content-length:'):
+                        length = int(line.split(b':', 1)[1].strip())
+                while len(rest) < length:
+                    chunk = conn.recv(65536)
+                    if not chunk:
+                        break
+                    rest += chunk
+                received['head'] = head
+                received['body'] = rest
+                conn.sendall(
+                    b'HTTP/1.1 200 OK\r\nContent-Length: 0\r\n'
+                    b'Connection: close\r\n\r\n'
+                )
+            finally:
+                conn.close()
+                srv.close()
+
+        thread = threading.Thread(target=serve)
+        thread.daemon = True
+        thread.start()
+        assert ready.wait(5)
+
+        # Direct preparation must not leave a unicode method behind either.
+        prepared = requests.Request(
+            method=u'POST',
+            url='http://example.com/post',
+            files={u'file': BytesIO(payload)},
+        ).prepare()
+        assert isinstance(prepared.method, builtin_str)
+        assert prepared.method == 'POST'
+
+        session = requests.Session()
+        session.trust_env = False
+        response = session.request(
+            method=u'POST',
+            url='http://127.0.0.1:%d/post' % received['port'],
+            files={u'file': BytesIO(payload)},
+            timeout=5,
+        )
+        thread.join(5)
+
+        assert response.status_code == 200
+        assert isinstance(response.request.method, builtin_str)
+        assert response.request.method == 'POST'
+        assert received['head'].startswith(b'POST ')
+        assert payload in received['body']
+
     def test_custom_content_type(self):
         r = requests.post(httpbin('post'),
                           data={'stuff': json.dumps({'a': 123})},

@@ -307,7 +307,10 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):
         """Prepares the given HTTP method."""
         self.method = method
         if self.method is not None:
-            self.method = self.method.upper()
+            # Native strings only. A unicode method on Python 2 makes httplib
+            # build a unicode request line, which then fails to concatenate
+            # with a non-ASCII body (UnicodeDecodeError).
+            self.method = to_native_string(self.method.upper())
 
     def prepare_url(self, url, params):
         """Prepares the given HTTP URL."""
