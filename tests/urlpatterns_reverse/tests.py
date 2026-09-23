@@ -1138,6 +1138,13 @@ class ResolverMatchTests(SimpleTestCase):
         )
 
 
+@override_settings(ROOT_URLCONF='urlpatterns_reverse.urls')
+class GetResolverTests(SimpleTestCase):
+    def test_get_resolver_none_and_root_urlconf_are_cached_together(self):
+        self.assertIs(get_resolver(), get_resolver('urlpatterns_reverse.urls'))
+        self.assertIs(get_resolver(None), get_resolver('urlpatterns_reverse.urls'))
+
+
 @override_settings(ROOT_URLCONF='urlpatterns_reverse.erroneous_urls')
 class ErroneousViewTests(SimpleTestCase):
 
