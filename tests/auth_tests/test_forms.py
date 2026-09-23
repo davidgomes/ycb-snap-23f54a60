@@ -423,6 +423,7 @@ class AuthenticationFormTest(TestDataMixin, TestCase):
         CustomEmailField.objects.create_user(**data)
         form = AuthenticationForm(None, data)
         self.assertEqual(form.fields['username'].max_length, 255)
+        self.assertEqual(form.fields['username'].widget.attrs['maxlength'], 255)
         self.assertEqual(form.errors, {})
 
     @override_settings(AUTH_USER_MODEL='auth_tests.IntegerUsernameUser')
@@ -435,6 +436,7 @@ class AuthenticationFormTest(TestDataMixin, TestCase):
         IntegerUsernameUser.objects.create_user(**data)
         form = AuthenticationForm(None, data)
         self.assertEqual(form.fields['username'].max_length, 254)
+        self.assertEqual(form.fields['username'].widget.attrs['maxlength'], 254)
         self.assertEqual(form.errors, {})
 
     def test_username_field_label(self):
@@ -457,6 +459,12 @@ class AuthenticationFormTest(TestDataMixin, TestCase):
     def test_username_field_autocapitalize_none(self):
         form = AuthenticationForm()
         self.assertEqual(form.fields['username'].widget.attrs.get('autocapitalize'), 'none')
+
+    def test_username_field_maxlength_html_attribute(self):
+        form = AuthenticationForm()
+        self.assertEqual(form.fields['username'].max_length, 150)
+        self.assertEqual(form.fields['username'].widget.attrs['maxlength'], 150)
+        self.assertIn('maxlength="150"', str(form['username']))
 
     def test_username_field_label_empty_string(self):
 
