@@ -6,6 +6,7 @@ import enum
 import functools
 import math
 import re
+import sys
 import types
 import uuid
 
@@ -95,7 +96,14 @@ class DeconstructableSerializer(BaseSerializer):
             imports = {"from django.db import models"}
             name = "models.%s" % name
         else:
-            imports = {"import %s" % module}
+            # Nested classes: 'pkg.mod.Outer.Inner' must import pkg.mod, not
+            # pkg.mod.Outer (which is a class, not a module).
+            module_name = path
+            while module_name not in sys.modules and "." in module_name:
+                module_name = module_name.rpartition(".")[0]
+            if module_name not in sys.modules:
+                module_name = module
+            imports = {"import %s" % module_name}
             name = path
         return name, imports
 
@@ -269,7 +277,7 @@ class TypeSerializer(BaseSerializer):
             if module == builtins.__name__:
                 return self.value.__name__, set()
             else:
-                return "%s.%s" % (module, self.value.__name__), {"import %s" % module}
+                return "%s.%s" % (module, self.value.__qualname__), {"import %s" % module}
 
 
 class UUIDSerializer(BaseSerializer):

@@ -26,6 +26,16 @@ from django.utils.translation import gettext_lazy as _
 from .models import FoodManager, FoodQuerySet
 
 
+class DeconstructibleInstances:
+    def deconstruct(self):
+        return ('DeconstructibleInstances', [], {})
+
+
+class OuterField:
+    class Inner(models.CharField):
+        pass
+
+
 class Money(decimal.Decimal):
     def deconstruct(self):
         return (
@@ -187,6 +197,10 @@ class WriterTests(SimpleTestCase):
     class NestedEnum(enum.IntEnum):
         A = 1
         B = 2
+
+    class NestedChoices(models.TextChoices):
+        X = 'X', 'X value'
+        Y = 'Y', 'Y value'
 
     def safe_exec(self, string, value=None):
         d = {}
@@ -381,6 +395,27 @@ class WriterTests(SimpleTestCase):
             "(datetime.date(1969, 7, 20), 'First date'), "
             "(datetime.date(1969, 11, 19), 'Second date')], "
             "default=datetime.date(1969, 11, 19))"
+        )
+
+    def test_serialize_nested_class(self):
+        for nested_cls in [self.NestedEnum, self.NestedChoices]:
+            cls_name = nested_cls.__name__
+            with self.subTest(cls_name):
+                self.assertSerializedResultEqual(
+                    nested_cls,
+                    (
+                        "migrations.test_writer.WriterTests.%s" % cls_name,
+                        {'import migrations.test_writer'},
+                    ),
+                )
+
+    def test_serialize_nested_field(self):
+        self.assertSerializedResultEqual(
+            OuterField.Inner(max_length=20),
+            (
+                "migrations.test_writer.OuterField.Inner(max_length=20)",
+                {"import migrations.test_writer"},
+            ),
         )
 
     def test_serialize_uuid(self):
@@ -726,10 +761,6 @@ class WriterTests(SimpleTestCase):
         # Yes, it doesn't make sense to use a class as a default for a
         # CharField. It does make sense for custom fields though, for example
         # an enumfield that takes the enum class as an argument.
-        class DeconstructibleInstances:
-            def deconstruct(self):
-                return ('DeconstructibleInstances', [], {})
-
         string = MigrationWriter.serialize(models.CharField(default=DeconstructibleInstances))[0]
         self.assertEqual(string, "models.CharField(default=migrations.test_writer.DeconstructibleInstances)")
 
