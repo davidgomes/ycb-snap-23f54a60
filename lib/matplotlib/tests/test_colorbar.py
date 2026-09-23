@@ -939,8 +939,14 @@ def test_colorbar_extend_drawedges(extend, coloroffset, res, inverted):
     if inverted:
         ax.invert_xaxis()
         cbar._draw_all()
-    np.testing.assert_array_equal(cbar.dividers.get_segments(),
-                                  [[[x, 0], [x, 1]] for x in res])
+    else:
+        np.testing.assert_array_equal(cbar.dividers.get_segments(),
+                                      [[[x, 0], [x, 1]] for x in res])
+    # An edge is drawn at an end of the colorbar iff it has an extension.
+    edges = [segment[0, 0] for segment in cbar.dividers.get_segments()]
+    left, right = ax.get_xlim()
+    assert (left in edges) == cbar._extend_lower()
+    assert (right in edges) == cbar._extend_upper()
 
 
 def test_negative_boundarynorm():
