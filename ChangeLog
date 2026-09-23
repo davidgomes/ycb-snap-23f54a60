@@ -9,6 +9,11 @@ Release date: TBA
 ..
   Put new features and bugfixes here and also in 'doc/whatsnew/2.9.rst'
 
+* Fix ``unused-import`` false positive for imported modules referenced in
+  attribute lookups in type comments.
+
+  Closes #4603
+
 * Add type annotations to pyreverse dot files
 
   Closes #1548

@@ -1826,6 +1826,12 @@ class VariablesChecker(BaseChecker):
             self._type_annotation_names.append(type_annotation.name)
             return
 
+        # Attribute lookups such as ``foo.Bar`` in a type comment reference the
+        # imported module (or the imported name) via the expression.
+        if isinstance(type_annotation, astroid.Attribute):
+            self._store_type_annotation_node(type_annotation.expr)
+            return
+
         if not isinstance(type_annotation, astroid.Subscript):
             return
 
