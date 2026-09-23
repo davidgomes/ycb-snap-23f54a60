@@ -1190,6 +1190,22 @@ def test_importorskip():
         pytest.importorskip("doesnotexist")
 
 
+def test_skip_location_with_runxfail(testdir):
+    """--runxfail must not move @pytest.mark.skip locations into skipping.py."""
+    testdir.makepyfile(
+        """
+        import pytest
+        @pytest.mark.skip
+        def test_skip_location():
+            assert 0
+        """
+    )
+    result = testdir.runpytest("-rs", "--runxfail")
+    result.stdout.fnmatch_lines(
+        ["SKIPPED [[]1[]] test_skip_location_with_runxfail.py:3: unconditional skip"]
+    )
+
+
 def test_relpath_rootdir(testdir):
     testdir.makepyfile(
         **{
