@@ -1241,6 +1241,8 @@ class PandasIndexAdapter(ExplicitlyIndexedNDArrayMixin):
                 dtype = np.dtype('O')
             else:
                 dtype = array.dtype
+        else:
+            dtype = np.dtype(dtype)
         self._dtype = dtype
 
     @property
@@ -1305,3 +1307,16 @@ class PandasIndexAdapter(ExplicitlyIndexedNDArrayMixin):
     def __repr__(self):
         return ('%s(array=%r, dtype=%r)'
                 % (type(self).__name__, self.array, self.dtype))
+
+    def copy(self, deep=True):
+        # Not the same as just writing `self.array.copy(deep=deep)`, as
+        # shallow copies of the underlying numpy.ndarrays become deep ones
+        # upon pickling
+        # >>> len(pickle.dumps((self.array, self.array)))
+        # 4000281
+        # >>> len(pickle.dumps((self.array, self.array.copy(deep=False))))
+        # 8000341
+        # Also, pandas' Index.copy(deep=True) can cast '<U*' indexes to
+        # object; keep this adapter's dtype so that cast is not exposed.
+        array = self.array.copy(deep=True) if deep else self.array
+        return type(self)(array, self._dtype)
