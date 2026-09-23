@@ -406,8 +406,6 @@ class PytestPluginManager(PluginManager):
         else:
             directory = path
 
-        directory = unique_path(directory)
-
         # XXX these days we may rather want to use config.rootdir
         # and allow users to opt into looking into the rootdir parent
         # directories instead of requiring to specify confcutdir
@@ -432,12 +430,14 @@ class PytestPluginManager(PluginManager):
         raise KeyError(name)
 
     def _importconftest(self, conftestpath):
-        # Use realpath to avoid loading the same conftest twice
+        # Use a unique path as key to avoid loading the same conftest twice
         # with build systems that create build directories containing
-        # symlinks to actual files.
-        conftestpath = unique_path(conftestpath)
+        # symlinks to actual files, or on case-insensitive file systems.
+        # The original path is still used for importing, since the
+        # normalized one loses the casing needed for module names (#5819).
+        key = unique_path(conftestpath)
         try:
-            return self._conftestpath2mod[conftestpath]
+            return self._conftestpath2mod[key]
         except KeyError:
             pkgpath = conftestpath.pypkgpath()
             if pkgpath is None:
@@ -454,7 +454,7 @@ class PytestPluginManager(PluginManager):
                 raise ConftestImportFailure(conftestpath, sys.exc_info())
 
             self._conftest_plugins.add(mod)
-            self._conftestpath2mod[conftestpath] = mod
+            self._conftestpath2mod[key] = mod
             dirpath = conftestpath.dirpath()
             if dirpath in self._dirpath2confmods:
                 for path, mods in self._dirpath2confmods.items():
