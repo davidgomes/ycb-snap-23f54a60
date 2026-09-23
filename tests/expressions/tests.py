@@ -775,6 +775,13 @@ class BasicExpressionsTests(TestCase):
         self.assertFalse(Employee.objects.exclude(Exists(inner)).exists())
         self.assertCountEqual(qs2, Employee.objects.exclude(~Exists(inner)))
 
+    def test_negated_empty_exists(self):
+        manager = Manager.objects.create()
+        qs = Manager.objects.filter(
+            ~Exists(Manager.objects.none()) & Q(pk=manager.pk)
+        )
+        self.assertSequenceEqual(qs, [manager])
+
     def test_subquery_in_filter(self):
         inner = Company.objects.filter(ceo=OuterRef('pk')).values('based_in_eu')
         self.assertSequenceEqual(
