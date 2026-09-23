@@ -1480,6 +1480,19 @@ class AggregateTestCase(TestCase):
                 )
                 self.assertEqual(result['value'], 35)
 
+    def test_aggregation_default_after_annotation(self):
+        result = Author.objects.annotate(idx=F('id')).aggregate(
+            Sum('id', default=0),
+        )
+        self.assertEqual(
+            result['id__sum'],
+            Author.objects.aggregate(Sum('id'))['id__sum'],
+        )
+        empty = Author.objects.annotate(idx=F('id')).filter(age__gt=100).aggregate(
+            Sum('age', default=0),
+        )
+        self.assertEqual(empty['age__sum'], 0)
+
     def test_aggregation_default_group_by(self):
         qs = Publisher.objects.values('name').annotate(
             books=Count('book'),
