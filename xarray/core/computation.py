@@ -1909,7 +1909,7 @@ def polyval(
 
     # using Horner's method
     # https://en.wikipedia.org/wiki/Horner%27s_method
-    res = coeffs.isel({degree_dim: max_deg}, drop=True) + zeros_like(coord)
+    res = zeros_like(coord) + coeffs.isel({degree_dim: max_deg}, drop=True)
     for deg in range(max_deg - 1, -1, -1):
         res *= coord
         res += coeffs.isel({degree_dim: deg}, drop=True)
@@ -1918,26 +1918,34 @@ def polyval(
 
 
 def _ensure_numeric(data: T_Xarray) -> T_Xarray:
-    """Converts all datetime64 variables to float64
+    """Converts all datetime64 and timedelta64 variables to float64
 
     Parameters
     ----------
     data : DataArray or Dataset
-        Variables with possible datetime dtypes.
+        Variables with possible datetime or timedelta dtypes.
 
     Returns
     -------
     DataArray or Dataset
-        Variables with datetime64 dtypes converted to float64.
+        Variables with datetime64 or timedelta64 dtypes converted to float64.
     """
     from .dataset import Dataset
 
     def to_floatable(x: DataArray) -> DataArray:
-        if x.dtype.kind in "mM":
+        if x.dtype.kind == "M":
             return x.copy(
                 data=datetime_to_numeric(
                     x.data,
                     offset=np.datetime64("1970-01-01"),
+                    datetime_unit="ns",
+                ),
+            )
+        elif x.dtype.kind == "m":
+            return x.copy(
+                data=datetime_to_numeric(
+                    x.data,
+                    offset=np.timedelta64(0, "ns"),
                     datetime_unit="ns",
                 ),
             )
