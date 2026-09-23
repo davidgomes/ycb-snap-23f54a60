@@ -62,6 +62,7 @@ class UpdateQuery(Query):
         self.values = []
         self.related_ids = None
         self.related_updates = {}
+        self.related_updates_index = {}
 
     def clone(self):
         obj = super().clone()
@@ -134,7 +135,7 @@ class UpdateQuery(Query):
             query = UpdateQuery(model)
             query.values = values
             if self.related_ids is not None:
-                query.add_filter("pk__in", self.related_ids)
+                query.add_filter("pk__in", self.related_ids.get(model, []))
             result.append(query)
         return result
 

@@ -1836,7 +1836,25 @@ class SQLUpdateCompiler(SQLCompiler):
         query.clear_ordering(force=True)
         query.extra = {}
         query.select = []
-        query.add_fields([query.get_meta().pk.name])
+        fields = [query.get_meta().pk.name]
+        meta = query.get_meta()
+        self.query.related_updates_index = {}
+        for related_model in self.query.related_updates:
+            if related_model._meta.concrete_model is not meta.concrete_model:
+                path = []
+                opts = meta
+                while opts is not None:
+                    link = opts.get_ancestor_link(related_model)
+                    if link is None:
+                        break
+                    path.append(link.name)
+                    opts = link.remote_field.model._meta
+                    if opts.concrete_model is related_model._meta.concrete_model:
+                        break
+                if path:
+                    self.query.related_updates_index[related_model] = len(fields)
+                    fields.append(LOOKUP_SEP.join(path))
+        query.add_fields(fields)
         super().pre_sql_setup()
 
         must_pre_select = (
@@ -1851,10 +1869,16 @@ class SQLUpdateCompiler(SQLCompiler):
             # don't want them to change), or the db backend doesn't support
             # selecting from the updating table (e.g. MySQL).
             idents = []
+            related_ids = collections.defaultdict(list)
             for rows in query.get_compiler(self.using).execute_sql(MULTI):
                 idents.extend(r[0] for r in rows)
+                for parent, index in self.query.related_updates_index.items():
+                    related_ids[parent].extend(r[index] for r in rows)
+            for parent in self.query.related_updates:
+                if parent not in self.query.related_updates_index:
+                    related_ids[parent] = idents
             self.query.add_filter("pk__in", idents)
-            self.query.related_ids = idents
+            self.query.related_ids = related_ids
         else:
             # The fast path. Filters and updates in one query.
             self.query.add_filter("pk__in", query)
