@@ -9,6 +9,11 @@ Release date: TBA
 ..
   Put new features here and also in 'doc/whatsnew/2.14.rst'
 
+* Respect ``ignore``, ``ignore-patterns`` and ``ignore-paths`` settings when
+  running with ``--recursive=y``.
+
+  Closes #6471
+
 * Added new checker ``comparison-of-constants``.
 
   Closes #6076
