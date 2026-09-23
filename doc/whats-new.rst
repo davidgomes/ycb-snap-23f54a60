@@ -26,6 +26,8 @@ New Features
 
 - Enable the limit option for dask array in the following methods :py:meth:`DataArray.ffill`, :py:meth:`DataArray.bfill`, :py:meth:`Dataset.ffill` and :py:meth:`Dataset.bfill` (:issue:`6112`)
   By `Joseph Nowak <https://github.com/josephnowak>`_.
+- Add ``keep_attrs`` argument to :py:func:`where` to keep the attributes of ``x``
+  (:issue:`4141`, :issue:`4682`, :pull:`4687`).
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
