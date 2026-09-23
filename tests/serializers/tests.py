@@ -25,6 +25,9 @@ from .models import (
     ProxyBaseModel,
     ProxyProxyBaseModel,
     Score,
+    SelectRelatedTag,
+    SelectRelatedTagMaster,
+    SelectRelatedTaggedItem,
     Team,
 )
 
@@ -273,6 +276,21 @@ class SerializersTestBase:
 
         with self.assertNumQueries(0):
             serializers.serialize(self.serializer_name, [mv])
+
+    def test_serialize_m2m_manager_select_related(self):
+        """
+        Serializing an m2m whose target uses a manager with select_related()
+        must not raise FieldError from only("pk") deferring that relation.
+        """
+        master = SelectRelatedTagMaster.objects.create(name="master")
+        tag = SelectRelatedTag.objects.create(name="tag", master=master)
+        item = SelectRelatedTaggedItem.objects.create(name="item")
+        item.tags.add(tag)
+        serial_str = serializers.serialize(self.serializer_name, [item])
+        self.assertTrue(self._validate_output(serial_str))
+        loaded = next(serializers.deserialize(self.serializer_name, serial_str))
+        loaded.save()
+        self.assertEqual(list(loaded.object.tags.values_list("pk", flat=True)), [tag.pk])
 
     def test_serialize_prefetch_related_m2m(self):
         # One query for the Article table and one for each prefetched m2m

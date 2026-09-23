@@ -163,3 +163,23 @@ class ComplexModel(models.Model):
     field1 = models.CharField(max_length=10)
     field2 = models.CharField(max_length=10)
     field3 = models.CharField(max_length=10)
+
+
+class SelectRelatedTagMaster(models.Model):
+    name = models.CharField(max_length=120)
+
+
+class SelectRelatedTagManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().select_related("master")
+
+
+class SelectRelatedTag(models.Model):
+    name = models.CharField(max_length=120)
+    master = models.ForeignKey(SelectRelatedTagMaster, models.SET_NULL, null=True)
+    objects = SelectRelatedTagManager()
+
+
+class SelectRelatedTaggedItem(models.Model):
+    name = models.CharField(max_length=120)
+    tags = models.ManyToManyField(SelectRelatedTag, blank=True)

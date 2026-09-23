@@ -155,7 +155,15 @@ class Serializer(base.Serializer):
                     self.xml.addQuickElement("object", attrs={"pk": str(value.pk)})
 
                 def queryset_iterator(obj, field):
-                    return getattr(obj, field.name).only("pk").iterator()
+                    # Clear select_related() inherited from a custom manager.
+                    # only("pk") defers every other column, and a deferred
+                    # field cannot also be followed with select_related().
+                    return (
+                        getattr(obj, field.name)
+                        .select_related(None)
+                        .only("pk")
+                        .iterator()
+                    )
 
             m2m_iter = getattr(obj, "_prefetched_objects_cache", {}).get(
                 field.name,
