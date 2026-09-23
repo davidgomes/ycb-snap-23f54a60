@@ -132,7 +132,7 @@ from collections import defaultdict
 
 from sympy.core.relational import (Ge, Gt, Le, Lt)
 from sympy.core import Symbol, Tuple, Dummy
-from sympy.core.basic import Basic
+from sympy.core.basic import Atom, Basic
 from sympy.core.expr import Expr
 from sympy.core.numbers import Float, Integer, oo
 from sympy.core.sympify import _sympify, sympify, SympifyError
@@ -869,7 +869,7 @@ class For(Token):
         return _sympify(itr)
 
 
-class String(Token):
+class String(Atom, Token):
     """ SymPy object representing a string.
 
     Atomic object which is not an expression (as opposed to Symbol).
@@ -906,6 +906,15 @@ class String(Token):
 
     def _sympystr(self, printer, *args, **kwargs):
         return self.text
+
+    def kwargs(self, exclude=(), apply=None):
+        return {}
+
+    # ``text`` is not stored in ``args``, so rebuilding from ``args`` must
+    # return the instance itself.
+    @property
+    def func(self):
+        return lambda: self
 
 
 class QuotedString(String):
