@@ -1525,6 +1525,26 @@ class AggregationTests(TestCase):
             allow_distinct = True
         DistinctAggregate('foo', distinct=True)
 
+    @skipUnlessDBFeature('supports_subqueries_in_group_by')
+    def test_having_subquery_select(self):
+        # Combining __in against a queryset with an aggregate must not put
+        # every concrete column of the subquery into GROUP BY (#32690).
+        authors = Author.objects.filter(pk=self.a1.pk)
+        books = Book.objects.annotate(Count('authors')).filter(
+            Q(authors__in=authors) | Q(authors__count__gt=2)
+        )
+        self.assertEqual(set(books), {self.b1, self.b4})
+
+    @skipUnlessDBFeature('supports_subqueries_in_group_by')
+    def test_having_subquery_select_nested_relation(self):
+        # Same failure through a multi-hop relation: rel__in=<queryset> OR
+        # rel__count=0 used to select every column of the related model.
+        friends = Author.objects.filter(pk=self.a2.pk)
+        books = Book.objects.annotate(Count('contact__friends')).filter(
+            Q(contact__friends__in=friends) | Q(contact__friends__count=0)
+        ).distinct()
+        self.assertEqual(set(books), {self.b1, self.b2})
+
 
 class JoinPromotionTests(TestCase):
     def test_ticket_21150(self):
