@@ -172,6 +172,10 @@ def test_residue():
     assert nthroot_mod(11, 3, 109) is None
     raises(NotImplementedError, lambda: nthroot_mod(16, 5, 36))
     raises(NotImplementedError, lambda: nthroot_mod(9, 16, 36))
+    assert nthroot_mod(17*17, 5, 17, True) == [0]
+    assert nthroot_mod(17*17, 5, 17) == 0
+    assert nthroot_mod(0, 3, 7, True) == [0]
+    assert nthroot_mod(17, 16, 17, True) == [0]
 
     for p in primerange(5, 100):
         qv = range(3, p, 4)
