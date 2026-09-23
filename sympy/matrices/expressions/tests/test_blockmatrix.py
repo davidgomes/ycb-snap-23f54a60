@@ -3,7 +3,7 @@ from sympy.matrices.expressions.blockmatrix import (
     BlockMatrix, bc_dist, bc_matadd, bc_transpose, bc_inverse,
     blockcut, reblock_2x2, deblock)
 from sympy.matrices.expressions import (MatrixSymbol, Identity,
-        Inverse, trace, Transpose, det)
+        Inverse, trace, Transpose, det, ZeroMatrix)
 from sympy.matrices import (
     Matrix, ImmutableMatrix, ImmutableSparseMatrix)
 from sympy.core import Tuple, symbols, Expr
@@ -222,3 +222,11 @@ def test_block_collapse_type():
     assert block_collapse(Transpose(bm1)).__class__ == BlockDiagMatrix
     assert bc_transpose(Transpose(bm1)).__class__ == BlockDiagMatrix
     assert bc_inverse(Inverse(bm1)).__class__ == BlockDiagMatrix
+
+def test_issue_17624():
+    a = MatrixSymbol("a", 2, 2)
+    z = ZeroMatrix(2, 2)
+    b = BlockMatrix([[a, z], [z, z]])
+    assert block_collapse(b * b) == BlockMatrix([[a**2, z], [z, z]])
+    assert block_collapse(b * b * b) == BlockMatrix([[a**3, z], [z, z]])
+    assert b._blockmul(b)._blockmul(b) == BlockMatrix([[a**3, z], [z, z]])
