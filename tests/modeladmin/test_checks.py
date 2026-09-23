@@ -3,6 +3,7 @@ from django.contrib.admin import BooleanFieldListFilter, SimpleListFilter
 from django.contrib.admin.options import VERTICAL, ModelAdmin, TabularInline
 from django.contrib.admin.sites import AdminSite
 from django.core.checks import Error
+from django.db import models
 from django.db.models import F
 from django.db.models.functions import Upper
 from django.forms.models import BaseModelFormSet
@@ -508,6 +509,25 @@ class ListDisplayTests(CheckTestCase):
             list_display = ('name', 'decade_published_in', 'a_method', a_callable)
 
         self.assertIsValid(TestModelAdmin, ValidationTestModel)
+
+    def test_field_accessible_only_via_instance(self):
+        class PositionField(models.IntegerField):
+            """Descriptor that raises when read from the model class."""
+            def __get__(self, instance, owner):
+                if instance is None:
+                    raise AttributeError
+                return instance.__dict__[self.attname]
+
+        class OrderModel(models.Model):
+            order = PositionField()
+
+            class Meta:
+                app_label = 'modeladmin'
+
+        class TestModelAdmin(ModelAdmin):
+            list_display = ('order',)
+
+        self.assertIsValid(TestModelAdmin, OrderModel)
 
 
 class ListDisplayLinksCheckTests(CheckTestCase):
