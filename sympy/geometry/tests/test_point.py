@@ -365,6 +365,14 @@ def test_arguments():
     assert Point(dim=3, on_morph='error')
 
 
+def test_rmul():
+    p1, p2 = Point(0, 0), Point(1, 1)
+    for f in (2, 2.0, S(2), S(2.0), Rational(1, 2), Symbol('x')):
+        assert f*p2 == p2*f
+        assert p1 + f*p2 == p1 + p2*f
+    assert 2*Point3D(1, 2, 3) == Point3D(2, 4, 6)
+
+
 def test_unit():
     assert Point(1, 1).unit == Point(sqrt(2)/2, sqrt(2)/2)
 
