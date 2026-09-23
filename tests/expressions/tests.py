@@ -21,6 +21,7 @@ from django.db.models.sql import constants
 from django.db.models.sql.datastructures import Join
 from django.test import SimpleTestCase, TestCase, skipUnlessDBFeature
 from django.test.utils import Approximate, isolate_apps
+from django.utils.functional import SimpleLazyObject
 
 from .models import (
     UUID, UUIDPK, Company, Employee, Experiment, Number, RemoteEmployee,
@@ -575,6 +576,17 @@ class BasicExpressionsTests(TestCase):
         outer = Time.objects.annotate(other=Subquery(middle, output_field=IntegerField()))
         # This exercises the double OuterRef form with AutoField as pk.
         self.assertCountEqual(outer, [first, second])
+
+    def test_nested_subquery_foreign_key_filter_lazy_object(self):
+        max_ceo = SimpleLazyObject(lambda: Employee.objects.get(pk=self.max.pk))
+        inner = Company.objects.filter(pk=OuterRef('pk')).values('ceo')
+        middle = Company.objects.filter(pk=OuterRef('pk')).annotate(
+            ceo_pk=Subquery(inner),
+        ).values('ceo_pk')
+        qs = Company.objects.annotate(
+            ceo_pk=Subquery(middle),
+        ).filter(ceo_pk=max_ceo)
+        self.assertSequenceEqual(qs, [self.gmbh])
 
     def test_annotations_within_subquery(self):
         Company.objects.filter(num_employees__lt=50).update(ceo=Employee.objects.get(firstname='Frank'))
