@@ -77,7 +77,7 @@ Options
       extension is enabled.
 
    **linkcheck**
-      Check the integrity of all external links.
+      Check the integrity of all external links and local file links.
 
    **xml**
      Build Docutils-native XML files.
