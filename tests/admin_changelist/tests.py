@@ -819,6 +819,24 @@ class ChangeListTests(TestCase):
         pks = m._get_edited_object_pks(request, prefix='form')
         self.assertEqual(sorted(pks), sorted([str(a.pk), str(b.pk), str(c.pk)]))
 
+    def test_get_edited_object_ids_regex_special_characters_in_prefix(self):
+        a = Swallow.objects.create(origin='Swallow A', load=4, speed=1)
+        superuser = self._create_superuser('superuser')
+        self.client.force_login(superuser)
+        changelist_url = reverse('admin:admin_changelist_swallow_changelist')
+        m = SwallowAdmin(Swallow, custom_site)
+        prefix = 'form$'
+        data = {
+            'form$-TOTAL_FORMS': '1',
+            'form$-INITIAL_FORMS': '1',
+            'form$-0-uuid': str(a.pk),
+            'form$-0-load': '9.0',
+            '_save': 'Save',
+        }
+        request = self.factory.post(changelist_url, data=data)
+        pks = m._get_edited_object_pks(request, prefix=prefix)
+        self.assertEqual(pks, [str(a.pk)])
+
     def test_get_list_editable_queryset(self):
         a = Swallow.objects.create(origin='Swallow A', load=4, speed=1)
         Swallow.objects.create(origin='Swallow B', load=2, speed=2)
