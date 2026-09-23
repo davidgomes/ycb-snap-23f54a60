@@ -1654,6 +1654,21 @@ class ManageRunserver(SimpleTestCase):
 
     @mock.patch("django.core.management.commands.runserver.run")
     @mock.patch("django.core.management.base.BaseCommand.check_migrations")
+    def test_zero_ip_addr(self, *mocked_objects):
+        call_command(
+            "runserver",
+            addrport="0:8000",
+            use_reloader=False,
+            skip_checks=True,
+            stdout=self.output,
+        )
+        self.assertIn(
+            "Starting development server at http://0.0.0.0:8000/",
+            self.output.getvalue(),
+        )
+
+    @mock.patch("django.core.management.commands.runserver.run")
+    @mock.patch("django.core.management.base.BaseCommand.check_migrations")
     @mock.patch("django.core.management.base.BaseCommand.check")
     def test_skip_checks(self, mocked_check, *mocked_objects):
         call_command(
