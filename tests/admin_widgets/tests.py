@@ -160,6 +160,19 @@ class AdminFormfieldForDBFieldTests(SimpleTestCase):
         f1 = ma.formfield_for_dbfield(Album._meta.get_field('backside_art'), request=None)
         self.assertIsInstance(f1.widget, forms.TextInput)
 
+    def test_formfield_for_manytomany_widget_override(self):
+        class AdvisorAdmin(admin.ModelAdmin):
+            filter_vertical = ['companies']
+
+            def formfield_for_manytomany(self, db_field, request, **kwargs):
+                if db_field.name == 'companies':
+                    kwargs['widget'] = forms.CheckboxSelectMultiple
+                return super().formfield_for_manytomany(db_field, request, **kwargs)
+
+        ma = AdvisorAdmin(Advisor, admin.site)
+        f = ma.formfield_for_dbfield(Advisor._meta.get_field('companies'), request=None)
+        self.assertIsInstance(f.widget.widget, forms.CheckboxSelectMultiple)
+
     def test_field_with_choices(self):
         self.assertFormfield(Member, 'gender', forms.Select)
 
