@@ -2144,6 +2144,10 @@ class SpanSelector(_SelectorWidget):
         else:
             trans = ax.get_yaxis_transform()
             w, h = 1, 0
+        # Apply a pending autoscale before the span rectangle is added. While
+        # the view is still the default unit box, a vertical rectangle is
+        # treated as data and expands the limits to include 0.
+        ax._unstale_viewLim()
         self._rect = Rectangle((0, 0), w, h,
                                transform=trans,
                                visible=False,
@@ -2156,7 +2160,14 @@ class SpanSelector(_SelectorWidget):
             self.artists.append(self._rect)
 
     def _setup_edge_handle(self, props):
-        self._edge_handles = ToolLineHandles(self.ax, self.extents,
+        # Define initial position using the axis bounds to keep the same
+        # bounds. Creating the handles at 0 (the unset span) would autoscale
+        # that axis to include 0.
+        if self.direction == 'horizontal':
+            positions = self.ax.get_xbound()
+        else:
+            positions = self.ax.get_ybound()
+        self._edge_handles = ToolLineHandles(self.ax, positions,
                                              direction=self.direction,
                                              line_props=props,
                                              useblit=self.useblit)
