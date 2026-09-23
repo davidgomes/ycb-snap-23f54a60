@@ -910,6 +910,29 @@ class ShadowingFieldsTests(SimpleTestCase):
             )
         ])
 
+    def test_proxy_of_m2m_target_with_through_fields_list(self):
+        class Parent(models.Model):
+            pass
+
+        class ProxyParent(Parent):
+            class Meta:
+                proxy = True
+
+        class Child(models.Model):
+            parents = models.ManyToManyField(
+                Parent,
+                through='Through',
+                through_fields=['child', 'parent'],
+                related_name='children',
+            )
+
+        class Through(models.Model):
+            parent = models.ForeignKey(Parent, models.CASCADE, related_name='+')
+            child = models.ForeignKey(Child, models.CASCADE, related_name='+')
+            second_child = models.ForeignKey(Child, models.CASCADE, null=True)
+
+        self.assertEqual(ProxyParent.check(), [])
+
 
 @isolate_apps('invalid_models_tests')
 class OtherModelTests(SimpleTestCase):
