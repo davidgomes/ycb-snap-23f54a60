@@ -788,6 +788,32 @@ class Grouper:
     def __init__(self, init=()):
         self._mapping = {weakref.ref(x): [weakref.ref(x)] for x in init}
 
+    def __getstate__(self):
+        self.clean()
+        # Convert weak refs to strong ones.  Reuse one list per group so
+        # pickle keeps the shared identity that `joined` relies on.
+        groups = {}
+        mapping = {}
+        for key, group in self._mapping.items():
+            gid = id(group)
+            if gid not in groups:
+                groups[gid] = [wref() for wref in group]
+            mapping[key()] = groups[gid]
+        return {**vars(self), "_mapping": mapping}
+
+    def __setstate__(self, state):
+        mapping = state.pop("_mapping")
+        vars(self).update(state)
+        # Convert strong refs back to weak ones, again sharing one list
+        # object per group.
+        weak_groups = {}
+        self._mapping = {}
+        for key, group in mapping.items():
+            gid = id(group)
+            if gid not in weak_groups:
+                weak_groups[gid] = [*map(weakref.ref, group)]
+            self._mapping[weakref.ref(key)] = weak_groups[gid]
+
     def __contains__(self, item):
         return weakref.ref(item) in self._mapping
 

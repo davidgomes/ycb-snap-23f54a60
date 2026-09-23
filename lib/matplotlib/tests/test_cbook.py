@@ -580,6 +580,23 @@ def test_grouper():
         assert g.joined(A, B)
 
 
+class _GrouperPickleItem:
+    pass
+
+
+def test_grouper_pickle():
+    a, b, c = [_GrouperPickleItem() for _ in range(3)]
+    g = cbook.Grouper()
+    g.join(a, b)
+    # Keep strong references alongside the grouper; members are only weakly
+    # referenced and would otherwise be collected on unpickle.
+    g2, a2, b2, c2 = pickle.loads(pickle.dumps((g, a, b, c)))
+    assert g2.joined(a2, b2)
+    assert not g2.joined(a2, c2)
+    assert set(g2.get_siblings(a2)) == {a2, b2}
+    assert g2._mapping[ref(a2)] is g2._mapping[ref(b2)]
+
+
 def test_grouper_private():
     class Dummy:
         pass
