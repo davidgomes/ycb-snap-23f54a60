@@ -1011,6 +1011,17 @@ def test_repeated_kfold_determinstic_split():
         assert_raises(StopIteration, next, splits)
 
 
+@pytest.mark.parametrize(
+    "RepeatedCV", [RepeatedKFold, RepeatedStratifiedKFold]
+)
+def test_repeated_cv_repr(RepeatedCV):
+    n_splits, n_repeats = 2, 6
+    repeated_cv = RepeatedCV(n_splits=n_splits, n_repeats=n_repeats)
+    repeated_cv_repr = ('{}(n_repeats=6, n_splits=2, random_state=None)'
+                        .format(repeated_cv.__class__.__name__))
+    assert repeated_cv_repr == repr(repeated_cv)
+
+
 def test_get_n_splits_for_repeated_kfold():
     n_splits = 3
     n_repeats = 4
