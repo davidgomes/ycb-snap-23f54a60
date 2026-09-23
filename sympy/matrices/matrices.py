@@ -6,6 +6,7 @@ from sympy.assumptions.refine import refine
 from sympy.core.add import Add
 from sympy.core.basic import Basic, Atom
 from sympy.core.expr import Expr
+from sympy.core.function import expand_mul
 from sympy.core.power import Pow
 from sympy.core.symbol import (Symbol, Dummy, symbols,
     _uniquely_named_symbol)
@@ -37,6 +38,12 @@ def _iszero(x):
         return x.is_zero
     except AttributeError:
         return None
+
+
+def _is_zero_after_expand_mul(x):
+    """Tests by expand_mul only, suitable for polynomials and rational
+    functions."""
+    return expand_mul(x) == 0
 
 
 class DeferredVector(Symbol, NotIterable):
@@ -162,7 +169,7 @@ class MatrixDeterminant(MatrixCommon):
         submat, toeplitz = self._eval_berkowitz_toeplitz_matrix()
         return toeplitz * submat._eval_berkowitz_vector()
 
-    def _eval_det_bareiss(self):
+    def _eval_det_bareiss(self, iszerofunc=_is_zero_after_expand_mul):
         """Compute matrix determinant using Bareiss' fraction-free
         algorithm which is an extension of the well known Gaussian
         elimination method. This approach is best suited for dense
@@ -174,14 +181,6 @@ class MatrixDeterminant(MatrixCommon):
         http://www.eecis.udel.edu/~saunders/papers/sffge/it5.ps.
         """
 
-        # XXX included as a workaround for issue #12362.  Should use `_find_reasonable_pivot` instead
-        def _find_pivot(l):
-            for pos,val in enumerate(l):
-                if val:
-                    return (pos, val, None, None)
-            return (None, None, None, None)
-
-
         # Recursively implemented Bareiss' algorithm as per Deanna Richelle Leggett's
         # thesis http://www.math.usm.edu/perry/Research/Thesis_DRL.pdf
         def bareiss(mat, cumm=1):
@@ -191,8 +190,8 @@ class MatrixDeterminant(MatrixCommon):
                 return mat[0, 0]
 
             # find a pivot and extract the remaining matrix
-            # XXX should use `_find_reasonable_pivot`.  Blocked by issue #12362
-            pivot_pos, pivot_val, _, _ = _find_pivot(mat[:, 0])
+            pivot_pos, pivot_val, _, _ = _find_reasonable_pivot(mat[:, 0],
+                                         iszerofunc=iszerofunc)
             if pivot_pos == None:
                 return S.Zero
 
@@ -208,7 +207,7 @@ class MatrixDeterminant(MatrixCommon):
             def entry(i, j):
                 ret = (pivot_val*tmp_mat[i, j + 1] - mat[pivot_pos, j + 1]*tmp_mat[i, 0]) / cumm
                 if not ret.is_Atom:
-                    cancel(ret)
+                    ret = cancel(ret)
                 return ret
 
             return sign*bareiss(self._new(mat.rows - 1, mat.cols - 1, entry), pivot_val)
