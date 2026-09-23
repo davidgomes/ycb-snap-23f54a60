@@ -192,6 +192,18 @@ def test_kahane_algorithm():
     execute_gamma_simplify_tests_for_function(tfunc, D=4)
 
 
+def test_kahane_leading_gamma_matrix_order():
+    mu, nu, rho, sigma = tensor_indices("mu, nu, rho, sigma", LorentzIndex)
+
+    t = G(mu)*G(-mu)*G(rho)*G(sigma)
+    r = kahane_simplify(t)
+    assert r.equals(4*G(rho)*G(sigma))
+
+    t = G(rho)*G(sigma)*G(mu)*G(-mu)
+    r = kahane_simplify(t)
+    assert r.equals(4*G(rho)*G(sigma))
+
+
 def test_kahane_simplify1():
     i0,i1,i2,i3,i4,i5,i6,i7,i8,i9,i10,i11,i12,i13,i14,i15 = tensor_indices('i0:16', LorentzIndex)
     mu, nu, rho, sigma = tensor_indices("mu, nu, rho, sigma", LorentzIndex)
