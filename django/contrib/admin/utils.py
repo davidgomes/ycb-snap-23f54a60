@@ -398,6 +398,13 @@ def display_for_field(value, field, empty_value_display):
         return formats.number_format(value)
     elif isinstance(field, models.FileField) and value:
         return format_html('<a href="{}">{}</a>', value.url, value)
+    elif isinstance(field, models.JSONField):
+        try:
+            # Use the form field so InvalidJSONInput is preserved and custom
+            # encoders are applied, instead of rendering Python reprs.
+            return field.formfield().prepare_value(value)
+        except TypeError:
+            return display_for_value(value, empty_value_display)
     else:
         return display_for_value(value, empty_value_display)
 

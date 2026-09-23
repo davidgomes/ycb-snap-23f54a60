@@ -3,6 +3,7 @@ from decimal import Decimal
 
 from django import forms
 from django.conf import settings
+from django.forms.fields import InvalidJSONInput
 from django.contrib.admin import helpers
 from django.contrib.admin.utils import (
     NestedObjects, display_for_field, display_for_value, flatten,
@@ -196,6 +197,25 @@ class UtilsTests(SimpleTestCase):
 
         display_value = display_for_field(12345, models.IntegerField(), self.empty_value)
         self.assertEqual(display_value, '12,345')
+
+    def test_json_display_for_field(self):
+        tests = [
+            ({'foo': 'bar'}, '{"foo": "bar"}'),
+            (['a', 'b'], '["a", "b"]'),
+            ('a', '"a"'),
+            (True, 'true'),
+            (False, 'false'),
+            (0, '0'),
+            (None, self.empty_value),
+            (InvalidJSONInput('{"broken":'), '{"broken":'),
+            ({('a', 'b'): 'c'}, "{('a', 'b'): 'c'}"),
+        ]
+        for value, display_value in tests:
+            with self.subTest(value=value):
+                self.assertEqual(
+                    display_for_field(value, models.JSONField(), self.empty_value),
+                    display_value,
+                )
 
     def test_list_display_for_value(self):
         display_value = display_for_value([1, 2, 3], self.empty_value)
