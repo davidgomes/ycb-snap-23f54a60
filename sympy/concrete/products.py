@@ -282,8 +282,13 @@ class Product(ExprWithIntLimits):
                 # There is expression, which couldn't change by
                 # as_numer_denom(). E.g. n**(2/3) + 1 --> (n**(2/3) + 1, 1).
                 # We have to catch this case.
+                #
+                # The product of a sum is not the sum of the products. Leave
+                # the product as exp of a sum of logs, which is equivalent
+                # when the factors are positive (see issue 13546).
 
-                p = sum([self._eval_product(i, (k, a, n)) for i in p.as_coeff_Add()])
+                from sympy.concrete.summations import Sum
+                p = exp(Sum(log(p), (k, a, n)))
             else:
                 p = self._eval_product(p, (k, a, n))
             return p / q
