@@ -4,6 +4,7 @@ from django.template.response import TemplateResponse
 from django.utils.decorators import (
     async_only_middleware, sync_and_async_middleware, sync_only_middleware,
 )
+from django.utils.deprecation import MiddlewareMixin
 
 log = []
 
@@ -121,6 +122,15 @@ class SyncAndAsyncMiddleware(BaseMiddleware):
 @sync_only_middleware
 class DecoratedPaymentMiddleware(PaymentMiddleware):
     pass
+
+
+class ProcessResponseTypeMiddleware(MiddlewareMixin):
+    """Record the response type passed to process_response()."""
+    seen = []
+
+    def process_response(self, request, response):
+        self.seen.append(type(response))
+        return response
 
 
 class NotSyncOrAsyncMiddleware(BaseMiddleware):

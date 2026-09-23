@@ -282,6 +282,32 @@ class MiddlewareSyncAsyncTests(SimpleTestCase):
         self.assertEqual(response.content, b'OK')
         self.assertEqual(response.status_code, 200)
 
+    @override_settings(MIDDLEWARE=[
+        'middleware_exceptions.middleware.ProcessResponseTypeMiddleware',
+        'django.middleware.security.SecurityMiddleware',
+        'middleware_exceptions.middleware.ProcessResponseTypeMiddleware',
+    ])
+    async def test_async_process_response_receives_http_response(self):
+        # The outermost middleware must see an HttpResponse, including when a
+        # builtin middleware such as SecurityMiddleware sits inside it.
+        mw.ProcessResponseTypeMiddleware.seen = []
+        response = await self.async_client.get('/middleware_exceptions/view/')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            mw.ProcessResponseTypeMiddleware.seen,
+            [HttpResponse, HttpResponse],
+        )
+
+    @override_settings(MIDDLEWARE=[
+        'middleware_exceptions.middleware.ProcessResponseTypeMiddleware',
+        'django.middleware.security.SecurityMiddleware',
+    ])
+    def test_sync_process_response_receives_http_response(self):
+        mw.ProcessResponseTypeMiddleware.seen = []
+        response = self.client.get('/middleware_exceptions/view/')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(mw.ProcessResponseTypeMiddleware.seen, [HttpResponse])
+
 
 @override_settings(ROOT_URLCONF='middleware_exceptions.urls')
 class AsyncMiddlewareTests(SimpleTestCase):
