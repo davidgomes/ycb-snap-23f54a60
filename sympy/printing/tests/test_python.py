@@ -80,7 +80,7 @@ def test_python_keyword_function_name_escaping():
 
 
 def test_python_relational():
-    assert python(Eq(x, y)) == "e = Eq(x, y)"
+    assert python(Eq(x, y)) == "x = Symbol('x')\ny = Symbol('y')\ne = Eq(x, y)"
     assert python(Ge(x, y)) == "x = Symbol('x')\ny = Symbol('y')\ne = x >= y"
     assert python(Le(x, y)) == "x = Symbol('x')\ny = Symbol('y')\ne = x <= y"
     assert python(Gt(x, y)) == "x = Symbol('x')\ny = Symbol('y')\ne = x > y"
