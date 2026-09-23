@@ -393,6 +393,48 @@ def test_from_sequence():
         Permutation(4)(0, 2)(1, 3)
 
 
+def test_Permutation_subclassing():
+    class CustomPermutation(Permutation):
+        pass
+
+    p = CustomPermutation([1, 2, 3, 0])
+    q = Permutation([1, 2, 3, 0])
+
+    for r in (CustomPermutation(), CustomPermutation(3),
+            CustomPermutation(1, 2), CustomPermutation([[1, 2]]),
+            CustomPermutation(Cycle(1, 2)), CustomPermutation(q),
+            CustomPermutation(p, size=6)):
+        assert type(r) is CustomPermutation
+    assert CustomPermutation(p) is p
+
+    for r in (p*q, [1, 0]*p, p**2, ~p, p ^ q, p(0, 1), p.commutator(q),
+            p.mul_inv(q), p + 1, p - 1, p.next_lex(), p.next_nonlex(),
+            p.next_trotterjohnson(), CustomPermutation.rmul_with_af(p, q),
+            CustomPermutation.random(4), CustomPermutation.unrank_lex(4, 5),
+            CustomPermutation.unrank_nonlex(4, 5),
+            CustomPermutation.unrank_trotterjohnson(4, 5),
+            CustomPermutation.from_inversion_vector([1, 0, 0]),
+            CustomPermutation.from_sequence('SymPy'),
+            CustomPermutation.josephus(3, 6, 2)):
+        assert type(r) is CustomPermutation
+    assert type(q*p) is Permutation
+    assert type(Permutation.unrank_lex(4, 5)) is Permutation
+    raises(NotImplementedError, lambda: q**p)
+
+    # the Permutation tests should also pass for the subclass
+    original = Permutation
+    try:
+        globals()['Permutation'] = CustomPermutation
+        test_Permutation()
+        test_josephus()
+        test_ranking()
+        test_mul()
+        test_args()
+        test_from_sequence()
+    finally:
+        globals()['Permutation'] = original
+
+
 def test_printing_cyclic():
     Permutation.print_cyclic = True
     p1 = Permutation([0, 2, 1])
