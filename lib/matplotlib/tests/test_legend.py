@@ -222,6 +222,16 @@ def test_legend_remove():
     assert ax.get_legend() is None
 
 
+def test_subfigure_legend():
+    subfig = plt.figure().subfigures()
+    ax = subfig.subplots()
+    ax.plot([0, 1], [0, 1], label="line")
+    leg = subfig.legend()
+    assert leg.figure is subfig
+    assert subfig.legends == [leg]
+    subfig.figure.canvas.draw()
+
+
 class TestLegendFunction:
     # Tests the legend function on the Axes and pyplot.
     def test_legend_no_args(self):
