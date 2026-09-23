@@ -204,6 +204,16 @@ class TestChildArguments(SimpleTestCase):
         )
 
     @mock.patch('__main__.__spec__', None)
+    @mock.patch('sys.argv', [__file__, 'runserver'])
+    @mock.patch('sys.warnoptions', [])
+    @mock.patch('sys._xoptions', {'utf8': True, 'a': 'b'})
+    def test_xoptions(self):
+        self.assertEqual(
+            autoreload.get_child_arguments(),
+            [sys.executable, '-Xutf8', '-Xa=b', __file__, 'runserver']
+        )
+
+    @mock.patch('__main__.__spec__', None)
     @mock.patch('sys.warnoptions', [])
     def test_exe_fallback(self):
         with tempfile.TemporaryDirectory() as tmpdir:
