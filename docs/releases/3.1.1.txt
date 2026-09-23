@@ -14,3 +14,7 @@ Bugfixes
 
 * Fixed wrapping of long model names in the admin's navigation sidebar
   (:ticket:`31854`).
+
+* Fixed session data written by Django 3.1 being unreadable by pre-3.1
+  instances when ``DEFAULT_HASHING_ALGORITHM`` is ``'sha1'``. Sessions are
+  encoded with the legacy format in that case.

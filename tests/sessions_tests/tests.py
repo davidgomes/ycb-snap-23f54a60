@@ -34,6 +34,7 @@ from django.test import (
     RequestFactory, TestCase, ignore_warnings, override_settings,
 )
 from django.utils import timezone
+from django.utils.deprecation import RemovedInDjango40Warning
 
 from .models import SessionStore as CustomDatabaseSession
 
@@ -322,6 +323,18 @@ class SessionTestsMixin:
             self.session.decode(legacy_encoded),
             {'a test key': 'a test value'},
         )
+
+    @ignore_warnings(category=RemovedInDjango40Warning)
+    @override_settings(DEFAULT_HASHING_ALGORITHM='sha1')
+    def test_default_hashing_algorithm_legacy_encode(self):
+        # RemovedInDjango40Warning: pre-Django 3.1 format will be invalid.
+        data = {'a test key': 'a test value'}
+        encoded = self.session.encode(data)
+        self.assertEqual(self.session.decode(encoded), data)
+        # Legacy format is "base64(hexdigest:serialized)", which older
+        # instances can read during the Django 3.1 transition.
+        decoded = base64.b64decode(encoded.encode('ascii'))
+        self.assertIn(b':', decoded)
 
     def test_decode_failure_logged_to_security(self):
         bad_encode = base64.b64encode(b'flaskdj:alkdjf').decode('ascii')
