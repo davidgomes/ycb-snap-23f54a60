@@ -252,6 +252,16 @@ class AppsTests(SimpleTestCase):
         finally:
             apps.models_ready = True
 
+    def test_clear_cache(self):
+        # Set cache.
+        self.assertIsNone(apps.get_swappable_settings_name("admin.LogEntry"))
+        apps.get_models()
+
+        apps.clear_cache()
+
+        self.assertEqual(apps.get_swappable_settings_name.cache_info().currsize, 0)
+        self.assertEqual(apps.get_models.cache_info().currsize, 0)
+
     def test_dynamic_load(self):
         """
         Makes a new model at runtime and ensures it goes into the right place.
