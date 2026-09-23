@@ -36,7 +36,7 @@ def test__wrap_in_pandas_container_dense_update_columns_and_index():
     assert_array_equal(new_df.columns, new_columns)
 
     # Index does not change when the input is a DataFrame
-    assert_array_equal(new_df.index, X_df.index)
+    assert_array_equal(new_df.index, [0, 1])
 
 
 def test__wrap_in_pandas_container_error_validation():
