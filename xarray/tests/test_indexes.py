@@ -697,3 +697,30 @@ def test_safe_cast_to_index_datetime_datetime():
     actual = safe_cast_to_index(np.array(dates))
     assert_array_equal(expected, actual)
     assert isinstance(actual, pd.Index)
+
+
+@pytest.mark.parametrize("dtype", ["int32", "float32"])
+def test_restore_dtype_on_multiindexes(dtype: str) -> None:
+    # GH7250: stacking a coordinate into a MultiIndex must not widen its dtype
+    foo = xr.Dataset(coords={"bar": ("bar", np.array([0, 1], dtype=dtype))})
+    foo = foo.stack(baz=("bar",))
+    assert str(foo["bar"].values.dtype) == dtype
+
+
+@pytest.mark.parametrize(
+    "stored_dtype,level_dtype",
+    [("int64", "int32"), ("float64", "float32"), ("int64", "int16")],
+)
+def test_multiindex_level_values_restore_tracked_dtype(
+    stored_dtype: str, level_dtype: str
+) -> None:
+    # pandas<2 stores MultiIndex levels as int64/float64 even when the
+    # coordinate was a narrower dtype. The adapter must cast back.
+    values = np.array([0, 1, 0], dtype=stored_dtype)
+    midx = pd.MultiIndex.from_arrays([values], names=["bar"])
+    index = PandasMultiIndex(
+        midx, "baz", level_coords_dtype={"bar": np.dtype(level_dtype)}
+    )
+    variables = index.create_variables()
+    assert variables["bar"].values.dtype == np.dtype(level_dtype)
+    np.testing.assert_array_equal(variables["bar"].values, values.astype(level_dtype))
