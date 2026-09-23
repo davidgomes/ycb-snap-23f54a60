@@ -1,5 +1,7 @@
 import compileall
 import os
+from importlib import import_module
+from unittest import mock
 
 from django.db import connection, connections
 from django.db.migrations.exceptions import (
@@ -511,6 +513,21 @@ class LoaderTests(TestCase):
         loader.load_disk()
         migrations = [name for app, name in loader.disk_migrations if app == 'migrations']
         self.assertEqual(migrations, [])
+
+    @override_settings(MIGRATION_MODULES={'migrations': 'migrations.test_migrations'})
+    def test_loading_package_without__file__(self):
+        """
+        To support frozen environments, MigrationLoader loads migrations from
+        regular packages that have no __file__ attribute.
+        """
+        test_module = import_module('migrations.test_migrations')
+        loader = MigrationLoader(connection, load=False)
+        # __file__ is optional; frozen modules may omit it. Namespace packages
+        # are still rejected because their __path__ is not a list.
+        with mock.patch.object(test_module, '__file__', None):
+            loader.load_disk()
+        migrations = [name for app, name in loader.disk_migrations if app == 'migrations']
+        self.assertCountEqual(migrations, ['0001_initial', '0002_second'])
 
 
 class PycLoaderTests(MigrationTestBase):

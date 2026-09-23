@@ -346,6 +346,10 @@ Migrations
 * Migrations now support serialization of pure and concrete path objects from
   :mod:`pathlib`, and :class:`os.PathLike` instances.
 
+* Migration loading now accepts regular packages that omit ``__file__``
+  (as in some frozen Python environments). Namespace packages are still
+  ignored. Namespace packages are distinguished by a non-list ``__path__``.
+
 Models
 ~~~~~~
 
