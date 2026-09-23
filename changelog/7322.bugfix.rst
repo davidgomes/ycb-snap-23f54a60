@@ -1,0 +1,1 @@
+Fix crash on debug builds of Python 3.8+ when ``-k``/``-m`` expressions contain ``True``, ``False`` or ``None``.
