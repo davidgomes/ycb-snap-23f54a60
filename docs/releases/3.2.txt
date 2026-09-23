@@ -95,6 +95,11 @@ Minor features
   constrained environments. If this is the case, the existing hasher can be
   subclassed to override the defaults.
 
+* The ``auth.E003`` system check now allows the ``USERNAME_FIELD`` to be made
+  unique with a :class:`~django.db.models.UniqueConstraint` in
+  :attr:`Meta.constraints <django.db.models.Options.constraints>`, instead of
+  ``unique=True``.
+
 :mod:`django.contrib.contenttypes`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
