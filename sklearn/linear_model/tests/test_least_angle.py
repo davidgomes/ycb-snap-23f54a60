@@ -695,7 +695,10 @@ def test_lasso_lars_copyX_behaviour(copy_X):
     at least version 0.21)
 
     """
-    lasso_lars = linear_model.LassoLarsIC(copy_X=copy_X, precompute=False)
+    # Centering/normalizing would overwrite X in place before lars_path runs,
+    # hiding whether lars_path itself honours copy_X.
+    lasso_lars = linear_model.LassoLarsIC(copy_X=copy_X, precompute=False,
+                                          fit_intercept=False, normalize=False)
     rng = np.random.RandomState(0)
     X = rng.normal(0, 1, (100, 5))
     X_copy = X.copy()
