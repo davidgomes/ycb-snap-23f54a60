@@ -572,6 +572,12 @@ Changelog
   :class:`svm.OneClassSVM` was previously non-initialized, and had size 2. It
   has now size 1 with the correct value. :pr:`15099` by `Nicolas Hug`_.
 
+- |Fix| Fixed a ``ZeroDivisionError`` in :class:`svm.SVC`,
+  :class:`svm.NuSVC`, :class:`svm.SVR`, :class:`svm.NuSVR` and
+  :class:`svm.OneClassSVM` when fitting on sparse data results in an empty
+  ``support_vectors_`` attribute. ``dual_coef_`` is now an empty sparse matrix
+  in that case. :pr:`14894` by :user:`Danna Naser <danna-naser>`.
+
 :mod:`sklearn.tree`
 ...................
 
