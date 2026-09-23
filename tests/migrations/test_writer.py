@@ -28,6 +28,10 @@ from django.utils.translation import gettext_lazy as _
 from .models import FoodManager, FoodQuerySet
 
 
+class MyMixin:
+    pass
+
+
 class DeconstructibleInstances:
     def deconstruct(self):
         return ('DeconstructibleInstances', [], {})
@@ -657,6 +661,37 @@ class WriterTests(SimpleTestCase):
 
     def test_serialize_type_none(self):
         self.assertSerializedEqual(type(None))
+
+    def test_serialize_type_model(self):
+        self.assertSerializedEqual(models.Model)
+        self.assertSerializedResultEqual(
+            models.Model,
+            ("models.Model", {"from django.db import models"}),
+        )
+
+    def test_mixin_model_base_imports_models(self):
+        """
+        CreateModel bases that include models.Model must import django.db.models.
+
+        A non-model mixin keeps models.Model in the bases tuple. Without the
+        import, loading the generated migration raises NameError.
+        """
+        migration = type("Migration", (migrations.Migration,), {
+            "operations": [
+                migrations.CreateModel(
+                    name="MyModel",
+                    fields=[],
+                    bases=(MyMixin, models.Model),
+                ),
+            ],
+            "dependencies": [],
+        })
+        writer = MigrationWriter(migration)
+        output = writer.as_string()
+        self.assertIn("from django.db import migrations, models\n", output)
+        self.assertIn("bases=(migrations.test_writer.MyMixin, models.Model)", output)
+        result = self.safe_exec(output)
+        self.assertIn("Migration", result)
 
     def test_simple_migration(self):
         """
