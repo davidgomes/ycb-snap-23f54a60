@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from .models import Flea, House, Person, Pet, Room
+from .models import Comment, Flea, House, Person, Pet, Room
 
 
 class UUIDPrefetchRelated(TestCase):
@@ -52,6 +52,15 @@ class UUIDPrefetchRelated(TestCase):
             Pet.objects.prefetch_related('fleas_hosted').values_list('id', flat=True),
             [pet.id]
         )
+
+    def test_prefetch_related_gfk_to_uuid_pk(self):
+        pet = Pet.objects.create(name='Fifi')
+        comment = Comment.objects.create(comment='awesome', content_object=pet)
+
+        with self.assertNumQueries(2):
+            fetched = Comment.objects.prefetch_related('content_object').get(pk=comment.pk)
+        with self.assertNumQueries(0):
+            self.assertEqual(fetched.content_object, pet)
 
 
 class UUIDPrefetchRelatedLookups(TestCase):

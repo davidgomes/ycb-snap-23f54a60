@@ -202,7 +202,9 @@ class GenericForeignKey(FieldCacheMixin):
             else:
                 model = self.get_content_type(id=ct_id,
                                               using=obj._state.db).model_class()
-                return (model._meta.pk.get_prep_value(getattr(obj, self.fk_field)),
+                # Cast the stored object id to the related PK's Python value
+                # so the in-memory join matches obj.pk (UUID, int, etc.).
+                return (model._meta.pk.to_python(getattr(obj, self.fk_field)),
                         model)
 
         return (
