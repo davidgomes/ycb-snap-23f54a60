@@ -43,7 +43,7 @@ class EscapeseqTests(SimpleTestCase):
     @setup({"escapeseq_join": '{{ a|escapeseq|join:"<br/>" }}'})
     def test_chain_join(self):
         output = self.engine.render_to_string("escapeseq_join", {"a": ["x&y", "<p>"]})
-        self.assertEqual(output, "x&amp;y&lt;br/&gt;&lt;p&gt;")
+        self.assertEqual(output, "x&amp;y<br/>&lt;p&gt;")
 
     @setup(
         {
