@@ -699,6 +699,22 @@ class ModelAdminTests(TestCase):
             ["extra", "transport", "id", "DELETE", "main_band"],
         )
 
+    def test_radio_fields_respect_custom_empty_label(self):
+        class ConcertAdmin(ModelAdmin):
+            radio_fields = {"opening_band": VERTICAL}
+
+            def formfield_for_foreignkey(self, db_field, request, **kwargs):
+                if db_field.name == "opening_band":
+                    kwargs["empty_label"] = "I WANT TO SET MY OWN EMPTY LABEL"
+                return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+        ma = ConcertAdmin(Concert, self.site)
+        form = ma.get_form(request)
+        self.assertEqual(
+            list(form.base_fields["opening_band"].widget.choices),
+            [("", "I WANT TO SET MY OWN EMPTY LABEL"), (self.band.id, "The Doors")],
+        )
+
     def test_log_actions(self):
         ma = ModelAdmin(Band, self.site)
         mock_request = MockRequest()
