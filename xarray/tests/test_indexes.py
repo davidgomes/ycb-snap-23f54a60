@@ -436,6 +436,19 @@ class TestPandasMultiIndex:
         np.testing.assert_array_equal(index.index.levels[0], ["b", "a"])
         np.testing.assert_array_equal(index.index.levels[1], [1, 2])
 
+    def test_stack_preserve_level_dtype(self) -> None:
+        prod_vars = {
+            "x": xr.Variable("x", np.array([0, 1], dtype="int32")),
+            "y": xr.Variable("y", np.array([0.5, 1.5], dtype="float32")),
+        }
+
+        index = PandasMultiIndex.stack(prod_vars, "z")
+        index_vars = index.create_variables()
+
+        for name, var in prod_vars.items():
+            assert index_vars[name].dtype == var.dtype
+            assert index_vars[name].values.dtype == var.dtype
+
     def test_unstack(self) -> None:
         pd_midx = pd.MultiIndex.from_product(
             [["a", "b"], [1, 2, 3]], names=["one", "two"]

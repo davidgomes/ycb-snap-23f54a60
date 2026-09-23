@@ -3526,6 +3526,15 @@ class TestDataset:
         assert_identical(expected, actual)
         assert list(actual.xindexes) == ["z", "xx", "y"]
 
+    @pytest.mark.parametrize("dtype", ["int32", "float32"])
+    def test_stack_preserve_coord_dtype(self, dtype) -> None:
+        # regression test for GH7250
+        ds = Dataset(coords={"a": np.array([0], dtype=dtype)})
+        actual = ds.stack(b=("a",))
+
+        assert actual["a"].dtype == dtype
+        assert actual["a"].values.dtype == dtype
+
     def test_unstack(self) -> None:
         index = pd.MultiIndex.from_product([[0, 1], ["a", "b"]], names=["x", "y"])
         ds = Dataset(data_vars={"b": ("z", [0, 1, 2, 3])}, coords={"z": index})
