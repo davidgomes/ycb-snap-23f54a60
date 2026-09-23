@@ -1,0 +1,7 @@
+``Axes.clear`` and ``Figure.clear`` unset the ``.axes`` and ``.figure`` of deparented artists
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Previously, clearing an Axes (with `.Axes.clear` / `.Axes.cla`) or a Figure
+(with `.Figure.clear` / `.Figure.clf`) removed the artists it contained, but
+left their ``.axes`` and ``.figure`` attributes pointing to the old container.
+These attributes are now set to None, consistently with `.Artist.remove`.
