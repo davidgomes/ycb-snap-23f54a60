@@ -819,7 +819,25 @@ class PrettyPrinter(Printer):
         return self._print(B.blocks)
 
     def _print_MatAdd(self, expr):
-        return self._print_seq(expr.args, None, None, ' + ')
+        from sympy import MatMul
+        s = None
+        for item in expr.args:
+            pform = self._print(item)
+            if s is None:
+                s = pform
+            else:
+                if (item.is_MatMul and item.args[0].is_Number
+                        and item.args[0] < 0):
+                    s = prettyForm(*stringPict.next(s, ' - '))
+                    coeff = -item.args[0]
+                    args = list(item.args[1:])
+                    if coeff != 1:
+                        args.insert(0, coeff)
+                    pform = self._print(MatMul(*args))
+                else:
+                    s = prettyForm(*stringPict.next(s, ' + '))
+                s = prettyForm(*stringPict.next(s, pform))
+        return s
 
     def _print_MatMul(self, expr):
         args = list(expr.args)

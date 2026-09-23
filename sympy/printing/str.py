@@ -304,16 +304,35 @@ class StrPrinter(Printer):
             return sign + '*'.join(a_str) + "/(%s)" % '*'.join(b_str)
 
     def _print_MatMul(self, expr):
-        return '*'.join([self.parenthesize(arg, precedence(expr))
-            for arg in expr.args])
+        args = list(expr.args)
+        sign = ""
+        if args[0].is_Number and args[0] < 0:
+            sign = "-"
+            args[0] = -args[0]
+            if args[0] == 1:
+                args = args[1:]
+        return sign + '*'.join([self.parenthesize(arg, precedence(expr))
+            for arg in args])
 
     def _print_HadamardProduct(self, expr):
         return '.*'.join([self.parenthesize(arg, precedence(expr))
             for arg in expr.args])
 
     def _print_MatAdd(self, expr):
-        return ' + '.join([self.parenthesize(arg, precedence(expr))
-            for arg in expr.args])
+        terms = [self.parenthesize(arg, precedence(expr))
+             for arg in expr.args]
+        l = []
+        for t in terms:
+            if t.startswith('-'):
+                sign = "-"
+                t = t[1:]
+            else:
+                sign = "+"
+            l.extend([sign, t])
+        sign = l.pop(0)
+        if sign == '+':
+            sign = ""
+        return sign + ' '.join(l)
 
     def _print_NaN(self, expr):
         return 'nan'
