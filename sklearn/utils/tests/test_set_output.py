@@ -36,6 +36,42 @@ def test__wrap_in_pandas_container_dense_update_columns_and_index():
     assert_array_equal(new_df.index, new_index)
 
 
+def test__wrap_in_pandas_container_ignore_index_when_row_count_changes():
+    """Keep the transformer's index when it changes the number of rows.
+
+    Non-regression test for aggregating transformers used with
+    ``transform_output="pandas"`` inside a feature union.
+    """
+    pd = pytest.importorskip("pandas")
+    from sklearn.base import BaseEstimator, TransformerMixin
+    from sklearn.pipeline import make_union
+
+    index = pd.date_range("2020-01-01", periods=48, freq=pd.offsets.Hour())
+    data = pd.DataFrame({"value": [10] * len(index)}, index=index)
+    data["date"] = index.date
+
+    class Aggregator(BaseEstimator, TransformerMixin):
+        def fit(self, X, y=None):
+            return self
+
+        def transform(self, X):
+            return X["value"].groupby(X["date"]).sum().to_frame()
+
+    aggregated = _wrap_in_pandas_container(
+        data.groupby(data["date"])[["value"]].sum(),
+        columns=["value"],
+        index=data.index,
+    )
+    assert list(aggregated.index) == list(pd.unique(data["date"]))
+
+    with config_context(transform_output="pandas"):
+        transformed = make_union(Aggregator()).fit_transform(data)
+
+    assert isinstance(transformed, pd.DataFrame)
+    assert len(transformed) == data["date"].nunique()
+    assert list(transformed.index) == list(pd.unique(data["date"]))
+
+
 def test__wrap_in_pandas_container_error_validation():
     """Check errors in _wrap_in_pandas_container."""
     X = np.asarray([[1, 0, 3], [0, 0, 1]])

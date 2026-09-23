@@ -34,7 +34,9 @@ def _wrap_in_pandas_container(
         `range(n_features)`.
 
     index : array-like, default=None
-        Index for data.
+        Index for data. ``index`` is ignored when its length does not match the
+        number of rows in ``data_to_wrap``, which happens when a transformer
+        changes the number of samples (for example by aggregating rows).
 
     Returns
     -------
@@ -51,6 +53,12 @@ def _wrap_in_pandas_container(
             columns = None
 
     pd = check_pandas_support("Setting output container to 'pandas'")
+
+    n_rows = data_to_wrap.shape[0]
+    if index is not None and len(index) != n_rows:
+        # A transformer may change the number of samples, for example by
+        # aggregating rows. Keep the index produced by that transformer.
+        index = None
 
     if isinstance(data_to_wrap, pd.DataFrame):
         if columns is not None:
