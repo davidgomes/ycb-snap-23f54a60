@@ -4007,6 +4007,22 @@ relation, hence reducing the number of queries even further:
     >>> Question.objects.prefetch_related(prefetch).get().choice_set.all()
     <QuerySet [<Choice: The sky>]>
 
+The ``queryset`` can also be sliced to limit the number of objects prefetched
+for each instance. The slice is applied to each instance's related objects
+separately, using the ordering of the ``queryset``:
+
+    >>> first_choices = Choice.objects.order_by('pk')[:2]
+    >>> prefetch = Prefetch('choice_set', queryset=first_choices)
+    >>> Question.objects.prefetch_related(prefetch).get().choice_set.all()
+    <QuerySet [<Choice: Not much>, <Choice: The sky>]>
+
+Sliced querysets are only supported on databases that support
+:ref:`window-functions`.
+
+.. versionchanged:: 4.2
+
+    Support for sliced querysets was added.
+
 The ``to_attr`` argument sets the result of the prefetch operation to a custom
 attribute:
 
