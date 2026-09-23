@@ -390,6 +390,8 @@ class Similar:
 
     def run(self) -> None:
         """start looking for similarities and display results on stdout"""
+        if self.min_lines == 0:
+            return
         self._display_sims(self._compute_sims())
 
     def _compute_sims(self) -> List[Tuple[int, Set[LinesChunkLimits_T]]]:
@@ -531,6 +533,8 @@ class Similar:
         """iterate on similarities among all files, by making a cartesian
         product
         """
+        if self.min_lines == 0:
+            return
         for idx, lineset in enumerate(self.linesets[:-1]):
             for lineset2 in self.linesets[idx + 1 :]:
                 yield from self._find_common(lineset, lineset2)

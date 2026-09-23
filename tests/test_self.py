@@ -1112,6 +1112,18 @@ class TestRunTC:
             expected_output=expected_output,
         )
 
+    def test_min_similarity_lines_zero_disables_duplicate_code(self) -> None:
+        path = join(HERE, "regrtest_data", "duplicate_data_raw_strings")
+        self._runtest(
+            [
+                path,
+                "--disable=all",
+                "--enable=duplicate-code",
+                "--min-similarity-lines=0",
+            ],
+            code=0,
+        )
+
     def test_regression_parallel_mode_without_filepath(self) -> None:
         # Test that parallel mode properly passes filepath
         # https://github.com/PyCQA/pylint/issues/3564

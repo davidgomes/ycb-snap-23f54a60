@@ -371,6 +371,14 @@ TOTAL lines=50 duplicates=14 percent=28.00
     )
 
 
+def test_set_duplicate_lines_to_zero() -> None:
+    output = StringIO()
+    with redirect_stdout(output), pytest.raises(SystemExit) as ex:
+        similar.Run(["--duplicates=0", SIMILAR1, SIMILAR2])
+    assert ex.value.code == 0
+    assert output.getvalue() == ""
+
+
 def test_help() -> None:
     output = StringIO()
     with redirect_stdout(output):
