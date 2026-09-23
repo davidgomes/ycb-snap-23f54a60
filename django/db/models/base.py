@@ -848,7 +848,10 @@ class Model(metaclass=ModelBase):
             raise ValueError("Cannot force an update in save() with no primary key.")
         updated = False
         # Skip an UPDATE when adding an instance and primary key has a default.
+        # Fixture loading (raw=True) must still try UPDATE so existing rows
+        # with explicit primary keys are updated.
         if (
+            not raw and
             not force_insert and
             self._state.adding and
             self._meta.pk.default and
