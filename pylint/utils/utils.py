@@ -22,7 +22,7 @@ import sys
 import textwrap
 import tokenize
 import warnings
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from io import BufferedReader, BytesIO
 from typing import (
     TYPE_CHECKING,
@@ -251,6 +251,31 @@ def _check_csv(value: list[str] | tuple[str] | str) -> Sequence[str]:
     if isinstance(value, (list, tuple)):
         return value
     return _splitstrip(value)
+
+
+def _check_regexp_csv(value: list[str] | tuple[str] | str) -> Iterable[str]:
+    r"""Split a comma-separated list of regexps, taking care to avoid splitting
+    a regex employing a comma as quantifier, as in `\d{1,2}`.
+    """
+    if isinstance(value, (list, tuple)):
+        yield from value
+        return
+    regexps: list[str] = []
+    current: list[str] = []
+    open_braces = False
+    for char in value:
+        if char == "{":
+            open_braces = True
+        elif char == "}" and open_braces:
+            open_braces = False
+
+        if char == "," and not open_braces:
+            regexps.append("".join(current))
+            current = []
+        else:
+            current.append(char)
+    regexps.append("".join(current))
+    yield from (regexp.strip() for regexp in regexps if regexp.strip())
 
 
 def _comment(string: str) -> str:
