@@ -255,12 +255,20 @@ def test_text_antialiased_on_default_vs_manual(fig_test, fig_ref, text):
     fig_ref.text(0.5, 0.5, text)
 
 
-def test_text_antialiased_changes_agg_output():
+@pytest.mark.parametrize("backend", ["agg", "cairo"])
+@pytest.mark.parametrize("text", ["foo", r"foo $\sqrt{x}$"])
+def test_text_antialiased_changes_output(backend, text):
+    if backend == "cairo":
+        pytest.importorskip("cairo")
+        if "$" in text:
+            pytest.skip("cairo draws mathtext as paths")
+
     def render(antialiased):
-        fig = plt.figure(figsize=(2, 1))
-        fig.text(0.1, 0.4, r"foo $\sqrt{x}$", antialiased=antialiased)
-        fig.canvas.draw()
-        return np.asarray(fig.canvas.buffer_rgba())
+        fig = plt.figure(figsize=(2, 1), dpi=100, facecolor="white")
+        fig.text(0.1, 0.4, text, antialiased=antialiased)
+        buf = io.BytesIO()
+        fig.savefig(buf, format="rgba", backend=backend)
+        return np.frombuffer(buf.getvalue(), np.uint8).reshape((100, 200, 4))
 
     aa_on = render(True)
     aa_off = render(False)

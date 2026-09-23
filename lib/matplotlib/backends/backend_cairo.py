@@ -309,6 +309,7 @@ class GraphicsContextCairo(GraphicsContextBase):
             self.ctx.set_source_rgba(rgb[0], rgb[1], rgb[2], rgb[3])
 
     def set_antialiased(self, b):
+        super().set_antialiased(b)
         self.ctx.set_antialias(
             cairo.ANTIALIAS_DEFAULT if b else cairo.ANTIALIAS_NONE)
 
