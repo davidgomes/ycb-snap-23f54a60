@@ -9,4 +9,6 @@ Django 4.1.8 fixes several bugs in 4.1.7.
 Bugfixes
 ========
 
-* ...
+* Fixed a bug in Django 4.1 where :setting:`SECRET_KEY_FALLBACKS` weren't used
+  to verify session authentication hashes, logging out all users after a
+  secret key rotation (:ticket:`34384`).

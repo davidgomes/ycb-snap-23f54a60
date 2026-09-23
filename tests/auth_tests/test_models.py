@@ -236,6 +236,22 @@ class AbstractBaseUserTests(SimpleTestCase):
         user = CustomEmailField()
         self.assertEqual(user.get_email_field_name(), "email_address")
 
+    def test_session_auth_fallback_hash(self):
+        user = User(password="some-password")
+        with self.settings(SECRET_KEY="oldsecret1"):
+            old_hash1 = user.get_session_auth_hash()
+        with self.settings(SECRET_KEY="oldsecret2"):
+            old_hash2 = user.get_session_auth_hash()
+        with self.settings(
+            SECRET_KEY="newsecret", SECRET_KEY_FALLBACKS=["oldsecret1", "oldsecret2"]
+        ):
+            self.assertEqual(
+                list(user.get_session_auth_fallback_hash()), [old_hash1, old_hash2]
+            )
+            self.assertNotIn(
+                user.get_session_auth_hash(), [old_hash1, old_hash2]
+            )
+
 
 class AbstractUserTestCase(TestCase):
     def test_email_user(self):
