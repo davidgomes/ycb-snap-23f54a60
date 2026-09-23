@@ -6,7 +6,7 @@ from sympy.codegen.matrix_nodes import MatrixSolve
 from sympy.core import Expr, Mod, symbols, Eq, Le, Gt, zoo, oo, Rational, Pow
 from sympy.core.numbers import pi
 from sympy.core.singleton import S
-from sympy.functions import acos, KroneckerDelta, Piecewise, sign, sqrt
+from sympy.functions import acos, KroneckerDelta, Max, Min, Piecewise, sign, sqrt
 from sympy.logic import And, Or
 from sympy.matrices import SparseMatrix, MatrixSymbol, Identity
 from sympy.printing.pycode import (
@@ -250,6 +250,14 @@ def test_printmethod():
 
 def test_codegen_ast_nodes():
     assert pycode(none) == 'None'
+
+
+def test_issue_22640():
+    a, b = symbols("a b")
+    assert pycode(Min(a, b)) == "min(a, b)"
+    assert pycode(Max(a, b)) == "max(a, b)"
+    assert pycode(Min(a, b, x)) == "min(a, b, x)"
+    assert pycode(Max(a, b, x)) == "max(a, b, x)"
 
 
 def test_issue_14283():
