@@ -719,11 +719,16 @@ class CodeGen(object):
         if argument_sequence is not None:
             # if the user has supplied IndexedBase instances, we'll accept that
             new_sequence = []
+            array_args = {}
             for arg in argument_sequence:
                 if isinstance(arg, IndexedBase):
                     new_sequence.append(arg.label)
+                    if arg.shape is not None:
+                        array_args[arg.label] = arg
                 else:
                     new_sequence.append(arg)
+                    if isinstance(arg, MatrixSymbol):
+                        array_args[arg] = arg
             argument_sequence = new_sequence
 
             missing = [x for x in arg_list if x.name not in argument_sequence]
@@ -739,7 +744,13 @@ class CodeGen(object):
                 try:
                     new_args.append(name_arg_dict[symbol])
                 except KeyError:
-                    new_args.append(InputArgument(symbol))
+                    if symbol in array_args:
+                        dims = [(S.Zero, dim - 1)
+                                for dim in array_args[symbol].shape]
+                        metadata = {'dimensions': dims}
+                    else:
+                        metadata = {}
+                    new_args.append(InputArgument(symbol, **metadata))
             arg_list = new_args
 
         return Routine(name, arg_list, return_val, local_vars, global_vars)
