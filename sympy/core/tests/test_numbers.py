@@ -347,6 +347,9 @@ def test_Rational_new():
     assert Rational('1e2/1e-2') == Rational(10000)
     assert Rational('1 234') == Rational(1234)
     assert Rational('1/1 234') == Rational(1, 1234)
+    assert Rational('0.5', '100') == Rational(1, 200)
+    assert Rational('0.5', 100) == Rational(1, 200)
+    assert Rational('1/3', '1/2') == Rational(2, 3)
     assert Rational(-1, 0) is S.ComplexInfinity
     assert Rational(1, 0) is S.ComplexInfinity
     # Make sure Rational doesn't lose precision on Floats
