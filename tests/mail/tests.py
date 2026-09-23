@@ -14,6 +14,7 @@ from email.utils import parseaddr
 from io import StringIO
 from smtplib import SMTP, SMTPAuthenticationError, SMTPException
 from ssl import SSLError
+from unittest.mock import patch
 
 from django.core import mail
 from django.core.mail import (
@@ -364,6 +365,17 @@ class MailTests(HeadersCheckMixin, SimpleTestCase):
         msg = EmailMessage('subject', None, 'from@example.com', ['to@example.com'])
         self.assertEqual(msg.body, '')
         self.assertEqual(msg.message().get_payload(), '')
+
+    def test_nonascii_dns_with_non_unicode_encoding(self):
+        """
+        A non-ASCII hostname is IDNA-encoded in Message-ID so the header can
+        be encoded with a non-Unicode charset such as iso-8859-1.
+        """
+        with patch('django.core.mail.message.DNS_NAME', '漢字'):
+            email = EmailMessage('subject', '', 'from@example.com', ['to@example.com'])
+            email.encoding = 'iso-8859-1'
+            message = email.message()
+        self.assertIn('xn--p8s937b', message['Message-ID'])
 
     def test_encoding(self):
         """

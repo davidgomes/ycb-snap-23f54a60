@@ -13,8 +13,13 @@ class CachedDnsName:
 
     def get_fqdn(self):
         if not hasattr(self, '_fqdn'):
-            self._fqdn = socket.getfqdn()
+            self._fqdn = punycode(socket.getfqdn())
         return self._fqdn
+
+
+def punycode(domain):
+    """Return the Punycode of the given domain if it's non-ASCII."""
+    return str(domain).encode('idna').decode('ascii')
 
 
 DNS_NAME = CachedDnsName()
