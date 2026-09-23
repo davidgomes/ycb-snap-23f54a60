@@ -369,6 +369,11 @@ def test_Rational_new():
     assert n.q == 4
     assert n.p == -2
 
+    assert Rational('0.5', '100') == Rational(1, 200)
+    assert Rational(0.5, '100') == Rational(1, 200)
+    assert Rational('0.5', 100) == Rational(1, 200)
+    assert Rational('1/2', '3/4') == Rational(2, 3)
+
 
 def test_Number_new():
     """"
