@@ -1228,14 +1228,88 @@ class TestRunTC:
         assert not ex.value.code % 2
 
     def test_regression_recursive(self):
+        """Tests if error is raised when linter is executed over directory not using --recursive=y"""
         self._test_output(
             [join(HERE, "regrtest_data", "directory", "subdirectory"), "--recursive=n"],
             expected_output="No such file or directory",
         )
 
     def test_recursive(self):
+        """Tests if running linter over directory using --recursive=y"""
         self._runtest(
             [join(HERE, "regrtest_data", "directory", "subdirectory"), "--recursive=y"],
+            code=0,
+        )
+
+    def test_ignore_recursive(self):
+        """Tests recursive run of linter ignoring directory using --ignore parameter.
+
+        Ignored directory contains files yielding lint errors. If directory is not ignored
+        test would fail due these errors.
+        """
+        self._runtest(
+            [
+                join(HERE, "regrtest_data", "directory"),
+                "--recursive=y",
+                "--ignore=ignored_subdirectory",
+            ],
+            code=0,
+        )
+
+        self._runtest(
+            [
+                join(HERE, "regrtest_data", "directory"),
+                "--recursive=y",
+                "--ignore=failing.py",
+            ],
+            code=0,
+        )
+
+    def test_ignore_pattern_recursive(self):
+        """Tests recursive run of linter ignoring directory using --ignore-patterns parameter.
+
+        Ignored directory contains files yielding lint errors. If directory is not ignored
+        test would fail due these errors.
+        """
+        self._runtest(
+            [
+                join(HERE, "regrtest_data", "directory"),
+                "--recursive=y",
+                "--ignore-patterns=ignored_.*",
+            ],
+            code=0,
+        )
+
+        self._runtest(
+            [
+                join(HERE, "regrtest_data", "directory"),
+                "--recursive=y",
+                "--ignore-patterns=failing.*",
+            ],
+            code=0,
+        )
+
+    def test_ignore_path_recursive(self):
+        """Tests recursive run of linter ignoring directory using --ignore-paths parameter.
+
+        Ignored directory contains files yielding lint errors. If directory is not ignored
+        test would fail due these errors.
+        """
+        self._runtest(
+            [
+                join(HERE, "regrtest_data", "directory"),
+                "--recursive=y",
+                "--ignore-paths=.*ignored.*",
+            ],
+            code=0,
+        )
+
+        self._runtest(
+            [
+                join(HERE, "regrtest_data", "directory"),
+                "--recursive=y",
+                "--ignore-paths=.*failing.*",
+            ],
             code=0,
         )
 
@@ -1249,9 +1323,30 @@ class TestRunTC:
                 if not os.path.basename(path) == "regrtest_data"
             ]
             with _test_cwd():
-                os.chdir(join(HERE, "regrtest_data", "directory"))
+                os.chdir(join(HERE, "regrtest_data", "directory", "subdirectory"))
                 self._runtest(
                     [".", "--recursive=y"],
+                    code=0,
+                )
+
+    def test_ignore_path_recursive_current_dir(self) -> None:
+        """Tests that path is normalized before checked that is ignored. GitHub issue #6964"""
+        with _test_sys_path():
+            # pytest is including directory HERE/regrtest_data to sys.path which causes
+            # astroid to believe that directory is a package.
+            sys.path = [
+                path
+                for path in sys.path
+                if not os.path.basename(path) == "regrtest_data"
+            ]
+            with _test_cwd():
+                os.chdir(join(HERE, "regrtest_data", "directory"))
+                self._runtest(
+                    [
+                        ".",
+                        "--recursive=y",
+                        "--ignore-paths=^ignored_subdirectory/.*",
+                    ],
                     code=0,
                 )
 

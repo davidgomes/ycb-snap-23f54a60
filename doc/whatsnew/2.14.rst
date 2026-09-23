@@ -110,6 +110,12 @@ Extensions
 Other Changes
 =============
 
+* ``--ignore``, ``--ignore-patterns``, and ``--ignore-paths`` are now respected
+  when discovering files with ``--recursive=y``.
+
+  Closes #6471
+  Closes #6964
+
 * Started ignoring underscore as a local variable for ``too-many-locals``.
 
   Closes #6488
