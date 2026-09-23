@@ -81,6 +81,14 @@ class ToFieldChild(models.Model):
     parent = models.ForeignKey(Parent, models.CASCADE, to_field='name', related_name='to_field_children')
 
 
+class ParentStringPrimaryKey(models.Model):
+    name = models.CharField(primary_key=True, max_length=15)
+
+
+class ChildStringPrimaryKeyParent(models.Model):
+    parent = models.ForeignKey(ParentStringPrimaryKey, on_delete=models.CASCADE)
+
+
 # Multiple paths to the same model (#7110, #7125)
 class Category(models.Model):
     name = models.CharField(max_length=20)
