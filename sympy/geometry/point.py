@@ -104,6 +104,11 @@ class Point(GeometryEntity):
     """
 
     is_Point = True
+    # Higher than Expr's so that Expr defers to Point's reflected methods,
+    # e.g. Float(2)*Point(1, 1) calls Point.__rmul__ instead of making a Mul.
+    # Those methods must therefore not defer back to the other operand (as
+    # the GeometryEntity ones do) or they would recurse endlessly.
+    _op_priority = 11.0
 
     def __new__(cls, *args, **kwargs):
         evaluate = kwargs.get('evaluate', global_evaluate[0])
@@ -282,6 +287,22 @@ class Point(GeometryEntity):
         """Negate the point."""
         coords = [-x for x in self.args]
         return Point(coords, evaluate=False)
+
+    def __radd__(self, other):
+        """Add self to other; the same as ``self + other``."""
+        return self.__add__(other)
+
+    def __rdiv__(self, other):
+        """Dividing by a Point is not supported."""
+        return NotImplemented
+
+    def __rmul__(self, factor):
+        """Multiply a factor by point's coordinates."""
+        return self.__mul__(factor)
+
+    def __rsub__(self, other):
+        """Subtract self from other; the same as ``-self + other``."""
+        return (-self).__add__(other)
 
     def __sub__(self, other):
         """Subtract two points, or subtract a factor from this point's

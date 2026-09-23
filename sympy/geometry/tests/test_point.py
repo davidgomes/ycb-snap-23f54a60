@@ -92,6 +92,7 @@ def test_point():
 
     assert p4 * 5 == Point(5, 5)
     assert p4 / 5 == Point(0.2, 0.2)
+    assert 5 * p4 == Point(5, 5)
 
     raises(ValueError, lambda: Point(0, 0) + 10)
 
@@ -169,6 +170,7 @@ def test_point3D():
 
     assert p4 * 5 == Point3D(5, 5, 5)
     assert p4 / 5 == Point3D(0.2, 0.2, 0.2)
+    assert 5 * p4 == Point3D(5, 5, 5)
 
     raises(ValueError, lambda: Point3D(0, 0, 0) + 10)
 
@@ -274,6 +276,20 @@ def test_issue_11617():
 
     with warns(UserWarning):
         assert p1.distance(p2) == sqrt(5)
+
+
+def test_issue_17116():
+    x = Symbol('x')
+    p1, p2 = Point(0, 0), Point(1, 1)
+    assert S(2.0)*p2 == p2*S(2.0)
+    assert p1 + S(2.0)*p2 == p1 + p2*S(2.0)
+    assert 2.0*p2 == p2*2.0
+    assert x*p2 == p2*x == Point(x, x)
+    assert (3, 5) + p2 == p2 + (3, 5) == Point(4, 6)
+    assert (3, 5) - p2 == Point(2, 4)
+    raises(ValueError, lambda: x + p2)
+    raises(ValueError, lambda: x - p2)
+    raises(TypeError, lambda: x/p2)
 
 
 def test_transform():
