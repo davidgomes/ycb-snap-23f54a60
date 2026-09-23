@@ -338,7 +338,18 @@ def test_signature_from_str_positionaly_only_args():
     sig = inspect.signature_from_str('(a, /, b)')
     assert list(sig.parameters.keys()) == ['a', 'b']
     assert sig.parameters['a'].kind == Parameter.POSITIONAL_ONLY
+    assert sig.parameters['a'].default == Parameter.empty
     assert sig.parameters['b'].kind == Parameter.POSITIONAL_OR_KEYWORD
+    assert sig.parameters['b'].default == Parameter.empty
+
+    sig = inspect.signature_from_str('(a, b=0, /, c=1)')
+    assert list(sig.parameters.keys()) == ['a', 'b', 'c']
+    assert sig.parameters['a'].kind == Parameter.POSITIONAL_ONLY
+    assert sig.parameters['a'].default == Parameter.empty
+    assert sig.parameters['b'].kind == Parameter.POSITIONAL_ONLY
+    assert sig.parameters['b'].default == '0'
+    assert sig.parameters['c'].kind == Parameter.POSITIONAL_OR_KEYWORD
+    assert sig.parameters['c'].default == '1'
 
 
 def test_signature_from_str_invalid():
