@@ -983,6 +983,11 @@ class FormsFormsetTestCase(SimpleTestCase):
         formset = FavoriteDrinksFormSet(data, prefix='drinks')
         self.assertFalse(formset.is_valid())
         self.assertEqual(formset.non_form_errors(), ['You may only specify a drink once.'])
+        self.assertEqual(
+            str(formset.non_form_errors()),
+            '<ul class="errorlist nonform"><li>'
+            'You may only specify a drink once.</li></ul>',
+        )
 
     def test_formset_iteration(self):
         """Formset instances are iterable."""
@@ -1310,6 +1315,13 @@ class TestIsBoundBehavior(SimpleTestCase):
                 'Missing fields: form-TOTAL_FORMS, form-INITIAL_FORMS. '
                 'You may need to file a bug report if the issue persists.',
             ],
+        )
+        self.assertEqual(
+            str(formset.non_form_errors()),
+            '<ul class="errorlist nonform"><li>'
+            'ManagementForm data is missing or has been tampered with. '
+            'Missing fields: form-TOTAL_FORMS, form-INITIAL_FORMS. '
+            'You may need to file a bug report if the issue persists.</li></ul>',
         )
         self.assertEqual(formset.errors, [])
         # Can still render the formset.
