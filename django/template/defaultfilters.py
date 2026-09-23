@@ -11,6 +11,7 @@ from urllib.parse import quote
 from django.utils import formats
 from django.utils.dateformat import format, time_format
 from django.utils.encoding import iri_to_uri
+from django.utils.functional import Promise
 from django.utils.html import (
     avoid_wrapping, conditional_escape, escape, escapejs,
     json_script as _json_script, linebreaks, strip_tags, urlize as _urlize,
@@ -679,6 +680,10 @@ def add(value, arg):
     except (ValueError, TypeError):
         try:
             return value + arg
+        except TypeError:
+            if isinstance(value, Promise) or isinstance(arg, Promise):
+                return str(value) + str(arg)
+            return ''
         except Exception:
             return ''
 
