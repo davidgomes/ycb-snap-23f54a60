@@ -185,6 +185,9 @@ Forms
   now uses ``DATE_INPUT_FORMATS`` in addition to ``DATETIME_INPUT_FORMATS``
   when converting a field input to a ``datetime`` value.
 
+* :attr:`.FileInput` no longer renders the ``required`` HTML attribute when
+  initial data exists (e.g. a file is already saved on a model instance).
+
 Generic Views
 ~~~~~~~~~~~~~
 
