@@ -1673,6 +1673,10 @@ def test_bool_eq():
     assert 1 == True
     assert S.One == True
     assert S.One != S.true
+    assert S(0.0) != S.false
+    assert S.false != S(0.0)
+    assert S(1.0) != S.true
+    assert S.true != S(1.0)
 
 
 def test_Float_eq():
