@@ -946,6 +946,9 @@ class MigrationAutodetector:
                 )
                 if rename_key in self.renamed_models:
                     new_field.remote_field.through = old_field.remote_field.through
+            dependencies = []
+            if hasattr(new_field, "remote_field") and getattr(new_field.remote_field, "model", None):
+                dependencies.extend(self._get_dependencies_for_foreign_key(new_field))
             old_field_dec = self.deep_deconstruct(old_field)
             new_field_dec = self.deep_deconstruct(new_field)
             if old_field_dec != new_field_dec:
@@ -970,7 +973,8 @@ class MigrationAutodetector:
                             name=field_name,
                             field=field,
                             preserve_default=preserve_default,
-                        )
+                        ),
+                        dependencies=dependencies,
                     )
                 else:
                     # We cannot alter between m2m and concrete fields
