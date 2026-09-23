@@ -541,6 +541,18 @@ def test_rst_prolog(app, status, warning):
     assert not md.rawsource.endswith('*Good-bye world*.\n')
 
 
+@pytest.mark.sphinx('dummy', testroot='prolog-role-heading')
+def test_rst_prolog_with_role_in_heading(app, status, warning):
+    app.builder.build_all()
+    doctree = app.env.get_doctree('mypackage')
+
+    section = doctree.next_node(nodes.section)
+    assert_node(section[0], nodes.title)
+    assert_node(section[0][0], addnodes.pending_xref, reftype='mod', reftarget='mypackage2')
+    assert section[0].astext() == 'mypackage2'
+    assert app.env.titles['mypackage'].astext() == 'mypackage2'
+
+
 @pytest.mark.sphinx('dummy', testroot='keep_warnings')
 def test_keep_warnings_is_True(app, status, warning):
     app.builder.build_all()
