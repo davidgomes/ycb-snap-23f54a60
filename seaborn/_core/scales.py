@@ -378,6 +378,12 @@ class ContinuousBase(Scale):
             axis.set_view_interval(vmin, vmax)
             locs = axis.major.locator()
             locs = locs[(vmin <= locs) & (locs <= vmax)]
+            # Avoid having an offset / scientific notation in a legend
+            # as we don't represent that anywhere so it ends up incorrect.
+            if hasattr(axis.major.formatter, "set_useOffset"):
+                axis.major.formatter.set_useOffset(False)
+            if hasattr(axis.major.formatter, "set_scientific"):
+                axis.major.formatter.set_scientific(False)
             labels = axis.major.formatter.format_ticks(locs)
             new._legend = list(locs), list(labels)
 

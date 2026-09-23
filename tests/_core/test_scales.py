@@ -267,6 +267,14 @@ class TestContinuous:
         for text in labels:
             assert re.match(r"^ \d\.\d $", text)
 
+    def test_legend_no_offset(self):
+
+        x = pd.Series([1e6, 2e6, 3e6], name="x")
+        s = Continuous()._setup(x, IntervalProperty())
+        locs, labels = s._legend
+        for loc, text in zip(locs, labels):
+            assert float(text.replace("\u2212", "-")) == loc
+
     def test_label_base(self, x):
 
         a, locs = self.setup_labels(100 * x, base=2)

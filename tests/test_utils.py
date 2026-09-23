@@ -335,6 +335,15 @@ def test_locator_to_legend_entries():
         assert re.match(f"1e.0{exp}", str_levels[i])
 
 
+def test_locator_to_legend_entries_no_offset():
+
+    locator = mpl.ticker.MaxNLocator(nbins=3)
+    limits = (1e6 + 1, 1e6 + 10)
+    levels, str_levels = utils.locator_to_legend_entries(locator, limits, float)
+    for level, text in zip(levels, str_levels):
+        assert float(text) == level
+
+
 def test_move_legend_matplotlib_objects():
 
     fig, ax = plt.subplots()
