@@ -701,6 +701,16 @@ class ExecutorTests(MigrationTestBase):
                 executor.recorder.applied_migrations(),
             )
 
+    def test_migrate_skips_schema_creation(self):
+        """The django_migrations table is not created if there are no migrations to record."""
+        executor = MigrationExecutor(connection)
+        # 0 queries, since the query for has_table is being mocked.
+        with mock.patch.object(executor.recorder, 'has_table', return_value=False), \
+                mock.patch.object(executor.recorder, 'ensure_schema') as ensure_schema, \
+                self.assertNumQueries(0):
+            executor.migrate([], plan=[])
+        ensure_schema.assert_not_called()
+
     # When the feature is False, the operation and the record won't be
     # performed in a transaction and the test will systematically pass.
     @skipUnlessDBFeature('can_rollback_ddl')
