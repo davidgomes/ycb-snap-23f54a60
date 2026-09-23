@@ -38,6 +38,21 @@ class TestQuery(SimpleTestCase):
         self.assertEqual(lookup.rhs, 0)
         self.assertEqual(lookup.lhs.target, Author._meta.get_field('num'))
 
+    def test_simplecol_query(self):
+        query = Query(Author)
+        where = query.build_where(Q(num__gt=2, name__isnull=False) | Q(num__lt=F('id')))
+
+        name_isnull_lookup, num_gt_lookup = where.children[0].children
+        self.assertIsInstance(num_gt_lookup, GreaterThan)
+        self.assertIsInstance(num_gt_lookup.lhs, SimpleCol)
+        self.assertIsInstance(name_isnull_lookup, IsNull)
+        self.assertIsInstance(name_isnull_lookup.lhs, SimpleCol)
+
+        num_lt_lookup = where.children[1]
+        self.assertIsInstance(num_lt_lookup, LessThan)
+        self.assertIsInstance(num_lt_lookup.rhs, SimpleCol)
+        self.assertIsInstance(num_lt_lookup.lhs, SimpleCol)
+
     def test_multiple_fields(self):
         query = Query(Item)
         where = query.build_where(Q(modified__gt=F('created')))
