@@ -22,12 +22,15 @@ unit test for visitors.diadefs and extensions.diadefslib modules
 import codecs
 import os
 from difflib import unified_diff
+from unittest.mock import patch
 
+import astroid
 import pytest
 
 from pylint.pyreverse.diadefslib import DefaultDiadefGenerator, DiadefsHandler
+from pylint.pyreverse.diagrams import ClassDiagram
 from pylint.pyreverse.inspector import Linker, project_from_files
-from pylint.pyreverse.utils import get_visibility
+from pylint.pyreverse.utils import get_annotation, get_visibility, infer_node
 from pylint.pyreverse.writer import DotWriter
 
 _DEFAULTS = {
@@ -132,3 +135,158 @@ def test_get_visibility(names, expected):
     for name in names:
         got = get_visibility(name)
         assert got == expected, f"got {got} instead of {expected} for value {name}"
+
+
+@pytest.mark.parametrize(
+    "assign, label",
+    [
+        ("a: str = None", "Optional[str]"),
+        ("a: str = 'mystr'", "str"),
+        ("a: Optional[str] = 'str'", "Optional[str]"),
+        ("a: Optional[str] = None", "Optional[str]"),
+        ("a: typing.Optional[str] = None", "typing.Optional[str]"),
+        ("a: 'MyClass' = None", "Optional[MyClass]"),
+    ],
+)
+def test_get_annotation_annassign(assign, label):
+    """AnnAssign"""
+    node = astroid.extract_node(assign)
+    assert isinstance(node, astroid.AnnAssign)
+    annotation = node.annotation.as_string()
+    got = get_annotation(node.target).name
+    assert got == label, f"got {got} instead of {label} for value {node}"
+    assert node.annotation.as_string() == annotation
+
+
+@pytest.mark.parametrize(
+    "init_method, label",
+    [
+        ("def __init__(self, x: str):                   self.x = x", "str"),
+        ("def __init__(self, x: str = 'str'):           self.x = x", "str"),
+        ("def __init__(self, x: str = None):            self.x = x", "Optional[str]"),
+        ("def __init__(self, x: Optional[str]):         self.x = x", "Optional[str]"),
+        ("def __init__(self, x: Optional[str] = None):  self.x = x", "Optional[str]"),
+        ("def __init__(self, x: Optional[str] = 'str'): self.x = x", "Optional[str]"),
+        ("def __init__(self, *, x: str = None):         self.x = x", "Optional[str]"),
+        ("def __init__(self):               self.x: int = None", "Optional[int]"),
+    ],
+)
+def test_get_annotation_assignattr(init_method, label):
+    """AssignAttr"""
+    assign = rf"""
+        class A:
+            {init_method}
+    """
+    node = astroid.extract_node(assign)
+    instance_attrs = node.instance_attrs
+    for _, assign_attrs in instance_attrs.items():
+        for assign_attr in assign_attrs:
+            got = get_annotation(assign_attr).name
+            assert isinstance(assign_attr, astroid.AssignAttr)
+            assert got == label, f"got {got} instead of {label} for value {node}"
+
+
+def test_get_annotation_assignattr_resolves_parameter():
+    """The annotation is only used when the assigned name is the parameter"""
+    node = astroid.extract_node(
+        """
+        class A:
+            def __init__(self, x: str, y: str, z: str):
+                if x:
+                    self.x = x
+                if y:
+                    y = 1
+                self.y = y
+                self.z = z.upper()
+        """
+    )
+    assert get_annotation(node.instance_attrs["x"][0]).name == "str"
+    assert get_annotation(node.instance_attrs["y"][0]) is None
+    assert get_annotation(node.instance_attrs["z"][0]) is None
+
+
+@patch("pylint.pyreverse.utils.get_annotation")
+@patch("astroid.node_classes.NodeNG.infer", side_effect=astroid.InferenceError)
+def test_infer_node_1(mock_infer, mock_get_annotation):
+    """Return set() when astroid.InferenceError is raised and an annotation has
+    not been returned
+    """
+    mock_get_annotation.return_value = None
+    node = astroid.extract_node("a: str = 'mystr'")
+    mock_infer.return_value = "x"
+    assert infer_node(node) == set()
+    assert mock_infer.called
+
+
+@patch("pylint.pyreverse.utils.get_annotation")
+@patch("astroid.node_classes.NodeNG.infer")
+def test_infer_node_2(mock_infer, mock_get_annotation):
+    """Return set(node.infer()) when InferenceError is not raised and an
+    annotation has not been returned
+    """
+    mock_get_annotation.return_value = None
+    node = astroid.extract_node("a: str = 'mystr'")
+    mock_infer.return_value = "x"
+    assert infer_node(node) == set("x")
+    assert mock_infer.called
+
+
+def test_infer_node_annotation():
+    """Annotations naming a class resolve to it, others are kept as labels"""
+    node = astroid.extract_node(
+        """
+        class Foo:
+            pass
+
+        class A:
+            def __init__(self, b: "Foo", c: Foo = None):
+                self.a: Foo = 1
+                self.b = b
+                self.c = c
+                self.d: List[Foo] = []
+        """
+    )
+    for attr in ("a", "b"):
+        (inferred,) = infer_node(node.instance_attrs[attr][0])
+        assert isinstance(inferred, astroid.ClassDef)
+        assert inferred.name == "Foo"
+    for attr, label in (("c", "Optional[Foo]"), ("d", "List[Foo]")):
+        (inferred,) = infer_node(node.instance_attrs[attr][0])
+        assert isinstance(inferred, astroid.Name)
+        assert inferred.name == label
+
+
+def test_dot_label_type_annotations():
+    module = astroid.parse(
+        """
+        class Supplier:
+            pass
+
+        class A:
+            def __init__(self, x: str = None):
+                self.x = x
+                self.supplier: Supplier = Supplier()
+
+            def method(self, i: int, j) -> List[int]:
+                pass
+
+            @staticmethod
+            def static(k: "Supplier"):
+                pass
+        """
+    )
+    Linker(project=None).visit(module)
+    diagram = ClassDiagram("classes", "PUB_ONLY")
+    for name in ("A", "Supplier"):
+        diagram.add_object(name, module[name])
+    diagram.extract_relationships()
+    obj = diagram.classe("A")
+    label = DotWriter(Config()).get_values(obj)["label"]
+    assert label == (
+        r"{A|supplier\lx : Optional[str]\l|"
+        r"method(i: int, j): List[int]\lstatic(k: Supplier)\l}"
+    )
+    (association,) = diagram.relationships["association"]
+    assert association.from_object is diagram.classe("Supplier")
+    assert association.to_object is obj
+    assert association.name == "supplier"
