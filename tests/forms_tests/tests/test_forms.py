@@ -2120,7 +2120,10 @@ Password: <input type="password" name="password" required></li>
 
         form = DateTimeForm({})
         self.assertEqual(form.errors, {})
-        self.assertEqual(form.cleaned_data, {'dt': now})
+        cleaned = form.cleaned_data['dt']
+        self.assertEqual(cleaned, datetime.datetime(2006, 10, 25, 14, 30, 45))
+        bf = form['dt']
+        self.assertEqual(cleaned, bf.initial)
 
     def test_datetime_changed_data_callable_with_microseconds(self):
         class DateTimeForm(forms.Form):
