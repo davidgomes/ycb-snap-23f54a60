@@ -340,7 +340,8 @@ def real_root(arg, n=None, evaluate=None):
 class MinMaxBase(Expr, LatticeOp):
     def __new__(cls, *args, **assumptions):
         if not args:
-            raise ValueError("The Max/Min functions must have arguments.")
+            # Infimum of the empty set is +oo; supremum is -oo.
+            return cls.identity
 
         args = (sympify(arg) for arg in args)
 
@@ -691,6 +692,8 @@ class Max(MinMaxBase, Application):
     Max(8, p)
     >>> Max (1, x, oo)
     oo
+    >>> Max()
+    -oo
 
     * Algorithm
 
@@ -786,6 +789,8 @@ class Min(MinMaxBase, Application):
     Min(x, y)
     >>> Min(n, 8, p, -7, p, oo)     #doctest: +SKIP
     Min(n, -7)
+    >>> Min()
+    oo
 
     See Also
     ========
