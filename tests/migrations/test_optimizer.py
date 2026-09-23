@@ -218,6 +218,20 @@ class OptimizerTests(SimpleTestCase):
             migrations.AlterOrderWithRespectTo("Foo", "b"),
         )
 
+    def test_alter_alter_foo_together_through_other_foo_together(self):
+        self.assertOptimizesTo(
+            [
+                migrations.AlterUniqueTogether("Foo", set()),
+                migrations.AlterIndexTogether("Foo", set()),
+                migrations.AlterUniqueTogether("Foo", {("col",)}),
+                migrations.AlterIndexTogether("Foo", {("col",)}),
+            ],
+            [
+                migrations.AlterUniqueTogether("Foo", {("col",)}),
+                migrations.AlterIndexTogether("Foo", {("col",)}),
+            ],
+        )
+
     def test_optimize_through_create(self):
         """
         We should be able to optimize away create/delete through a create or delete
