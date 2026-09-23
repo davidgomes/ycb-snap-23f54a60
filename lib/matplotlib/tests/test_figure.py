@@ -2,6 +2,7 @@ import copy
 from datetime import datetime
 import io
 from pathlib import Path
+import pickle
 import platform
 from threading import Timer
 from types import SimpleNamespace
