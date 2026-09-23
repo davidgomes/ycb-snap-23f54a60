@@ -1,0 +1,1 @@
+Fix interpreter crash on debug builds of Python 3.8+ when using ``True``, ``False`` or ``None`` as identifiers in ``-k`` and ``-m`` expressions.
