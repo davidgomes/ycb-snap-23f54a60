@@ -283,7 +283,8 @@ class Product(ExprWithIntLimits):
                 # as_numer_denom(). E.g. n**(2/3) + 1 --> (n**(2/3) + 1, 1).
                 # We have to catch this case.
 
-                p = sum([self._eval_product(i, (k, a, n)) for i in p.as_coeff_Add()])
+                from sympy.concrete.summations import Sum
+                p = exp(Sum(log(p), (k, a, n)))
             else:
                 p = self._eval_product(p, (k, a, n))
             return p / q
