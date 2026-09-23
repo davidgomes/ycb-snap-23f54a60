@@ -1627,17 +1627,25 @@ class Rational(Number):
 
         if not isinstance(p, SYMPY_INTS):
             p = Rational(p)
-            q *= p.q
-            p = p.p
+            # Convert q before scaling. A non-int q (for example a numeric
+            # string) must not be updated with ``q *= p.q``, which repeats
+            # the string instead of multiplying: Rational('0.5', '100').
+            if not isinstance(q, SYMPY_INTS):
+                q = Rational(q)
+                # (p.p/p.q) / (q.p/q.q)
+                p, q = p.p*q.q, p.q*q.p
+            else:
+                q = int(q)
+                p, q = p.p, q*p.q
         else:
             p = int(p)
 
-        if not isinstance(q, SYMPY_INTS):
-            q = Rational(q)
-            p *= q.q
-            q = q.p
-        else:
-            q = int(q)
+            if not isinstance(q, SYMPY_INTS):
+                q = Rational(q)
+                p *= q.q
+                q = q.p
+            else:
+                q = int(q)
 
         # p and q are now ints
         if q == 0:

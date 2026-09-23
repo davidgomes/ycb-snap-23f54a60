@@ -343,6 +343,11 @@ def test_Rational_new():
     assert Rational('19/25').limit_denominator(4) == n3_4
     assert Rational(1.0, 3) == Rational(1, 3)
     assert Rational(1, 3.0) == Rational(1, 3)
+    # Numeric strings in both arguments are values, not digit concatenation.
+    assert Rational('0.5', '100') == Rational(1, 200)
+    assert Rational('0.5', 100) == Rational(1, 200)
+    assert Rational(0.5, '100') == Rational(1, 200)
+    assert Rational('1/2', '1/4') == Rational(2)
     assert Rational(Float(0.5)) == S.Half
     assert Rational('1e2/1e-2') == Rational(10000)
     assert Rational('1 234') == Rational(1234)
