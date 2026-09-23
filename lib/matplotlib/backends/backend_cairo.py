@@ -25,7 +25,6 @@ except ImportError:
             "cairo backend requires that pycairo>=1.14.0 or cairocffi "
             "is installed") from err
 
-import matplotlib as mpl
 from .. import _api, cbook, font_manager
 from matplotlib.backend_bases import (
     _Backend, FigureCanvasBase, FigureManagerBase, GraphicsContextBase,
@@ -205,7 +204,7 @@ class RendererCairo(RendererBase):
             ctx.set_font_size(self.points_to_pixels(prop.get_size_in_points()))
             opts = cairo.FontOptions()
             opts.set_antialias(
-                cairo.ANTIALIAS_DEFAULT if mpl.rcParams["text.antialiased"]
+                cairo.ANTIALIAS_DEFAULT if gc.get_antialiased()
                 else cairo.ANTIALIAS_NONE)
             ctx.set_font_options(opts)
             if angle:
@@ -222,6 +221,11 @@ class RendererCairo(RendererBase):
         ctx.translate(x, y)
         if angle:
             ctx.rotate(np.deg2rad(-angle))
+        opts = cairo.FontOptions()
+        opts.set_antialias(
+            cairo.ANTIALIAS_DEFAULT if gc.get_antialiased()
+            else cairo.ANTIALIAS_NONE)
+        ctx.set_font_options(opts)
 
         for font, fontsize, idx, ox, oy in glyphs:
             ctx.new_path()
@@ -311,6 +315,9 @@ class GraphicsContextCairo(GraphicsContextBase):
     def set_antialiased(self, b):
         self.ctx.set_antialias(
             cairo.ANTIALIAS_DEFAULT if b else cairo.ANTIALIAS_NONE)
+
+    def get_antialiased(self):
+        return self.ctx.get_antialias() != cairo.ANTIALIAS_NONE
 
     def set_capstyle(self, cs):
         self.ctx.set_line_cap(_api.check_getitem(self._capd, capstyle=cs))
