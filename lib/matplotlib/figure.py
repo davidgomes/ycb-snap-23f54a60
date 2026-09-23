@@ -949,12 +949,14 @@ default: %(va)s
             ax.clear()
             self.delaxes(ax)  # Remove ax from self._axstack.
 
-        self.artists = []
-        self.lines = []
-        self.patches = []
-        self.texts = []
-        self.images = []
-        self.legends = []
+        # Figure-level artists are deparented the same way Axes children are:
+        # drop .axes and .figure so they do not keep the cleared figure alive.
+        for attr in ("artists", "lines", "patches", "texts", "images",
+                     "legends"):
+            old, empty = getattr(self, attr), []
+            setattr(self, attr, empty)
+            for art in old:
+                art.axes = art.figure = None
         if not keep_observers:
             self._axobservers = cbook.CallbackRegistry()
         self._suptitle = None
