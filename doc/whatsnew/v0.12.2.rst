@@ -11,3 +11,5 @@ v0.12.2 (Unreleased)
 - |Fix| Fixed a bug in :func:`histplot` with `kde=True` and `log_scale=True` where the curve was not scaled properly (:pr:`3173`).
 
 - |Fix| Fixed a bug in :func:`relplot` where inner axis labels would be shown when axis sharing was disabled (:pr:`3180`).
+
+- |Fix| Fixed a bug where legends for numeric variables with large values would be incorrectly shown (i.e. with a missing offset or exponent; :pr:`3187`).

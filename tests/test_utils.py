@@ -322,6 +322,14 @@ def test_locator_to_legend_entries():
     levels, str_levels = utils.locator_to_legend_entries(locator, limits, int)
     assert str_levels == ["2", "4", "6"]
 
+    limits = (2e6, 6e6)
+    levels, str_levels = utils.locator_to_legend_entries(locator, limits, int)
+    assert str_levels == ["3000000", "4500000", "6000000"]
+
+    limits = (1e6 + 1, 1e6 + 9)
+    levels, str_levels = utils.locator_to_legend_entries(locator, limits, int)
+    assert str_levels == [f"{level:d}" for level in levels]
+
     locator = mpl.ticker.LogLocator(numticks=5)
     limits = (5, 1425)
     levels, str_levels = utils.locator_to_legend_entries(locator, limits, int)

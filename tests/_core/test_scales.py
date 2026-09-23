@@ -312,6 +312,20 @@ class TestContinuous:
         with pytest.raises(TypeError, match="`like` must be"):
             s.label(like=2)
 
+    def test_legend_large_values_no_offset(self):
+
+        x = pd.Series([1e6 + 1, 1e6 + 5, 1e6 + 9], name="x")
+        s = Continuous()._setup(x, IntervalProperty())
+        locs, labels = s._legend
+        assert labels == [f"{loc:.0f}" for loc in locs]
+
+    def test_legend_large_values_no_scientific(self):
+
+        x = pd.Series([2e6, 4e6, 6e6], name="x")
+        s = Continuous()._setup(x, IntervalProperty())
+        locs, labels = s._legend
+        assert labels == [f"{loc:.0f}" for loc in locs]
+
 
 class TestNominal:
 
