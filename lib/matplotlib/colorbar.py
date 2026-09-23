@@ -651,8 +651,21 @@ class Colorbar:
             if not self.drawedges:
                 if len(self._y) >= self.n_rasterize:
                     self.solids.set_rasterized(True)
-        self.dividers.set_segments(
-            np.dstack([X, Y])[1:-1] if self.drawedges else [])
+        if self.drawedges:
+            # Outer edges that sit on the colorbar spine are already stroked
+            # by the outline. Extension triangles (or rectangles) lie outside
+            # that spine, so the edge at an extended end must be drawn to
+            # separate the extension from the colorbar body. Axis inversion
+            # flips which end is visually on top, but mesh order stays in
+            # data order, so this follows *extend* rather than the visual end.
+            segs = np.dstack([X, Y])
+            if self.extend not in ('min', 'both'):
+                segs = segs[1:]
+            if self.extend not in ('max', 'both'):
+                segs = segs[:-1]
+        else:
+            segs = []
+        self.dividers.set_segments(segs)
 
     def _add_solids_patches(self, X, Y, C, mappable):
         hatches = mappable.hatches * len(C)  # Have enough hatches.

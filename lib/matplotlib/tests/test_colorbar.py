@@ -1012,6 +1012,35 @@ def test_colorbar_set_formatter_locator():
     assert cb.ax.yaxis.get_minor_formatter() is fmt
 
 
+@pytest.mark.parametrize('orientation', ['vertical', 'horizontal'])
+@pytest.mark.parametrize('extend', ['neither', 'min', 'max', 'both'])
+@pytest.mark.parametrize('inverted', [False, True])
+def test_colorbar_drawedges_extend(orientation, extend, inverted):
+    # Edges at an extended end separate the extension from the body and must
+    # be drawn. Edges that coincide with the spine are left to the outline.
+    fig, ax = plt.subplots()
+    bounds = np.arange(5)
+    ncolors = len(bounds) - 1
+    if extend in ('min', 'max'):
+        ncolors += 1
+    elif extend == 'both':
+        ncolors += 2
+    cmap = cm.get_cmap('viridis', ncolors)
+    norm = BoundaryNorm(bounds, cmap.N, extend=extend)
+    if inverted:
+        ax.invert_yaxis() if orientation == 'vertical' else ax.invert_xaxis()
+    cbar = Colorbar(ax, cmap=cmap, norm=norm, orientation=orientation,
+                    drawedges=True, extend=extend)
+    axis = 1 if orientation == 'vertical' else 0
+    coords = np.array(sorted(seg[0, axis] for seg in cbar.dividers.get_segments()))
+    expected = np.array(cbar._y, dtype=float)
+    if extend not in ('min', 'both'):
+        expected = expected[1:]
+    if extend not in ('max', 'both'):
+        expected = expected[:-1]
+    np.testing.assert_allclose(coords, expected)
+
+
 def test_offset_text_loc():
     plt.style.use('mpl20')
     fig, ax = plt.subplots()
