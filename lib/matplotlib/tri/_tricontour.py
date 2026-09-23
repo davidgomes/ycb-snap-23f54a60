@@ -127,6 +127,9 @@ levels : int or array-like, optional
     If *z* is a boolean array and *levels* is not given, *levels* defaults to
     ``[0.5]`` for `.tricontour` and ``[0, 0.5, 1]`` for `.tricontourf`.
 
+    .. versionchanged:: 3.7
+        Boolean *z* inputs now default to those levels.
+
 Returns
 -------
 `~matplotlib.tri.TriContourSet`

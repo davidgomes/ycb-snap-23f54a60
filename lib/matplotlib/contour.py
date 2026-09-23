@@ -1592,6 +1592,9 @@ levels : int or array-like, optional
     If *Z* is a boolean array and *levels* is not given, *levels* defaults to
     ``[0.5]`` for `.contour` and ``[0, 0.5, 1]`` for `.contourf`.
 
+    .. versionchanged:: 3.7
+        Boolean *Z* inputs now default to those levels.
+
 Returns
 -------
 `~.contour.QuadContourSet`
