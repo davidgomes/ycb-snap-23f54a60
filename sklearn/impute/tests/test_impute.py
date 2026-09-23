@@ -1691,3 +1691,17 @@ def test_simple_imputer_keep_empty_features(strategy, array_type, keep_empty_fea
             assert_array_equal(constant_feature, 0)
         else:
             assert X_imputed.shape == (X.shape[0], X.shape[1] - 1)
+
+
+@pytest.mark.parametrize("fill_value", [-1, np.nan])
+def test_iterative_imputer_constant_fill_value(fill_value):
+    """Check that `fill_value` is forwarded to the initial imputer."""
+    X = np.array([[-1, 2, 3, -1], [4, -1, 5, -1], [6, 7, -1, -1], [8, 9, 0, -1]])
+    imputer = IterativeImputer(
+        missing_values=-1,
+        initial_strategy="constant",
+        fill_value=fill_value,
+        max_iter=0,
+    )
+    imputer.fit_transform(X)
+    assert_array_equal(imputer.initial_imputer_.statistics_, fill_value)
