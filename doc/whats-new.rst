@@ -57,6 +57,9 @@ New Features
   now accept a ``dim_order`` parameter allowing to specify the resulting dataframe's
   dimensions order (:issue:`4331`, :pull:`4333`).
   By `Thomas Zilio <https://github.com/thomas-z>`_.
+- The ``min_count`` argument of :py:meth:`DataArray.sum`, :py:meth:`DataArray.prod`,
+  :py:meth:`Dataset.sum` and :py:meth:`Dataset.prod` is now supported when reducing
+  over more than one dimension (:issue:`4354`).
 
 
 Bug fixes
