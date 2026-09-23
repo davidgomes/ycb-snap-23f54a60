@@ -1170,6 +1170,20 @@ class TestDataArray:
         assert data.loc[True] == 0
         assert data.loc[False] == 1
 
+    def test_loc_dim_name_collision_with_sel_params(self):
+        # regression test for GH2840: a dimension named like a ``sel``
+        # parameter (method, tolerance, drop, indexers) must still index by label.
+        da = DataArray(
+            [[0, 0], [1, 1]],
+            dims=["dim1", "method"],
+            coords={"dim1": ["x", "y"], "method": ["a", "b"]},
+        )
+        assert_array_equal(da.loc[dict(dim1=["x", "y"], method=["a"])], [[0], [1]])
+        assert_array_equal(da.loc[dict(dim1="x", method="a")], 0)
+
+        da_drop = DataArray([0, 1], dims=["drop"], coords={"drop": ["a", "b"]})
+        assert_array_equal(da_drop.loc[dict(drop="b")], 1)
+
     def test_selection_multiindex(self):
         mindex = pd.MultiIndex.from_product(
             [["a", "b"], [1, 2], [-1, -2]], names=("one", "two", "three")
