@@ -1568,8 +1568,7 @@ default: %(va)s
         wspace, hspace : float, default: None
             The amount of width/height reserved for space between subfigures,
             expressed as a fraction of the average subfigure width/height.
-            If not given, the values will be inferred from a figure or
-            rcParams when necessary.
+            If not given, no space is reserved.
 
         width_ratios : array-like of length *ncols*, optional
             Defines the relative widths of the columns. Each column gets a
@@ -1582,7 +1581,9 @@ default: %(va)s
             If not given, all rows will have the same height.
         """
         gs = GridSpec(nrows=nrows, ncols=ncols, figure=self,
-                      wspace=wspace, hspace=hspace,
+                      wspace=0 if wspace is None else wspace,
+                      hspace=0 if hspace is None else hspace,
+                      left=0, right=1, bottom=0, top=1,
                       width_ratios=width_ratios,
                       height_ratios=height_ratios)
 
@@ -2274,17 +2275,15 @@ class SubFigure(FigureBase):
             return
         # need to figure out *where* this subplotspec is.
         gs = self._subplotspec.get_gridspec()
-        wr = np.asarray(gs.get_width_ratios())
-        hr = np.asarray(gs.get_height_ratios())
-        dx = wr[self._subplotspec.colspan].sum() / wr.sum()
-        dy = hr[self._subplotspec.rowspan].sum() / hr.sum()
-        x0 = wr[:self._subplotspec.colspan.start].sum() / wr.sum()
-        y0 = 1 - hr[:self._subplotspec.rowspan.stop].sum() / hr.sum()
+        bottoms, tops, lefts, rights = gs.get_grid_positions(self._parent)
+        rows, cols = self._subplotspec.rowspan, self._subplotspec.colspan
+        x0, x1 = lefts[cols.start], rights[cols.stop - 1]
+        y0, y1 = bottoms[rows.stop - 1], tops[rows.start]
         if self.bbox_relative is None:
-            self.bbox_relative = Bbox.from_bounds(x0, y0, dx, dy)
+            self.bbox_relative = Bbox.from_extents(x0, y0, x1, y1)
         else:
             self.bbox_relative.p0 = (x0, y0)
-            self.bbox_relative.p1 = (x0 + dx, y0 + dy)
+            self.bbox_relative.p1 = (x1, y1)
 
     def get_constrained_layout(self):
         """
