@@ -81,7 +81,7 @@ class RequestEncodingMixin(object):
         """
 
         if isinstance(data, (str, bytes)):
-            return to_native_string(data)
+            return data
         elif hasattr(data, 'read'):
             return data
         elif hasattr(data, '__iter__'):
