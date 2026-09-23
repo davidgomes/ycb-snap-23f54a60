@@ -2362,6 +2362,11 @@ class AttributeDocumenter(GenericAliasMixin, NewTypeMixin, SlotsMixin,  # type: 
         if self.object is INSTANCEATTR:
             return []
 
+        # Check the attribute has a docstring-comment
+        comment = self.get_attribute_comment(self.parent)
+        if comment:
+            return [comment]
+
         try:
             # Disable `autodoc_inherit_docstring` temporarily to avoid to obtain
             # a docstring from the value which descriptor returns unexpectedly.
