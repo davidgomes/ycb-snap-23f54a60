@@ -245,7 +245,10 @@ Models
 Requests and Responses
 ~~~~~~~~~~~~~~~~~~~~~~
 
-* ...
+* The new ``samesite`` argument of :meth:`.HttpResponse.delete_cookie` allows
+  setting the ``SameSite`` cookie flag when deleting a cookie. If
+  ``samesite='None'``, the ``secure`` flag is also set, as browsers ignore
+  ``SameSite=None`` cookies without it.
 
 Security
 ~~~~~~~~
