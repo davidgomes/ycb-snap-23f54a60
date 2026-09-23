@@ -71,6 +71,7 @@ class UpdateCacheMiddleware(MiddlewareMixin):
         self.cache_alias = settings.CACHE_MIDDLEWARE_ALIAS
         self.cache = caches[self.cache_alias]
         self.get_response = get_response
+        self._async_check()
 
     def _should_update_cache(self, request, response):
         return hasattr(request, '_cache_update_cache') and request._cache_update_cache
@@ -133,6 +134,7 @@ class FetchFromCacheMiddleware(MiddlewareMixin):
         self.cache_alias = settings.CACHE_MIDDLEWARE_ALIAS
         self.cache = caches[self.cache_alias]
         self.get_response = get_response
+        self._async_check()
 
     def process_request(self, request):
         """
@@ -201,3 +203,4 @@ class CacheMiddleware(UpdateCacheMiddleware, FetchFromCacheMiddleware):
         self.cache_timeout = cache_timeout
         self.page_timeout = page_timeout
         self.cache = caches[self.cache_alias]
+        self._async_check()

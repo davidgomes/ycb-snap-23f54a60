@@ -1,3 +1,4 @@
+import asyncio
 import threading
 
 from asgiref.sync import async_to_sync
@@ -78,3 +79,35 @@ class MiddlewareMixinTests(SimpleTestCase):
 
         self.assertEqual(len(threads_and_connections), 4)
         self.assertEqual(len(set(threads_and_connections)), 1)
+
+    def test_async_capable_middleware_passes_response_not_coroutine(self):
+        """
+        Built-in middleware that override __init__() must still enter async
+        mode. Otherwise the middleware outside them receives a coroutine in
+        process_response() under ASGI.
+        """
+        async def get_response(request):
+            return HttpResponse('ok')
+
+        class Outer(MiddlewareMixin):
+            def process_response(self, request, response):
+                self.response_type = type(response)
+                return response
+
+        for middleware_class in [
+            SecurityMiddleware,
+            UpdateCacheMiddleware,
+            FetchFromCacheMiddleware,
+            CacheMiddleware,
+        ]:
+            with self.subTest(middleware=middleware_class):
+                inner = middleware_class(get_response)
+                self.assertIs(
+                    getattr(inner, '_is_coroutine', None),
+                    asyncio.coroutines._is_coroutine,
+                )
+                outer = Outer(inner)
+                request = HttpRequest()
+                response = async_to_sync(outer)(request)
+                self.assertIs(outer.response_type, HttpResponse)
+                self.assertIsInstance(response, HttpResponse)
