@@ -475,6 +475,8 @@ class Similar:
         hash_to_index_2: HashToIndex_T
         index_to_lines_1: IndexToLines_T
         index_to_lines_2: IndexToLines_T
+        if self.min_lines == 0:
+            return
         hash_to_index_1, index_to_lines_1 = hash_lineset(lineset1, self.min_lines)
         hash_to_index_2, index_to_lines_2 = hash_lineset(lineset2, self.min_lines)
 
@@ -739,7 +741,7 @@ class SimilarChecker(BaseChecker, Similar, MapReduceMixin):
                 "default": DEFAULT_MIN_SIMILARITY_LINE,
                 "type": "int",
                 "metavar": "<int>",
-                "help": "Minimum lines number of a similarity.",
+                "help": "Minimum lines number of a similarity. Set to 0 to disable the check.",
             },
         ),
         (
