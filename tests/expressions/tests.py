@@ -1905,6 +1905,25 @@ class ExistsTests(TestCase):
         )
         self.assertNotIn('ORDER BY', captured_sql)
 
+    def test_negated_empty_exists(self):
+        # ~Exists(empty queryset) is always true, so sibling filters must remain.
+        expr = Experiment.objects.create(
+            name='test',
+            assigned=datetime.date(2020, 1, 1),
+            completed=datetime.date(2020, 1, 2),
+            estimated_time=datetime.timedelta(1),
+            start=datetime.datetime(2020, 1, 1),
+            end=datetime.datetime(2020, 1, 2),
+        )
+        qs = Experiment.objects.filter(~Exists(Experiment.objects.none()), name='test')
+        self.assertSequenceEqual(qs, [expr])
+        self.assertIn('WHERE', str(qs.query))
+        self.assertIn('test', str(qs.query))
+        self.assertSequenceEqual(
+            Experiment.objects.filter(Exists(Experiment.objects.none()), name='test'),
+            [],
+        )
+
 
 class FieldTransformTests(TestCase):
 
