@@ -618,6 +618,18 @@ class TestCombineAuto:
                                       " along dimension x"):
             combine_by_coords([ds1, ds0])
 
+    def test_combine_by_coords_non_monotonic_bystander_dim(self):
+        ds0 = Dataset({'data': (('x', 'y'), np.zeros((3, 3)))},
+                      coords={'x': [1, 2, 3], 'y': ['a', 'c', 'b']})
+        ds1 = Dataset({'data': (('x', 'y'), np.ones((4, 3)))},
+                      coords={'x': [4, 5, 6, 7], 'y': ['a', 'c', 'b']})
+        expected = Dataset(
+            {'data': (('x', 'y'), np.concatenate([np.zeros((3, 3)),
+                                                  np.ones((4, 3))]))},
+            coords={'x': [1, 2, 3, 4, 5, 6, 7], 'y': ['a', 'c', 'b']})
+        actual = combine_by_coords([ds1, ds0])
+        assert_identical(expected, actual)
+
 
 @pytest.mark.filterwarnings("ignore:In xarray version 0.13 `auto_combine` "
                             "will be deprecated")
