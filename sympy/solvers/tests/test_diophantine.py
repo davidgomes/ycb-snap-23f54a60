@@ -902,6 +902,7 @@ def test_diophantine_permute_sign():
     assert diophantine(eq) == base_sol
     complete_soln = set(signed_permutations(base_sol.pop()))
     assert diophantine(eq, permute=True) == complete_soln
+    assert diophantine(eq, syms=(b, a), permute=True) == complete_soln
 
     eq = a**2 + b**2 + c**2 + d**2 + e**2 - 234
     assert len(diophantine(eq)) == 35
