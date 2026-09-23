@@ -10,6 +10,7 @@
 
 import ast
 import datetime
+import enum
 import functools
 import sys
 import types
@@ -500,6 +501,14 @@ def test_frozenset_sorting_fallback():
     frozenset_ = frozenset((None, 1))
     description = inspect.object_description(frozenset_)
     assert description in ("frozenset({1, None})", "frozenset({None, 1})")
+
+
+def test_object_description_enum():
+    class MyEnum(enum.Enum):
+        FOO = 1
+        BAR = 2
+
+    assert inspect.object_description(MyEnum.FOO) == "MyEnum.FOO"
 
 
 def test_dict_customtype():
