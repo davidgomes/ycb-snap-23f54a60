@@ -257,6 +257,12 @@ class polylog(Function):
     >>> expand_func(polylog(0, z))
     z/(-z + 1)
 
+    The dilogarithm at one half has a known closed form:
+
+    >>> from sympy import Rational
+    >>> expand_func(polylog(2, Rational(1, 2)))
+    -log(2)**2/2 + pi**2/12
+
     The derivative with respect to :math:`z` can be computed in closed form:
 
     >>> polylog(s, z).diff(z)
@@ -292,6 +298,9 @@ class polylog(Function):
         s, z = self.args
         if s == 1:
             return -log(1 + exp_polar(-I*pi)*z)
+        if s == 2:
+            if z == S.Half:
+                return -log(2)**2/2 + pi**2/12
         if s.is_Integer and s <= 0:
             u = Dummy('u')
             start = u/(1 - u)
