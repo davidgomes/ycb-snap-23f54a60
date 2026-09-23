@@ -107,6 +107,8 @@ Bug fixes
   By `Joseph K Aicher <https://github.com/jaicher>`_.
 - Fixed the poor html repr performance on large multi-indexes (:pull:`6400`).
   By `Benoît Bovy <https://github.com/benbovy>`_.
+- Fixed :py:meth:`xr.polyval` with timedelta64 coordinates and restored the dimension
+  order of its result (coordinate dimensions first) (:issue:`6597`, :pull:`6599`).
 - Allow fancy indexing of duck dask arrays along multiple dimensions. (:pull:`6414`)
   By `Justus Magin <https://github.com/keewis>`_.
 - In the API for backends, support dimensions that express their preferred chunk sizes
