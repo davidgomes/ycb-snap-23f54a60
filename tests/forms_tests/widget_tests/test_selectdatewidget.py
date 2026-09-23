@@ -603,6 +603,8 @@ class SelectDateWidgetTest(WidgetTest):
     def test_value_from_datadict(self):
         tests = [
             (("2000", "12", "1"), "2000-12-01"),
+            # Integers larger than sys.maxsize raise OverflowError in date().
+            (("1234567821345678", "1", "1"), "1234567821345678-1-1"),
             (("", "12", "1"), "0-12-1"),
             (("2000", "", "1"), "2000-0-1"),
             (("2000", "12", ""), "2000-12-0"),
