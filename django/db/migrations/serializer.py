@@ -120,6 +120,12 @@ class EnumSerializer(BaseSerializer):
     def serialize(self):
         enum_class = self.value.__class__
         module = enum_class.__module__
+        if self.value.name in enum_class.__members__:
+            return (
+                '%s.%s[%r]' % (module, enum_class.__name__, self.value.name),
+                {'import %s' % module},
+            )
+        # Combinations of Flag members aren't addressable by name.
         v_string, v_imports = serializer_factory(self.value.value).serialize()
         imports = {'import %s' % module, *v_imports}
         return "%s.%s(%s)" % (module, enum_class.__name__, v_string), imports
