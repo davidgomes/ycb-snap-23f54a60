@@ -1554,6 +1554,22 @@ def test_LogisticRegressionCV_no_refit(multi_class):
     assert lrcv.coef_.shape == (n_classes, n_features)
 
 
+@pytest.mark.parametrize('penalty', ('l2', 'elasticnet'))
+@pytest.mark.parametrize('multi_class', ('ovr', 'multinomial', 'auto'))
+def test_LogisticRegressionCV_no_refit_default_multi_class(penalty,
+                                                           multi_class):
+    # Non-regression test for IndexError with refit=False, where the
+    # multi_class option was not resolved and non-elasticnet penalties
+    # could not index l1_ratios_
+    X, y = make_classification(n_samples=200, n_features=5, random_state=0)
+    l1_ratios = [.5] if penalty == 'elasticnet' else None
+    lrcv = LogisticRegressionCV(penalty=penalty, solver='saga', cv=3,
+                                l1_ratios=l1_ratios, tol=1e-2,
+                                multi_class=multi_class, refit=False)
+    lrcv.fit(X, y)
+    assert lrcv.coef_.shape == (1, 5)
+
+
 def test_LogisticRegressionCV_elasticnet_attribute_shapes():
     # Make sure the shapes of scores_ and coefs_paths_ attributes are correct
     # when using elasticnet (added one dimension for l1_ratios)
