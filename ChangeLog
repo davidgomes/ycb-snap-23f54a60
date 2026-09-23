@@ -13,6 +13,11 @@ Release date: TBA
 
   Closes #4301
 
+* The short ``verbose`` option ``-v`` no longer expects an argument and matches
+  ``--verbose``.
+
+  Closes #6385
+
 * ``BaseChecker`` classes now require the ``linter`` argument to be passed.
 
 * Fix a failure to respect inline disables for ``fixme`` occurring on the last line

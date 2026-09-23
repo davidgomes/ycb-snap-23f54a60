@@ -71,6 +71,11 @@ Other Changes
 
   Closes #4301
 
+* The short ``verbose`` option ``-v`` no longer expects an argument and matches
+  ``--verbose``. The help text no longer suggests a ``VERBOSE`` value.
+
+  Closes #6385
+
 * Update ``invalid-slots-object`` message to show bad object rather than its inferred value.
 
   Closes #6101
