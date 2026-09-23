@@ -11,6 +11,7 @@ import logging
 import socket
 import socketserver
 import sys
+from collections import deque
 from wsgiref import simple_server
 
 from django.core.exceptions import ImproperlyConfigured
@@ -146,6 +147,27 @@ class ServerHandler(simple_server.ServerHandler):
     def close(self):
         self.get_stdin().read()
         super().close()
+
+    def set_content_length(self):
+        # wsgiref computes Content-Length from the bytes sent, which is always
+        # 0 for HEAD requests since the body is omitted. Omit the header
+        # instead, as permitted by RFC 9110 Section 9.3.2.
+        if self.environ["REQUEST_METHOD"] != "HEAD":
+            super().set_content_length()
+
+    def finish_response(self):
+        if self.environ["REQUEST_METHOD"] == "HEAD":
+            try:
+                deque(self.result, maxlen=0)  # Consume iterator.
+                # Don't call self.finish_content() as, if the headers have not
+                # been sent, it sets Content-Length to "0". Instead, send the
+                # headers, if not sent yet.
+                if not self.headers_sent:
+                    self.send_headers()
+            finally:
+                self.close()
+        else:
+            super().finish_response()
 
 
 class WSGIRequestHandler(simple_server.WSGIRequestHandler):

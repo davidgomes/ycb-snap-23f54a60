@@ -106,6 +106,59 @@ class WSGIRequestHandlerTestCase(SimpleTestCase):
 
         self.assertEqual(body, b"HTTP_SOME_HEADER:good")
 
+    def test_no_body_returned_for_head_requests(self):
+        hello_world_body = b"<!DOCTYPE html><html><body>Hello World</body></html>"
+        content_length = len(hello_world_body)
+
+        def test_app(environ, start_response):
+            """A WSGI app that returns a hello world."""
+            start_response("200 OK", list(response_headers))
+            return [hello_world_body]
+
+        def run_request(method):
+            rfile = BytesIO(f"{method} / HTTP/1.0\r\n\r\n".encode())
+
+            # WSGIRequestHandler closes the output file; we need to make this a
+            # no-op so we can still read its contents.
+            class UnclosableBytesIO(BytesIO):
+                def close(self):
+                    pass
+
+            wfile = UnclosableBytesIO()
+
+            def makefile(mode, *a, **kw):
+                if mode == "rb":
+                    return rfile
+                elif mode == "wb":
+                    return wfile
+
+            request = Stub(makefile=makefile)
+            server = Stub(base_environ={}, get_app=lambda: test_app)
+            # Prevent logging from appearing in test output.
+            with self.assertLogs("django.server", "INFO"):
+                # Instantiating a handler runs the request as side effect.
+                WSGIRequestHandler(request, "192.168.0.2", server)
+            return wfile.getvalue().split(b"\r\n\r\n", 1)
+
+        response_headers = []
+        headers, body = run_request("GET")
+        # The body is returned in a GET response.
+        self.assertEqual(body, hello_world_body)
+        self.assertIn(f"Content-Length: {content_length}".encode(), headers)
+
+        headers, body = run_request("HEAD")
+        # The body is not returned in a HEAD response.
+        self.assertEqual(body, b"")
+        self.assertIn(b"HTTP/1.1 200 OK", headers)
+        # Content-Length isn't computed from the omitted body.
+        self.assertNotIn(b"Content-Length:", headers)
+
+        # An explicit Content-Length is preserved.
+        response_headers = [("Content-Length", str(content_length))]
+        headers, body = run_request("HEAD")
+        self.assertEqual(body, b"")
+        self.assertIn(f"Content-Length: {content_length}".encode(), headers)
+
 
 class WSGIServerTestCase(SimpleTestCase):
     request_factory = RequestFactory()
