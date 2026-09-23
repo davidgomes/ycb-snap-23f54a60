@@ -187,6 +187,7 @@ class Text(Artist):
             linespacing = 1.2  # Maybe use rcParam later.
         self.set_linespacing(linespacing)
         self.set_rotation_mode(rotation_mode)
+        self.set_antialiased(None)
 
     def update(self, kwargs):
         # docstring inherited
@@ -737,6 +738,7 @@ class Text(Artist):
             gc.set_foreground(self.get_color())
             gc.set_alpha(self.get_alpha())
             gc.set_url(self._url)
+            gc.set_antialiased(self.get_antialiased())
             self._set_gc_clip(gc)
 
             angle = self.get_rotation()
@@ -769,6 +771,24 @@ class Text(Artist):
         gc.restore()
         renderer.close_group('text')
         self.stale = False
+
+    def get_antialiased(self):
+        """Return whether antialiased rendering is used."""
+        return self._antialiased
+
+    def set_antialiased(self, antialiased):
+        """
+        Set whether to use antialiased rendering.
+
+        Parameters
+        ----------
+        antialiased : bool or None
+            If None, use :rc:`text.antialiased`.
+        """
+        if antialiased is None:
+            antialiased = mpl.rcParams['text.antialiased']
+        self._antialiased = bool(antialiased)
+        self.stale = True
 
     def get_color(self):
         """Return the color of the text."""

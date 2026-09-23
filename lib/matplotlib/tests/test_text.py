@@ -197,6 +197,19 @@ def test_antialiasing():
     # rendered.
 
 
+def test_text_antialiased():
+    t = mpl.text.Text()
+    assert t.get_antialiased() == mpl.rcParams['text.antialiased']
+    t.set_antialiased(not mpl.rcParams['text.antialiased'])
+    assert t.get_antialiased() is not mpl.rcParams['text.antialiased']
+    t.set_antialiased(None)
+    assert t.get_antialiased() == mpl.rcParams['text.antialiased']
+
+    ann = mpl.text.Annotation("a", (0, 0))
+    ann.set_antialiased(False)
+    assert ann.get_antialiased() is False
+
+
 def test_afm_kerning():
     fn = mpl.font_manager.findfont("Helvetica", fontext="afm")
     with open(fn, 'rb') as fh:

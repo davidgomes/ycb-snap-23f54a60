@@ -205,7 +205,7 @@ class RendererCairo(RendererBase):
             ctx.set_font_size(self.points_to_pixels(prop.get_size_in_points()))
             opts = cairo.FontOptions()
             opts.set_antialias(
-                cairo.ANTIALIAS_DEFAULT if mpl.rcParams["text.antialiased"]
+                cairo.ANTIALIAS_DEFAULT if gc.get_antialiased()
                 else cairo.ANTIALIAS_NONE)
             ctx.set_font_options(opts)
             if angle:
@@ -309,6 +309,7 @@ class GraphicsContextCairo(GraphicsContextBase):
             self.ctx.set_source_rgba(rgb[0], rgb[1], rgb[2], rgb[3])
 
     def set_antialiased(self, b):
+        super().set_antialiased(b)
         self.ctx.set_antialias(
             cairo.ANTIALIAS_DEFAULT if b else cairo.ANTIALIAS_NONE)
 
