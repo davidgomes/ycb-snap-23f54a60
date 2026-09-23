@@ -8,6 +8,7 @@ import pytest
 from _pytest.config import ExitCode
 from _pytest.mark import MarkGenerator
 from _pytest.mark.structures import EMPTY_PARAMETERSET_OPTION
+from _pytest.mark.structures import get_unpacked_marks
 from _pytest.nodes import Collector
 from _pytest.nodes import Node
 from _pytest.pytester import Pytester
@@ -561,6 +562,37 @@ class TestFunctional:
         items, rec = pytester.inline_genitems(p)
         self.assert_markers(items, test_foo=("a", "b", "c"), test_bar=("a", "b", "d"))
 
+    def test_mark_decorator_multiple_baseclasses_merged(
+        self, pytester: Pytester
+    ) -> None:
+        """#7792"""
+        p = pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.a
+            class Base(object): pass
+
+            @pytest.mark.b
+            class Foo(Base): pass
+
+            @pytest.mark.c
+            class Bar(Base): pass
+
+            class TestDings(Foo, Bar):
+                def test_dings(self): pass
+
+            @pytest.mark.d
+            class TestBums(Bar, Foo):
+                @pytest.mark.e
+                def test_bums(self): pass
+        """
+        )
+        items, rec = pytester.inline_genitems(p)
+        self.assert_markers(
+            items, test_dings=("a", "b", "c"), test_bums=("a", "b", "c", "d", "e")
+        )
+
     def test_mark_closest(self, pytester: Pytester) -> None:
         p = pytester.makepyfile(
             """
@@ -1109,3 +1141,41 @@ def test_marker_expr_eval_failure_handling(pytester: Pytester, expr) -> None:
     result = pytester.runpytest(foo, "-m", expr)
     result.stderr.fnmatch_lines([expected])
     assert result.ret == ExitCode.USAGE_ERROR
+
+
+def test_mark_mro() -> None:
+    """#7792"""
+    xfail = pytest.mark.xfail
+
+    @xfail("a")
+    class A:
+        pass
+
+    @xfail("b")
+    class B:
+        pass
+
+    @xfail("c")
+    class C(A, B):
+        pass
+
+    @xfail("d")
+    @xfail("e")
+    class D(C):
+        pass
+
+    assert list(get_unpacked_marks(C)) == [
+        xfail("b").mark,
+        xfail("a").mark,
+        xfail("c").mark,
+    ]
+    assert list(get_unpacked_marks(C, consider_mro=False)) == [xfail("c").mark]
+
+    assert list(get_unpacked_marks(D)) == [
+        xfail("b").mark,
+        xfail("a").mark,
+        xfail("c").mark,
+        xfail("e").mark,
+        xfail("d").mark,
+    ]
+    assert D.pytestmark == [xfail("e").mark, xfail("d").mark]  # type: ignore[attr-defined]
