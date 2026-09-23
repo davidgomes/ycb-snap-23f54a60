@@ -254,6 +254,10 @@ class TestUtilsHtml(SimpleTestCase):
                 lazystr('Search for google.com/?q=!'),
                 'Search for <a href="http://google.com/?q=">google.com/?q=</a>!'
             ),
+            (
+                'Search for google.com/?q=1&lt! and see.',
+                'Search for <a href="http://google.com/?q=1%3C">google.com/?q=1&lt</a>! and see.'
+            ),
             ('foo@example.com', '<a href="mailto:foo@example.com">foo@example.com</a>'),
         )
         for value, output in tests:
