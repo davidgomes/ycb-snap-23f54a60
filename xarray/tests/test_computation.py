@@ -1951,7 +1951,7 @@ def test_where_attrs() -> None:
             xr.DataArray(
                 [[0, 1], [0, 1]], dims=("y", "degree"), coords={"degree": [0, 1]}
             ),
-            xr.DataArray([[1, 2, 3], [1, 2, 3]], dims=("y", "x")),
+            xr.DataArray([[1, 1], [2, 2], [3, 3]], dims=("x", "y")),
             id="broadcast-x",
         ),
         pytest.param(
@@ -2010,6 +2010,14 @@ def test_where_attrs() -> None:
             ),
             id="datetime",
         ),
+        pytest.param(
+            xr.DataArray(
+                np.array([1000, 2000, 3000], dtype="timedelta64[ns]"), dims="x"
+            ),
+            xr.DataArray([0, 1], dims="degree", coords={"degree": [0, 1]}),
+            xr.DataArray([1000.0, 2000.0, 3000.0], dims="x"),
+            id="timedelta",
+        ),
     ],
 )
 def test_polyval(
@@ -2026,6 +2034,8 @@ def test_polyval(
     with raise_if_dask_computes():
         actual = xr.polyval(coord=x, coeffs=coeffs)  # type: ignore
     xr.testing.assert_allclose(actual, expected)
+    if isinstance(expected, xr.DataArray):
+        assert actual.dims == expected.dims
 
 
 def test_polyval_degree_dim_checks():
