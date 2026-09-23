@@ -23,4 +23,11 @@ Other Changes
 
 * Performance of the Similarity checker has been improved.
 
+* The default directory for persistent data (``PYLINTHOME``) now follows the
+  XDG Base Directory Specification via ``appdirs`` (``$XDG_CACHE_HOME/pylint``
+  on Linux). An existing ``~/.pylint.d`` directory is left in place and a
+  notice is printed so it can be removed.
+
+  Closes #3878
+
 * Added ``time.clock`` to deprecated functions/methods for python 3.3
