@@ -44,6 +44,11 @@ class CheckboxInputTest(WidgetTest):
             html='<input checked type="checkbox" name="is_cool" value="1">',
         )
 
+    def test_get_context_does_not_mutate_attrs(self):
+        attrs = {'checked': False}
+        self.widget.get_context('name', True, attrs)
+        self.assertIs(attrs['checked'], False)
+
     def test_render_check_test(self):
         """
         You can pass 'check_test' to the constructor. This is a callable that
