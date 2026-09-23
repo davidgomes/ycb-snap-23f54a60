@@ -1863,7 +1863,7 @@ def where(cond, x, y, keep_attrs=None):
         keep_attrs = lambda attrs, context: getattr(x, "attrs", {})
 
     # alignment for three arguments is complicated, so don't support it yet
-    return apply_ufunc(
+    result = apply_ufunc(
         duck_array_ops.where,
         cond,
         x,
@@ -1873,6 +1873,16 @@ def where(cond, x, y, keep_attrs=None):
         dask="allowed",
         keep_attrs=keep_attrs,
     )
+
+    # keep the attributes of the coordinates of x rather than overwriting them
+    if callable(keep_attrs) and hasattr(result, "coords"):
+        for c in result.coords:
+            if c in getattr(x, "coords", {}):
+                result[c].attrs = dict(x[c].attrs)
+            elif c in getattr(y, "coords", {}):
+                result[c].attrs = dict(y[c].attrs)
+
+    return result
 
 
 @overload
