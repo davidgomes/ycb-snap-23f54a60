@@ -147,7 +147,13 @@ class Command(BaseCommand):
                 "version": self.get_version(),
                 "settings": settings.SETTINGS_MODULE,
                 "protocol": self.protocol,
-                "addr": "[%s]" % self.addr if self._raw_ipv6 else self.addr,
+                "addr": (
+                    "[%s]" % self.addr
+                    if self._raw_ipv6
+                    else "0.0.0.0"
+                    if self.addr == "0"
+                    else self.addr
+                ),
                 "port": self.port,
                 "quit_command": quit_command,
             }
