@@ -18,6 +18,7 @@ metrics for those fonts.
 import functools
 import logging
 
+import matplotlib as mpl
 from matplotlib import _api, _mathtext
 from matplotlib.ft2font import LOAD_NO_HINTING
 from matplotlib.font_manager import FontProperties
@@ -58,7 +59,7 @@ class MathTextParser:
             {"path": "vector", "agg": "raster", "macosx": "raster"},
             output=output.lower())
 
-    def parse(self, s, dpi=72, prop=None):
+    def parse(self, s, dpi=72, prop=None, *, antialiased=None):
         """
         Parse the given math expression *s* at the given *dpi*.  If *prop* is
         provided, it is a `.FontProperties` object specifying the "default"
@@ -69,15 +70,26 @@ class MathTextParser:
 
         Depending on the *output* type, this returns either a `VectorParse` or
         a `RasterParse`.
+
+        Parameters
+        ----------
+        antialiased : bool, optional
+            Whether to antialias the raster output.  Vector output ignores
+            this flag.  Defaults to :rc:`text.antialiased`.
         """
         # lru_cache can't decorate parse() directly because prop
         # is mutable; key the cache using an internal copy (see
         # text._get_text_metrics_with_cache for a similar case).
         prop = prop.copy() if prop is not None else None
-        return self._parse_cached(s, dpi, prop)
+        if antialiased is None:
+            antialiased = mpl.rcParams['text.antialiased']
+        # Graphics contexts store this as 0/1; normalize so the cache key
+        # matches an explicit bool.
+        antialiased = bool(antialiased)
+        return self._parse_cached(s, dpi, prop, antialiased)
 
     @functools.lru_cache(50)
-    def _parse_cached(self, s, dpi, prop):
+    def _parse_cached(self, s, dpi, prop, antialiased):
         from matplotlib.backends import backend_agg
 
         if prop is None:
@@ -100,7 +112,7 @@ class MathTextParser:
         if self._output_type == "vector":
             return output.to_vector()
         elif self._output_type == "raster":
-            return output.to_raster()
+            return output.to_raster(antialiased=antialiased)
 
 
 def math_to_image(s, filename_or_obj, prop=None, dpi=None, format=None,

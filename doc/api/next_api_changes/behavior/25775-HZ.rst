@@ -1,0 +1,15 @@
+Default antialiasing behavior changes for ``Text`` and ``Annotation``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``Text`` and ``Annotation`` now store their own antialiasing flag, read with
+`~.Text.get_antialiased` and set with `~.Text.set_antialiased` (also accepted
+as the *antialiased* keyword when the artist is created).
+
+The flag is initialized from :rc:`text.antialiased` at creation time. Changing
+:rc:`text.antialiased` afterwards no longer affects artists that already
+exist, including tick labels. Create the figure inside the desired rc context
+if that value should apply::
+
+    with rccontext({'text.antialiased': False}):
+        fig, ax = plt.subplots()
+        ax.annotate('local max', xy=(2, 1), xytext=(3, 1.5))
+        fig.savefig('/tmp/test.png')
