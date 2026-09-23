@@ -121,6 +121,9 @@ Bug fixes
   By `Ryan May <https://github.com/dopplershift>`_.
 - Fix html repr in untrusted notebooks: fallback to plain text repr. (:pull:`4053`)
   By `Benoit Bovy <https://github.com/benbovy>`_.
+- Fix wrong results of :py:meth:`DataArray.weighted` and :py:meth:`Dataset.weighted`
+  reductions when passing boolean weights (:issue:`4074`, :pull:`4075`).
+  By `Mathias Hauser <https://github.com/mathause>`_.
 
 Documentation
 ~~~~~~~~~~~~~
