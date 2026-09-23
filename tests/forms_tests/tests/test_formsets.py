@@ -1480,6 +1480,8 @@ class FormsFormsetTestCase(SimpleTestCase):
         self.assertIn("DELETE", formset.forms[0].fields)
         self.assertNotIn("DELETE", formset.forms[1].fields)
         self.assertNotIn("DELETE", formset.forms[2].fields)
+        # empty_form uses index=None and must not compare None to an int.
+        self.assertNotIn("DELETE", formset.empty_form.fields)
 
         formset = ChoiceFormFormset(
             data={
