@@ -236,6 +236,16 @@ def test_complement():
     assert all(pt in notsquare for pt in [(-1, 0), (1.5, .5), (10, 10)])
 
 
+def test_complement_finiteset_symbols_and_numbers():
+    y = Symbol('y')
+    assert Complement(FiniteSet(x, y, 2), Interval(-10, 10)) == \
+        Complement(FiniteSet(x, y), Interval(-10, 10), evaluate=False)
+    assert Complement(FiniteSet(x, y, 2, 20), Interval(-10, 10)) == \
+        Union(FiniteSet(20), Complement(FiniteSet(x, y), Interval(-10, 10),
+            evaluate=False), evaluate=False)
+    assert Complement(FiniteSet(2, 20), Interval(-10, 10)) == FiniteSet(20)
+
+
 def test_intersect():
     x = Symbol('x')
     assert Interval(0, 2).intersect(Interval(1, 2)) == Interval(1, 2)
