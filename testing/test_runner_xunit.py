@@ -295,3 +295,38 @@ def test_setup_teardown_function_level_with_optional_argument(
         "teardown_module",
     ]
     assert trace_setups_teardowns == expected
+
+
+def test_xunit_fixtures_are_private(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        """
+        def setup_module(module):
+            pass
+        def setup_function(function):
+            pass
+        def test_func():
+            pass
+        class TestClass:
+            def setup_class(cls):
+                pass
+            def setup_method(self, method):
+                pass
+            def test_method(self):
+                pass
+    """
+    )
+    result = pytester.runpytest("--fixtures")
+    assert result.ret == 0
+    result.stdout.no_fnmatch_line("*xunit_setup*")
+
+    result = pytester.runpytest("--fixtures", "-v")
+    assert result.ret == 0
+    result.stdout.fnmatch_lines(
+        [
+            "*_xunit_setup_module_fixture_*",
+            "*_xunit_setup_function_fixture_*",
+            "*_xunit_setup_class_fixture_*",
+            "*_xunit_setup_method_fixture_*",
+        ],
+        consecutive=False,
+    )
