@@ -613,6 +613,49 @@ class TestScaling:
         Plot(y=y).add(MockMark(), s).plot()
         assert s.scales["y"].__class__.__name__ == "Nominal"
 
+    def test_nominal_x_axis_tweaks(self):
+
+        p = Plot(x=["a", "b", "c"], y=[1, 2, 3])
+        ax1 = p.theme({"axes.grid": True}).plot()._figure.axes[0]
+        assert ax1.get_xlim() == (-.5, 2.5)
+        assert not any(x.get_visible() for x in ax1.xaxis.get_gridlines())
+        assert any(y.get_visible() for y in ax1.yaxis.get_gridlines())
+
+        lim = (-1, 2.1)
+        ax2 = p.limit(x=lim).plot()._figure.axes[0]
+        assert ax2.get_xlim() == lim
+
+    def test_nominal_y_axis_tweaks(self):
+
+        p = Plot(x=[1, 2, 3], y=["a", "b", "c"])
+        ax1 = p.theme({"axes.grid": True}).plot()._figure.axes[0]
+        assert ax1.get_ylim() == (2.5, -.5)
+        assert not any(y.get_visible() for y in ax1.yaxis.get_gridlines())
+        assert any(x.get_visible() for x in ax1.xaxis.get_gridlines())
+
+        lim = (-1, 2.1)
+        ax2 = p.limit(y=lim).plot()._figure.axes[0]
+        assert ax2.get_ylim() == lim
+
+    def test_nominal_explicit_scale_axis_tweaks(self):
+
+        p = Plot(x=[1, 2, 5], y=[1, 2, 3]).scale(x=Nominal()).plot()
+        ax = p._figure.axes[0]
+        assert ax.get_xlim() == (-.5, 2.5)
+
+    def test_nominal_axis_tweaks_unshared_facets(self):
+
+        p = (
+            Plot(x=["a", "b", "a", "c", "d"], y=[1, 2, 3, 4, 5])
+            .facet(col=["x", "x", "y", "y", "y"])
+            .share(x=False)
+            .add(MockMark())
+            .plot()
+        )
+        ax1, ax2 = p._figure.axes
+        assert ax1.get_xlim() == (-.5, 1.5)
+        assert ax2.get_xlim() == (-.5, 2.5)
+
     # TODO where should RGB consistency be enforced?
     @pytest.mark.xfail(
         reason="Correct output representation for color with identity scale undefined"

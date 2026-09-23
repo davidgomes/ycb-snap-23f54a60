@@ -101,6 +101,10 @@ class Scale:
     ) -> Scale:
         raise NotImplementedError()
 
+    def _finalize(self, axis: Axis) -> None:
+        """Perform scale-specific axis tweaks after adding artists."""
+        pass
+
     def __call__(self, data: Series) -> ArrayLike:
 
         trans_data: Series | NDArray | list
@@ -226,6 +230,17 @@ class Nominal(Scale):
             new._legend = units_seed, list(stringify(units_seed))
 
         return new
+
+    def _finalize(self, axis: Axis) -> None:
+
+        axis.grid(False, which="both")
+
+        nticks = len(axis.get_majorticklocs())
+        lo, hi = -.5, nticks - .5
+        if axis.axis_name == "y":
+            lo, hi = hi, lo
+        set_lim = getattr(axis.axes, f"set_{axis.axis_name}lim")
+        set_lim(lo, hi, auto=None)
 
     def tick(self, locator: Locator | None = None):
         """

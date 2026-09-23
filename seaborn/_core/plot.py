@@ -1632,6 +1632,9 @@ class Plotter:
             for axis in "xy":
                 axis_key = sub[axis]
 
+                if axis_key in self._scales:
+                    self._scales[axis_key]._finalize(getattr(ax, f"{axis}axis"))
+
                 # Axis limits
                 if axis_key in p._limits:
                     convert_units = getattr(ax, f"{axis}axis").convert_units
