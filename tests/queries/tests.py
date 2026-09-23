@@ -15,17 +15,17 @@ from django.test import SimpleTestCase, TestCase, skipUnlessDBFeature
 from django.test.utils import CaptureQueriesContext
 
 from .models import (
-    FK1, Annotation, Article, Author, BaseA, Book, CategoryItem,
+    FK1, Annotation, Article, Author, BaseA, Bar, Book, CategoryItem,
     CategoryRelationship, Celebrity, Channel, Chapter, Child, ChildObjectA,
     Classroom, CommonMixedCaseForeignKeys, Company, Cover, CustomPk,
     CustomPkTag, DateTimePK, Detail, DumbCategory, Eaten, Employment,
-    ExtraInfo, Fan, Food, Identifier, Individual, Item, Job,
+    ExtraInfo, Fan, Foo, Food, Identifier, Individual, Item, Job,
     JobResponsibilities, Join, LeafA, LeafB, LoopX, LoopZ, ManagedModel,
     Member, MixedCaseDbColumnCategoryItem, MixedCaseFieldCategoryItem, ModelA,
     ModelB, ModelC, ModelD, MyObject, NamedCategory, Node, Note, NullableName,
     Number, ObjectA, ObjectB, ObjectC, OneToOneCategory, Order, OrderItem,
     Page, Paragraph, Person, Plaything, PointerA, Program, ProxyCategory,
-    ProxyObjectA, ProxyObjectB, Ranking, Related, RelatedIndividual,
+    ProxyObjectA, ProxyObjectB, Qux, Ranking, Related, RelatedIndividual,
     RelatedObject, Report, ReportComment, ReservedName, Responsibility, School,
     SharedConnection, SimpleCategory, SingleObject, SpecialCategory, Staff,
     StaffUser, Student, Tag, Task, Teacher, Ticket21203Child,
@@ -2129,6 +2129,21 @@ class QuerySetBitwiseOperationTests(TestCase):
         self.assertSequenceEqual(combined, [self.school])
         nested_combined = School.objects.filter(pk__in=combined.values('pk'))
         self.assertSequenceEqual(nested_combined, [self.school])
+
+    def test_conflicting_aliases_during_combine(self):
+        qux = Qux.objects.create()
+        baz = qux.bazes.create()
+        foo_1 = Foo.objects.create(qux=qux)
+        foo_2 = Foo.objects.create(qux=Qux.objects.create())
+        Bar.objects.create(foo=foo_2, another_foo=foo_2, baz=baz)
+        qs1 = qux.foos.all()
+        qs2 = Foo.objects.filter(
+            Q(bars__baz__in=qux.bazes.all()) | Q(other_bars__baz__in=qux.bazes.all())
+        )
+        self.assertCountEqual(qs1 | qs2, [foo_1, foo_2])
+        self.assertCountEqual(qs2 | qs1, [foo_1, foo_2])
+        # The rhs query isn't modified by the combination.
+        self.assertEqual(qs2.query.alias_prefix, 'T')
 
 
 class CloneTests(TestCase):

@@ -743,6 +743,24 @@ class NonIntegerPKReturningModel(models.Model):
     created = CreatedField(editable=False, primary_key=True)
 
 
+class Baz(models.Model):
+    pass
+
+
+class Qux(models.Model):
+    bazes = models.ManyToManyField(Baz, related_name='quxes')
+
+
+class Foo(models.Model):
+    qux = models.ForeignKey(Qux, models.CASCADE, related_name='foos')
+
+
+class Bar(models.Model):
+    foo = models.ForeignKey(Foo, models.CASCADE, related_name='bars')
+    another_foo = models.ForeignKey(Foo, models.CASCADE, related_name='other_bars')
+    baz = models.ForeignKey(Baz, models.CASCADE, related_name='bars')
+
+
 class JSONFieldNullable(models.Model):
     json_field = models.JSONField(blank=True, null=True)
 
