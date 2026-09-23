@@ -188,6 +188,12 @@ def test_Complement():
     assert S.Reals - Union(S.Naturals, FiniteSet(pi)) == \
             Intersection(S.Reals - S.Naturals, S.Reals - FiniteSet(pi))
 
+    assert Complement(FiniteSet(x, y, 2), Interval(-10, 10)) == \
+            Complement(FiniteSet(x, y), Interval(-10, 10))
+    assert Complement(FiniteSet(x, y, 2, 20), Interval(-10, 10)) == \
+            Union(FiniteSet(20), Complement(FiniteSet(x, y), Interval(-10, 10),
+            evaluate=False))
+
 def test_complement():
     assert Interval(0, 1).complement(S.Reals) == \
         Union(Interval(-oo, 0, True, True), Interval(1, oo, True, True))
