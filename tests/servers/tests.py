@@ -4,13 +4,15 @@ Tests for django.core.servers.
 import errno
 import os
 import socket
+import threading
 from http.client import HTTPConnection
 from urllib.error import HTTPError
 from urllib.parse import urlencode
 from urllib.request import urlopen
 
 from django.conf import settings
-from django.core.servers.basehttp import WSGIServer
+from django.core.servers.basehttp import ThreadedWSGIServer, WSGIServer
+from django.db import connections
 from django.test import LiveServerTestCase, override_settings
 from django.test.testcases import LiveServerThread, QuietWSGIRequestHandler
 
@@ -41,7 +43,7 @@ class LiveServerBase(LiveServerTestCase):
 
 
 class FailingLiveServerThread(LiveServerThread):
-    def _create_server(self):
+    def _create_server(self, connections_override=None):
         raise RuntimeError('Error creating server.')
 
 
@@ -89,8 +91,45 @@ class LiveServerAddress(LiveServerBase):
         self.assertEqual(self.live_server_url_test[0], self.live_server_url)
 
 
+class CloseConnectionTestServer(ThreadedWSGIServer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Set right after a request thread closes its database connections.
+        self.connections_closed = threading.Event()
+        self.open_connections = None
+
+    def _close_connections(self):
+        super()._close_connections()
+        # Closing an in-memory SQLite database is a no-op, as the connection
+        # is shared with the main thread.
+        self.open_connections = [
+            conn.alias for conn in connections.all()
+            if conn.connection is not None and not (
+                conn.vendor == 'sqlite' and conn.is_in_memory_db()
+            )
+        ]
+        self.connections_closed.set()
+
+
+class CloseConnectionTestLiveServerThread(LiveServerThread):
+    server_class = CloseConnectionTestServer
+
+
+class LiveServerTestCloseConnectionTest(LiveServerBase):
+    server_thread_class = CloseConnectionTestLiveServerThread
+
+    def test_closes_connections(self):
+        httpd = self.server_thread.httpd
+        with self.urlopen('/model_view/') as f:
+            # The server can access the database.
+            self.assertEqual(f.read().splitlines(), [b'jane', b'robert'])
+        # Wait for the server's request thread to close its connections.
+        self.assertIs(httpd.connections_closed.wait(timeout=5), True)
+        self.assertEqual(httpd.open_connections, [])
+
+
 class LiveServerSingleThread(LiveServerThread):
-    def _create_server(self):
+    def _create_server(self, connections_override=None):
         return WSGIServer((self.host, self.port), QuietWSGIRequestHandler, allow_reuse_address=False)
 
 
