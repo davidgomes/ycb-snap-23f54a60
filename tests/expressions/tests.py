@@ -1614,6 +1614,12 @@ class FTimeDeltaTests(TestCase):
         ).order_by('name')
         self.assertQuerysetEqual(over_estimate, ['e3', 'e4', 'e5'], lambda e: e.name)
 
+    def test_duration_expressions(self):
+        for delta in self.deltas:
+            qs = Experiment.objects.annotate(duration=F('estimated_time') + delta)
+            for obj in qs:
+                self.assertEqual(obj.duration, obj.estimated_time + delta)
+
     def test_duration_with_datetime_microseconds(self):
         delta = datetime.timedelta(microseconds=8999999999999999)
         qs = Experiment.objects.annotate(dt=ExpressionWrapper(
