@@ -271,6 +271,21 @@ class MethodDecoratorTests(SimpleTestCase):
                 self.assertEqual(Test.method.__doc__, 'A method')
                 self.assertEqual(Test.method.__name__, 'method')
 
+    def test_preserve_attributes_on_decorated_function(self):
+        def decorator(func):
+            @wraps(func)
+            def inner(*args, **kwargs):
+                return '%s.%s:%s' % (func.__module__, func.__name__, func(*args, **kwargs))
+            return inner
+
+        class Test:
+            @method_decorator(decorator)
+            def method(self):
+                "A method"
+                return 'hello'
+
+        self.assertEqual(Test().method(), '%s.method:hello' % __name__)
+
     def test_new_attribute(self):
         """A decorator that sets a new attribute on the method."""
         def decorate(func):
