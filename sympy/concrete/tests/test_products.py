@@ -358,3 +358,11 @@ def test_issue_9983():
 def test_rewrite_Sum():
     assert Product(1 - S.Half**2/k**2, (k, 1, oo)).rewrite(Sum) == \
         exp(Sum(log(1 - 1/(4*k**2)), (k, 1, oo)))
+
+
+def test_issue_13546():
+    n = Symbol('n')
+    k = Symbol('k')
+    p = Product(n + 1 / 2**k, (k, 0, n-1)).doit()
+    assert p.subs(n, 2).doit() == S(15)/2
+    assert Product(2**k + 1, (k, 1, n)).doit() == Product(2**k + 1, (k, 1, n))
