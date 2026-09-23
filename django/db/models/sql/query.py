@@ -572,15 +572,15 @@ class Query(BaseExpression):
         if self.distinct_fields != rhs.distinct_fields:
             raise TypeError('Cannot combine queries with different distinct fields.')
 
-        # If lhs and rhs shares the same alias prefix, it is possible to have
+        # If lhs and rhs share the same alias prefix, it is possible to have
         # conflicting alias changes like T4 -> T5, T5 -> T6, which might end up
         # as T4 -> T6 while combining two querysets. To prevent this, change an
         # alias prefix of the rhs and update current aliases accordingly,
         # except if the alias is the base table since it must be present in the
         # query on both sides.
         initial_alias = self.get_initial_alias()
-        # rhs must not be modified. Query.clone() shallow-copies table_map, but
-        # change_aliases() rewrites those alias lists in place.
+        # Combine must leave the caller's rhs intact. clone() shallow-copies
+        # table_map, whose lists change_aliases() rewrites in place.
         rhs = rhs.clone()
         rhs.table_map = {
             table: aliases[:] for table, aliases in rhs.table_map.items()
