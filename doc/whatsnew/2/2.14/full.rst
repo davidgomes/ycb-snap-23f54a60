@@ -18,6 +18,11 @@ Release date: TBA
 
   Closes #6965
 
+* Fixed ``ignore-paths`` not being respected when running with ``--recursive=y``
+  and a path that isn't normalized (e.g. ``.``, or mixed separators on Windows).
+
+  Closes #6964
+
 
 What's New in Pylint 2.14.3?
 ----------------------------
