@@ -1525,6 +1525,17 @@ def test_build_repr():
     assert repr(MockSplitter(5, 6)) == "MockSplitter(a=5, b=6, c=None)"
 
 
+@pytest.mark.parametrize(
+    "RepeatedCV", [RepeatedKFold, RepeatedStratifiedKFold]
+)
+def test_repeated_cv_repr(RepeatedCV):
+    n_splits, n_repeats = 2, 6
+    repeated_cv = RepeatedCV(n_splits=n_splits, n_repeats=n_repeats)
+    repeated_cv_repr = ('{}(n_repeats=6, n_splits=2, random_state=None)'
+                        .format(repeated_cv.__class__.__name__))
+    assert repeated_cv_repr == repr(repeated_cv)
+
+
 @pytest.mark.parametrize('CVSplitter', (ShuffleSplit, GroupShuffleSplit,
                                         StratifiedShuffleSplit))
 def test_shuffle_split_empty_trainset(CVSplitter):
