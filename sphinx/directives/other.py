@@ -82,6 +82,7 @@ class TocTree(SphinxDirective):
         # glob target documents
         all_docnames = self.env.found_docs.copy()
         all_docnames.remove(self.env.docname)  # remove current document
+        generated_docnames = frozenset(self.env.domains['std'].initial_data['labels'])
 
         ret: List[Node] = []
         excluded = Matcher(self.config.exclude_patterns)
@@ -118,6 +119,8 @@ class TocTree(SphinxDirective):
                 docname = docname_join(self.env.docname, docname)
                 if url_re.match(ref) or ref == 'self':
                     toctree['entries'].append((title, ref))
+                elif docname not in self.env.found_docs and docname in generated_docnames:
+                    toctree['entries'].append((title, docname))
                 elif docname not in self.env.found_docs:
                     if excluded(self.env.doc2path(docname, False)):
                         message = __('toctree contains reference to excluded document %r')

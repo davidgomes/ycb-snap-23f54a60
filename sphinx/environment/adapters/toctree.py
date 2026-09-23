@@ -1,6 +1,6 @@
 """Toctree adapter for sphinx.environment."""
 
-from typing import TYPE_CHECKING, Any, Iterable, List, Optional, cast
+from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Tuple, cast
 
 from docutils import nodes
 from docutils.nodes import Element, Node
@@ -107,6 +107,11 @@ class TocTree:
                             subnode['iscurrent'] = True
                             subnode = subnode.parent
 
+        generated_docnames: Dict[str, Tuple[str, str, str]] = {
+            k: v for k, v in self.env.domains['std'].initial_data['labels'].items()
+            if k not in self.env.found_docs
+        }
+
         def _entries_from_toctree(toctreenode: addnodes.toctree, parents: List[str],
                                   separate: bool = False, subtree: bool = False
                                   ) -> List[Element]:
@@ -138,6 +143,15 @@ class TocTree:
                         para = addnodes.compact_paragraph('', '', reference)
                         item = nodes.list_item('', para)
                         # don't show subitems
+                        toc = nodes.bullet_list('', item)
+                    elif ref in generated_docnames:
+                        docname, _labelid, sectionname = generated_docnames[ref]
+                        if not title:
+                            title = sectionname
+                        reference = nodes.reference('', title, internal=True,
+                                                    refuri=docname, anchorname='')
+                        para = addnodes.compact_paragraph('', '', reference)
+                        item = nodes.list_item('', para)
                         toc = nodes.bullet_list('', item)
                     else:
                         if ref in parents:
