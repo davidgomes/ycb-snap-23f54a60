@@ -248,6 +248,15 @@ def filepath_to_uri(path):
     return quote(path.replace("\\", "/"), safe="/~!*()'")
 
 
+def punycode(domain):
+    """Return the Punycode of the given domain if it's non-ASCII."""
+    try:
+        domain.encode('ascii')
+    except UnicodeEncodeError:
+        return domain.encode('idna').decode('ascii')
+    return domain
+
+
 def get_system_encoding():
     """
     The encoding of the default system locale. Fallback to 'ascii' if the
