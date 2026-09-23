@@ -1,0 +1,1 @@
+Generated ``unittest`` ``setUpClass`` / ``setup_method`` fixtures are private again (their names start with ``_``), so ``pytest --fixtures`` hides them unless ``-v`` is passed.

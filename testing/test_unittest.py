@@ -1438,3 +1438,25 @@ def test_do_cleanups_on_teardown_failure(pytester: Pytester) -> None:
     passed, skipped, failed = reprec.countoutcomes()
     assert failed == 2
     assert passed == 1
+
+
+def test_setUpClass_fixture_is_hidden_from_fixtures(pytester: Pytester) -> None:
+    """Generated unittest setUpClass fixtures are private (leading underscore)."""
+    pytester.makepyfile(
+        """
+        import unittest
+
+        class Tests(unittest.TestCase):
+            @classmethod
+            def setUpClass(cls):
+                pass
+
+            def test_1(self):
+                pass
+        """
+    )
+    result = pytester.runpytest("--fixtures")
+    result.stdout.no_fnmatch_line("*unittest_setUpClass_fixture*")
+
+    result = pytester.runpytest("--fixtures", "-v")
+    result.stdout.fnmatch_lines(["*_unittest_setUpClass_fixture_Tests*"])

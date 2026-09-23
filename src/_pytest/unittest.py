@@ -144,7 +144,9 @@ def _make_xunit_fixture(
         scope=scope,
         autouse=True,
         # Use a unique name to speed up lookup.
-        name=f"unittest_{setup_name}_fixture_{obj.__qualname__}",
+        # Prefix with "_" so --fixtures hides these generated fixtures
+        # unless -v is given (they have no docstring).
+        name=f"_unittest_{setup_name}_fixture_{obj.__qualname__}",
     )
     def fixture(self, request: FixtureRequest) -> Generator[None, None, None]:
         if _is_skipped(self):
