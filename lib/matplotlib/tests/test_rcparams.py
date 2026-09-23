@@ -545,6 +545,29 @@ def test_backend_fallback_headful(tmpdir):
     assert backend.strip().lower() != "agg"
 
 
+def test_no_backend_reset_rccontext():
+    assert mpl.rcParams['backend'] != 'module://aardvark'
+    with mpl.rc_context():
+        mpl.rcParams['backend'] = 'module://aardvark'
+    assert mpl.rcParams['backend'] == 'module://aardvark'
+
+
+@pytest.mark.skipif(sys.platform != "linux", reason="Linux only")
+def test_backend_resolved_in_rc_context_keeps_figures(tmpdir):
+    env = {**os.environ,
+           "DISPLAY": "", "WAYLAND_DISPLAY": "",
+           "MPLBACKEND": "", "MPLCONFIGDIR": str(tmpdir)}
+    subprocess.run(
+        [sys.executable, "-c",
+         "import matplotlib as mpl\n"
+         "import matplotlib.pyplot as plt\n"
+         "with mpl.rc_context():\n"
+         "    fig = plt.figure()\n"
+         "mpl.get_backend()\n"
+         "assert plt.get_fignums() == [fig.number], plt.get_fignums()\n"],
+        env=env, check=True)
+
+
 def test_deprecation(monkeypatch):
     monkeypatch.setitem(
         mpl._deprecated_map, "patch.linewidth",
