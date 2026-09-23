@@ -84,6 +84,14 @@ class Article(models.Model):
         return self.headline
 
 
+class SQLKeywordsModel(models.Model):
+    id = models.AutoField(primary_key=True, db_column='select')
+    reporter = models.ForeignKey(Reporter, models.CASCADE, db_column='where')
+
+    class Meta:
+        db_table = 'order'
+
+
 class Item(models.Model):
     name = models.CharField(max_length=30)
     date = models.DateField()
