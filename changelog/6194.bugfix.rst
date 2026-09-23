@@ -1,0 +1,1 @@
+Fix regression where pytest collected ``__init__.py`` files not matching ``python_files``.

@@ -177,9 +177,7 @@ def pytest_collect_file(path, parent):
     ext = path.ext
     if ext == ".py":
         if not parent.session.isinitpath(path):
-            if not path_matches_patterns(
-                path, parent.config.getini("python_files") + ["__init__.py"]
-            ):
+            if not path_matches_patterns(path, parent.config.getini("python_files")):
                 return
         ihook = parent.session.gethookproxy(path)
         return ihook.pytest_pycollect_makemodule(path=path, parent=parent)
