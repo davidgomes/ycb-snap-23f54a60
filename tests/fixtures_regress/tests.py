@@ -539,35 +539,40 @@ class TestFixtures(TestCase):
             verbosity=0,
         )
 
-    @override_settings(
-        FIXTURE_DIRS=[
-            os.path.join(_cur_dir, "fixtures_1"),
-            os.path.join(_cur_dir, "fixtures_1"),
-        ]
-    )
     def test_fixture_dirs_with_duplicates(self):
         """
         settings.FIXTURE_DIRS cannot contain duplicates in order to avoid
         repeated fixture loading.
         """
-        with self.assertRaisesMessage(
-            ImproperlyConfigured, "settings.FIXTURE_DIRS contains duplicates."
-        ):
-            management.call_command("loaddata", "absolute.json", verbosity=0)
+        fixtures_1 = os.path.join(_cur_dir, "fixtures_1")
+        for fixture_dirs in [
+            [fixtures_1, fixtures_1],
+            [Path(fixtures_1), Path(fixtures_1)],
+            [fixtures_1, Path(fixtures_1)],
+        ]:
+            with self.subTest(fixture_dirs=fixture_dirs), self.settings(
+                FIXTURE_DIRS=fixture_dirs
+            ), self.assertRaisesMessage(
+                ImproperlyConfigured, "settings.FIXTURE_DIRS contains duplicates."
+            ):
+                management.call_command("loaddata", "absolute.json", verbosity=0)
 
-    @override_settings(FIXTURE_DIRS=[os.path.join(_cur_dir, "fixtures")])
     def test_fixture_dirs_with_default_fixture_path(self):
         """
         settings.FIXTURE_DIRS cannot contain a default fixtures directory
         for application (app/fixtures) in order to avoid repeated fixture loading.
         """
+        fixtures = os.path.join(_cur_dir, "fixtures")
         msg = (
             "'%s' is a default fixture directory for the '%s' app "
             "and cannot be listed in settings.FIXTURE_DIRS."
-            % (os.path.join(_cur_dir, "fixtures"), "fixtures_regress")
+            % (fixtures, "fixtures_regress")
         )
-        with self.assertRaisesMessage(ImproperlyConfigured, msg):
-            management.call_command("loaddata", "absolute.json", verbosity=0)
+        for fixture_dirs in [[fixtures], [Path(fixtures)]]:
+            with self.subTest(fixture_dirs=fixture_dirs), self.settings(
+                FIXTURE_DIRS=fixture_dirs
+            ), self.assertRaisesMessage(ImproperlyConfigured, msg):
+                management.call_command("loaddata", "absolute.json", verbosity=0)
 
     @override_settings(
         FIXTURE_DIRS=[
