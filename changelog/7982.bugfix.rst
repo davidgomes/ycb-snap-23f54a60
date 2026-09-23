@@ -1,0 +1,1 @@
+Fixed a regression in pytest 6.1.0 where a symlink to a directory inside a test directory was skipped during collection instead of being followed.

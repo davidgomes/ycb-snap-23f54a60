@@ -1256,6 +1256,18 @@ def test_collect_sub_with_symlinks(use_pkg, testdir):
     )
 
 
+def test_collect_symlink_dir(testdir):
+    """A symlink to a directory is followed and its tests are collected."""
+    real = testdir.mkdir("real")
+    real.join("test_it.py").write("def test_it(): pass")
+    symlink_or_skip(real, testdir.tmpdir.join("symlink_dir"), target_is_directory=True)
+
+    result = testdir.runpytest("-v", "symlink_dir")
+    result.stdout.fnmatch_lines(
+        ["symlink_dir/test_it.py::test_it PASSED*", "*1 passed in*"]
+    )
+
+
 def test_collector_respects_tbstyle(testdir):
     p1 = testdir.makepyfile("assert 0")
     result = testdir.runpytest(p1, "--tb=native")
