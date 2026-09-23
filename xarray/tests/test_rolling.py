@@ -49,6 +49,15 @@ class TestDataArrayRolling:
                     expected.values[expected.values.nonzero()],
                 )
 
+    @pytest.mark.parametrize("center", (True, False))
+    @pytest.mark.parametrize("window", (1, 2, 3, 4))
+    def test_rolling_iter_center(self, center, window) -> None:
+        da = DataArray(np.arange(1.0, 10.0), dims="x")
+        rolling_obj = da.rolling(x=window, center=center)
+        expected = rolling_obj.mean().values
+        actual = [w.mean().item() for _, w in rolling_obj]
+        np.testing.assert_allclose(actual, expected)
+
     @pytest.mark.parametrize("da", (1,), indirect=True)
     def test_rolling_repr(self, da) -> None:
         rolling_obj = da.rolling(time=7)
