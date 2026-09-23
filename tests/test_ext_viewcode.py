@@ -49,6 +49,26 @@ def test_viewcode(app, status, warning):
             '<span>    &quot;&quot;&quot;</span></div>\n') in result
 
 
+@pytest.mark.sphinx(testroot='ext-viewcode', srcdir='viewcode_epub_default')
+def test_viewcode_epub_default(app, make_app):
+    # emulate "make html epub": the epub build reuses the html build's environment
+    app.builder.build_all()
+    assert (app.outdir / '_modules/spam/mod1.html').exists()
+
+    epub_app = make_app('epub', srcdir=app.srcdir)
+    epub_app.builder.build_all()
+
+    assert not (epub_app.outdir / '_modules/spam/mod1.xhtml').exists()
+
+
+@pytest.mark.sphinx('epub', testroot='ext-viewcode', srcdir='viewcode_epub_enabled',
+                    confoverrides={'viewcode_enable_epub': True})
+def test_viewcode_epub_enabled(app, status, warning):
+    app.builder.build_all()
+
+    assert (app.outdir / '_modules/spam/mod1.xhtml').exists()
+
+
 @pytest.mark.sphinx(testroot='ext-viewcode', tags=['test_linkcode'])
 def test_linkcode(app, status, warning):
     app.builder.build(['objects'])
