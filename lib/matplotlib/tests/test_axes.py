@@ -950,6 +950,29 @@ def test_hexbin_empty():
     ax.hexbin([], [], bins='log')
 
 
+@pytest.mark.parametrize("mincnt", [None, 0, 1, 2])
+def test_hexbin_mincnt_behavior_upon_C_parameter(mincnt):
+    # mincnt should filter the same cells whether or not C is supplied.
+    np.random.seed(42)
+    x, y = np.random.multivariate_normal(
+        [0.0, 0.0], [[1.0, 0.1], [0.1, 1.0]], size=250).T
+    z = np.ones_like(x)
+    kwargs = dict(extent=[-3., 3., -3., 3.], gridsize=(7, 7), mincnt=mincnt)
+
+    fig, (ax0, ax1) = plt.subplots(1, 2)
+    hb0 = ax0.hexbin(x, y, **kwargs)
+    hb1 = ax1.hexbin(x, y, C=z, reduce_C_function=np.sum, **kwargs)
+    counts = hb0.get_array()
+    sums = hb1.get_array()
+
+    if mincnt is None:
+        # Without C, all cells are shown; with C, only non-empty ones are.
+        np.testing.assert_array_equal(sums, counts[counts > 0])
+    else:
+        np.testing.assert_array_equal(sums, counts)
+        assert np.all(counts >= mincnt)
+
+
 def test_hexbin_pickable():
     # From #1973: Test that picking a hexbin collection works
     fig, ax = plt.subplots()

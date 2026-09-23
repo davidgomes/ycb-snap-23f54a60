@@ -1,0 +1,7 @@
+*mincnt* parameter of `.Axes.hexbin` is now consistent regardless of *C*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When *C* is given, cells are now shown if they contain at least *mincnt*
+points (previously, strictly more than *mincnt*), matching the behavior when
+*C* is not given. The default (*mincnt* = None) is unchanged: with *C*, only
+cells containing at least one point are shown.
