@@ -1073,7 +1073,10 @@ class Query(BaseExpression):
                         ))
                 else:
                     resolved_values.append(sub_value)
-            value = tuple(resolved_values)
+            # Preserve the input iterable type. Coercing a list to a tuple
+            # breaks exact lookups on fields that compare the Python type of
+            # the value, such as PickledField.
+            value = type(value)(resolved_values)
         return value
 
     def solve_lookup_type(self, lookup):
