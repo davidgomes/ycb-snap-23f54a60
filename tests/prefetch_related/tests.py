@@ -800,6 +800,53 @@ class CustomPrefetchTests(TestCase):
             list(person.houses.all().all()),
         )
 
+    def test_nested_prefetch_related_doesnt_inherit_parent_deferred_fields(self):
+        # Following a prefetch back to the parent must keep the deferred-field
+        # set of the inner queryset.
+        queryset = Room.objects.only('name').prefetch_related(
+            Prefetch(
+                'main_room_of',
+                queryset=House.objects.prefetch_related(
+                    Prefetch('main_room', queryset=Room.objects.only('house')),
+                ),
+            )
+        )
+        with self.assertNumQueries(3):
+            room = queryset.get(pk=self.room1_1.pk)
+        with self.assertNumQueries(0):
+            self.assertEqual(room.main_room_of.main_room.house_id, self.house1.pk)
+
+        queryset = House.objects.only('name').prefetch_related(
+            Prefetch(
+                'rooms',
+                queryset=Room.objects.prefetch_related(
+                    Prefetch('house', queryset=House.objects.only('address')),
+                ),
+            )
+        )
+        with self.assertNumQueries(3):
+            house = queryset.get(pk=self.house1.pk)
+        with self.assertNumQueries(0):
+            self.assertEqual(house.rooms.all()[0].house.address, self.house1.address)
+
+        queryset = House.objects.only('name').prefetch_related(
+            Prefetch(
+                'main_room',
+                queryset=Room.objects.prefetch_related(
+                    Prefetch(
+                        'main_room_of',
+                        queryset=House.objects.only('address', 'main_room'),
+                    ),
+                ),
+            )
+        )
+        # The outer only() defers main_room_id, which must be fetched before
+        # the forward one-to-one can be prefetched.
+        with self.assertNumQueries(4):
+            house = queryset.get(pk=self.house1.pk)
+        with self.assertNumQueries(0):
+            self.assertEqual(house.main_room.main_room_of.address, self.house1.address)
+
     def test_nested_prefetch_related_are_not_overwritten(self):
         # Regression test for #24873
         houses_2 = House.objects.prefetch_related(Prefetch('rooms'))
