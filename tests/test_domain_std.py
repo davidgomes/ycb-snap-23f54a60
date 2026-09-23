@@ -99,7 +99,7 @@ def test_glossary(app):
     text = (".. glossary::\n"
             "\n"
             "   term1\n"
-            "   term2\n"
+            "   TERM2\n"
             "       description\n"
             "\n"
             "   term3 : classifier\n"
@@ -114,7 +114,7 @@ def test_glossary(app):
     assert_node(doctree, (
         [glossary, definition_list, ([definition_list_item, ([term, ("term1",
                                                                      index)],
-                                                             [term, ("term2",
+                                                             [term, ("TERM2",
                                                                      index)],
                                                              definition)],
                                      [definition_list_item, ([term, ("term3",
@@ -127,7 +127,7 @@ def test_glossary(app):
     assert_node(doctree[0][0][0][0][1],
                 entries=[("single", "term1", "term-term1", "main", None)])
     assert_node(doctree[0][0][0][1][1],
-                entries=[("single", "term2", "term-term2", "main", None)])
+                entries=[("single", "TERM2", "term-TERM2", "main", None)])
     assert_node(doctree[0][0][0][2],
                 [definition, nodes.paragraph, "description"])
     assert_node(doctree[0][0][1][0][1],
@@ -143,7 +143,7 @@ def test_glossary(app):
     # index
     objects = list(app.env.get_domain("std").get_objects())
     assert ("term1", "term1", "term", "index", "term-term1", -1) in objects
-    assert ("term2", "term2", "term", "index", "term-term2", -1) in objects
+    assert ("TERM2", "TERM2", "term", "index", "term-TERM2", -1) in objects
     assert ("term3", "term3", "term", "index", "term-term3", -1) in objects
     assert ("term4", "term4", "term", "index", "term-term4", -1) in objects
 
@@ -186,6 +186,47 @@ def test_glossary_warning(app, status, warning):
     restructuredtext.parse(app, text, "case4")
     assert ("case4.rst:3: WARNING: duplicate term description of term-case4, "
             "other instance in case4" in warning.getvalue())
+
+    # terms that differ only in case are not duplicates
+    text = (".. glossary::\n"
+            "\n"
+            "   term-case5\n"
+            "   TERM-CASE5\n")
+    restructuredtext.parse(app, text, "case5")
+    assert "duplicate term description of TERM-CASE5" not in warning.getvalue()
+
+
+def test_glossary_term_resolution(app):
+    text = (".. glossary::\n"
+            "\n"
+            "   MySQL\n"
+            "   mysql\n"
+            "   Builder\n")
+    restructuredtext.parse(app, text)
+    domain = app.env.get_domain('std')
+
+    def resolve(target):
+        refnode = domain.resolve_xref(app.env, 'index', app.builder, 'term', target,
+                                      pending_xref(), nodes.inline())
+        return refnode and refnode['refid']
+
+    def resolve_any(target):
+        results = domain.resolve_any_xref(app.env, 'index', app.builder, target,
+                                          pending_xref(), nodes.inline())
+        return [(role, refnode['refid']) for role, refnode in results]
+
+    # exact match wins over case-insensitive match
+    assert resolve('MySQL') == 'term-MySQL'
+    assert resolve('mysql') == 'term-mysql'
+    assert resolve_any('MySQL') == [('std:term', 'term-MySQL')]
+    assert resolve_any('mysql') == [('std:term', 'term-mysql')]
+
+    # case-insensitive fallback
+    assert resolve('builder') == 'term-Builder'
+    assert resolve_any('BUILDER') == [('std:term', 'term-Builder')]
+
+    assert resolve('unknown') is None
+    assert resolve_any('unknown') == []
 
 
 def test_glossary_comment(app):
