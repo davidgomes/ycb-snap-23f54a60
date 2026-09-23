@@ -67,6 +67,22 @@ class Article(models.Model):
         return self.headline
 
 
+class TopicManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().select_related("category")
+
+
+class Topic(models.Model):
+    name = models.CharField(max_length=255)
+    category = models.ForeignKey(Category, models.CASCADE, null=True)
+    objects = TopicManager()
+
+
+class Post(models.Model):
+    title = models.CharField(max_length=255)
+    topics = models.ManyToManyField(Topic)
+
+
 class AuthorProfile(models.Model):
     author = models.OneToOneField(Author, models.CASCADE, primary_key=True)
     date_of_birth = models.DateField()

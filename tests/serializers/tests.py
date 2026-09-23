@@ -22,10 +22,12 @@ from .models import (
     ComplexModel,
     Movie,
     Player,
+    Post,
     ProxyBaseModel,
     ProxyProxyBaseModel,
     Score,
     Team,
+    Topic,
 )
 
 
@@ -434,6 +436,16 @@ class SerializersTestBase:
         # CategoryMetaData has natural_key().
         meta_data_sql = ctx[2]["sql"]
         self.assertIn(connection.ops.quote_name("kind"), meta_data_sql)
+
+    def test_serialize_only_pk_m2m_default_manager_select_related(self):
+        category = Category.objects.create(name="Reference")
+        topic = Topic.objects.create(name="Django", category=category)
+        post = Post.objects.create(title="Serialization")
+        post.topics.add(topic)
+        serial_str = serializers.serialize(self.serializer_name, [post])
+        (deserial_obj,) = serializers.deserialize(self.serializer_name, serial_str)
+        deserial_obj.save()
+        self.assertSequenceEqual(post.topics.all(), [topic])
 
 
 class SerializerAPITests(SimpleTestCase):
