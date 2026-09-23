@@ -1,0 +1,5 @@
+Don't remove the first entry of ``sys.path`` when running pylint as a module
+unless it is ``""``, ``"."`` or the current working directory, e.g. when
+pylint is run programmatically through ``runpy``.
+
+Closes #7231

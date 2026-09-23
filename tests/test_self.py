@@ -12,6 +12,7 @@ import json
 import os
 import platform
 import re
+import runpy
 import subprocess
 import sys
 import tempfile
@@ -759,6 +760,24 @@ a.py:1:4: E0001: Parsing failed: 'invalid syntax (<unknown>, line 1)' (syntax-er
                 modify_sys_path()
             assert sys.path == paths[1:]
 
+            paths = ["", *default_paths]
+            sys.path = copy(paths)
+            with _test_environ_pythonpath():
+                modify_sys_path()
+            assert sys.path == paths[1:]
+
+            paths = [".", *default_paths]
+            sys.path = copy(paths)
+            with _test_environ_pythonpath():
+                modify_sys_path()
+            assert sys.path == paths[1:]
+
+            paths = ["/do_not_remove", *default_paths]
+            sys.path = copy(paths)
+            with _test_environ_pythonpath():
+                modify_sys_path()
+            assert sys.path == paths
+
             paths = [cwd, cwd, *default_paths]
             sys.path = copy(paths)
             with _test_environ_pythonpath("."):
@@ -813,6 +832,20 @@ a.py:1:4: E0001: Parsing failed: 'invalid syntax (<unknown>, line 1)' (syntax-er
             with _test_environ_pythonpath(cwd):
                 modify_sys_path()
             assert sys.path == paths[1:]
+
+    @staticmethod
+    def test_modify_sys_path_from_runpy() -> None:
+        """Running pylint through runpy should keep a custom first sys.path entry.
+
+        https://github.com/PyCQA/pylint/issues/7231
+        """
+        with _test_sys_path(
+            ["/do_not_remove", *sys.path]
+        ), _test_environ_pythonpath(), patch("pylint.run_pylint") as mock_run_pylint:
+            expected_paths = copy(sys.path)
+            runpy.run_module("pylint", run_name="__main__", alter_sys=True)
+            mock_run_pylint.assert_called_once()
+            assert sys.path == expected_paths
 
     @pytest.mark.parametrize(
         "args",
