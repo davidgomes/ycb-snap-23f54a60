@@ -1627,6 +1627,13 @@ class FTimeDeltaTests(TestCase):
         for e in qs:
             self.assertEqual(e.delta, delta)
 
+    def test_datetime_subtraction_without_expressionwrapper(self):
+        queryset = Experiment.objects.annotate(
+            delta=F('end') - F('start') + Value(datetime.timedelta(), output_field=DurationField()),
+        )
+        for e in queryset:
+            self.assertEqual(e.delta, e.end - e.start)
+
     def test_duration_with_datetime(self):
         # Exclude e1 which has very high precision so we can test this on all
         # backends regardless of whether or not it supports
