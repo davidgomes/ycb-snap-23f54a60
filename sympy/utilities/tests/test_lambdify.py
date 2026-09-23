@@ -157,6 +157,12 @@ def test_mpmath_precision():
     mpmath.mp.dps = 100
     assert str(lambdify((), pi.evalf(100), 'mpmath')()) == str(pi.evalf(100))
 
+@conserve_mpmath_dps
+def test_mpmath_rational():
+    mpmath.mp.dps = 50
+    f = lambdify(x, x - Rational(232, 3), 'mpmath')
+    assert f(0) == -mpmath.mpf(232)/3
+
 #================== Test Translations ==============================
 # We can only check if all translated functions are valid. It has to be checked
 # by hand if they are complete.
