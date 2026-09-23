@@ -3253,6 +3253,15 @@ class TestDataset:
         with pytest.raises(ValueError, match=r".*not coordinates with an index"):
             ds.reset_index("y")
 
+    def test_reset_index_drop_multiindex_repr(self) -> None:
+        # dropping a multi-index leaves its name in coord names without a variable
+        ds = Dataset(coords={"a": ("x", [1, 2, 3]), "b": ("x", ["a", "b", "c"])})
+        obj = ds.set_index(z=["a", "b"]).reset_index("z", drop=True)
+        assert list(obj.data_vars) == []
+        assert len(obj.data_vars) == 0
+        # repr used to raise ValueError because data_vars length was negative
+        repr(obj)
+
     def test_reset_index_keep_attrs(self) -> None:
         coord_1 = DataArray([1, 2], dims=["coord_1"], attrs={"attrs": True})
         ds = Dataset({}, {"coord_1": coord_1})

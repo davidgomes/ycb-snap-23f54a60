@@ -365,7 +365,11 @@ class DataVariables(Mapping[Any, "DataArray"]):
         )
 
     def __len__(self) -> int:
-        return len(self._dataset._variables) - len(self._dataset._coord_names)
+        # coord names can include index names that are not stored as variables
+        # (e.g. after ``reset_index(..., drop=True)``)
+        return sum(
+            key not in self._dataset._coord_names for key in self._dataset._variables
+        )
 
     def __contains__(self, key: Hashable) -> bool:
         return key in self._dataset._variables and key not in self._dataset._coord_names
