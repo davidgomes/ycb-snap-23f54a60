@@ -73,6 +73,7 @@ def _make_subclass(name: str, module: str, superclass: Any = _MockObject,
                    attributes: Any = None, decorator_args: Tuple = ()) -> Any:
     attrs = {'__module__': module,
              '__display_name__': module + '.' + name,
+             '__name__': name,
              '__sphinx_decorator_args__': decorator_args}
     attrs.update(attributes or {})
 
@@ -168,7 +169,8 @@ def ismock(subject: Any) -> bool:
     try:
         # check the object is mocked object
         __mro__ = safe_getattr(type(subject), '__mro__', [])
-        if len(__mro__) > 2 and __mro__[1] is _MockObject:
+        if len(__mro__) > 2 and __mro__[-2] is _MockObject:
+            # A mocked object has a MRO that ends with (..., _MockObject, object).
             return True
     except AttributeError:
         pass

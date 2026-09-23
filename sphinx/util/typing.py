@@ -106,6 +106,7 @@ def is_system_TypeVar(typ: Any) -> bool:
 
 def restify(cls: Optional[Type]) -> str:
     """Convert python class to a reST reference."""
+    from sphinx.ext.autodoc.mock import ismock
     from sphinx.util import inspect  # lazy loading
 
     try:
@@ -115,6 +116,8 @@ def restify(cls: Optional[Type]) -> str:
             return '...'
         elif isinstance(cls, str):
             return cls
+        elif ismock(cls):
+            return ':py:class:`%s.%s`' % (cls.__module__, cls.__name__)
         elif cls in INVALID_BUILTIN_CLASSES:
             return ':py:class:`%s`' % INVALID_BUILTIN_CLASSES[cls]
         elif inspect.isNewType(cls):
@@ -300,6 +303,7 @@ def _restify_py36(cls: Optional[Type]) -> str:
 
 def stringify(annotation: Any) -> str:
     """Stringify type annotation object."""
+    from sphinx.ext.autodoc.mock import ismock
     from sphinx.util import inspect  # lazy loading
 
     if isinstance(annotation, str):
@@ -308,6 +312,8 @@ def stringify(annotation: Any) -> str:
             return annotation[1:-1]
         else:
             return annotation
+    elif ismock(annotation):
+        return '%s.%s' % (annotation.__module__, annotation.__name__)
     elif isinstance(annotation, TypeVar):
         if annotation.__module__ == 'typing':
             return annotation.__name__
