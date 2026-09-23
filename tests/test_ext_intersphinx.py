@@ -227,6 +227,17 @@ def test_missing_reference_stddomain(tempdir, app, status, warning):
     rn = missing_reference(app, app.env, node, contnode)
     assert rn.astext() == '-l'
 
+    # term reference (case-sensitive match)
+    node, contnode = fake_node('std', 'term', 'a term', 'a term')
+    rn = missing_reference(app, app.env, node, contnode)
+    assert rn['refuri'] == 'https://docs.python.org/glossary.html#term-a-term'
+
+    # term reference (case-insensitive fallback)
+    node, contnode = fake_node('std', 'term', 'A Term', 'A Term')
+    rn = missing_reference(app, app.env, node, contnode)
+    assert rn['refuri'] == 'https://docs.python.org/glossary.html#term-a-term'
+    assert rn.astext() == 'A Term'
+
 
 @pytest.mark.sphinx('html', testroot='ext-intersphinx-cppdomain')
 def test_missing_reference_cppdomain(tempdir, app, status, warning):

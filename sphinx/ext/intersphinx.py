@@ -304,9 +304,20 @@ def missing_reference(app: Sphinx, env: BuildEnvironment, node: Element, contnod
                     to_try.append((inventories.named_inventory[setname], full_qualified_name))
     for inventory, target in to_try:
         for objtype in objtypes:
-            if objtype not in inventory or target not in inventory[objtype]:
+            if objtype not in inventory:
                 continue
-            proj, version, uri, dispname = inventory[objtype][target]
+            if target in inventory[objtype]:
+                data = inventory[objtype][target]
+            elif objtype == 'std:term':
+                # glossary terms fall back to a case-insensitive match
+                ltarget = target.lower()
+                matches = [v for k, v in inventory[objtype].items() if k.lower() == ltarget]
+                if not matches:
+                    continue
+                data = matches[0]
+            else:
+                continue
+            proj, version, uri, dispname = data
             if '://' not in uri and node.get('refdoc'):
                 # get correct path in case of subdirectories
                 uri = path.join(relative_path(node['refdoc'], '.'), uri)
