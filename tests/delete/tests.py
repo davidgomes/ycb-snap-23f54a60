@@ -7,8 +7,8 @@ from django.test import TestCase, skipIfDBFeature, skipUnlessDBFeature
 
 from .models import (
     MR, A, Avatar, Base, Child, HiddenUser, HiddenUserProfile, M, M2MFrom,
-    M2MTo, MRNull, Origin, Parent, R, RChild, RChildChild, Referrer, S, T,
-    User, create_a, get_default_r,
+    M2MTo, MRNull, Origin, Parent, R, RChild, RChildChild, Referrer,
+    SecondReferrer, S, T, User, create_a, get_default_r,
 )
 
 
@@ -582,3 +582,23 @@ class FastDeleteTests(TestCase):
                 User.objects.filter(avatar__desc='missing').delete(),
                 (0, {'delete.User': 0})
             )
+
+    def test_fast_delete_combined_relationships(self):
+        # The cascading fast-delete of SecondReferrer should be combined
+        # in a single DELETE WHERE referrer_id OR unique_field.
+        origin = Origin.objects.create()
+        referer = Referrer.objects.create(origin=origin, unique_field=42)
+        other = Referrer.objects.create(origin=origin, unique_field=43)
+        SecondReferrer.objects.create(referrer=referer, other_referrer=referer)
+        SecondReferrer.objects.create(referrer=referer, other_referrer=other)
+        SecondReferrer.objects.create(referrer=other, other_referrer=referer)
+        untouched = SecondReferrer.objects.create(referrer=other, other_referrer=other)
+        with self.assertNumQueries(2) as ctx:
+            deleted, deleted_objs = referer.delete()
+        self.assertIn(' OR ', ctx.captured_queries[0]['sql'])
+        # Three SecondReferrer rows match either FK, plus the Referrer itself.
+        self.assertEqual(deleted, 4)
+        self.assertEqual(deleted_objs[SecondReferrer._meta.label], 3)
+        self.assertEqual(deleted_objs[Referrer._meta.label], 1)
+        self.assertEqual(SecondReferrer.objects.get(), untouched)
+        self.assertTrue(Referrer.objects.filter(pk=other.pk).exists())
