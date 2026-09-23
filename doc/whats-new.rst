@@ -62,6 +62,9 @@ Bug fixes
   By `Michael Niklas <https://github.com/headtr1ck>`_.
 - Fix static typing of :py:meth:`xr.polyval` (:issue:`7312`, :pull:`7315`).
   By `Michael Niklas <https://github.com/headtr1ck>`_.
+- Fix :py:func:`xr.where` with ``keep_attrs=True`` overwriting the attrs of
+  coordinates and data variables with the top-level attrs of ``x``; attrs are
+  now kept from ``x`` at every level (:issue:`7220`, :pull:`7229`).
 
 Documentation
 ~~~~~~~~~~~~~
