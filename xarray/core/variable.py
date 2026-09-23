@@ -1947,7 +1947,8 @@ class IndexVariable(Variable):
                 # point, which doesn't have a copy method, so make a deep copy
                 # of the underlying `pandas.MultiIndex` and create a new
                 # `PandasIndexAdapter` instance with it.
-                data = PandasIndexAdapter(self._data.array.copy(deep=True))
+                data = PandasIndexAdapter(self._data.array.copy(deep=True),
+                                          dtype=self._data.dtype)
             else:
                 data = self._data
         else:
