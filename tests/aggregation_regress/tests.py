@@ -106,6 +106,16 @@ class AggregationTests(TestCase):
         for attr, value in kwargs.items():
             self.assertEqual(getattr(obj, attr), value)
 
+    def test_meta_ordering_not_in_group_by(self):
+        # Book.Meta.ordering = ('name',) must not affect grouping.
+        values = Book.objects.values('rating').annotate(count=Count('id'))
+        self.assertCountEqual(values, [
+            {'rating': 3.0, 'count': 1},
+            {'rating': 4.0, 'count': 3},
+            {'rating': 4.5, 'count': 1},
+            {'rating': 5.0, 'count': 1},
+        ])
+
     def test_annotation_with_value(self):
         values = Book.objects.filter(
             name='Practical Django Projects',
