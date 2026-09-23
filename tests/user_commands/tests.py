@@ -164,6 +164,23 @@ class CommandTests(SimpleTestCase):
         finally:
             BaseCommand.check = saved_check
 
+    def test_skip_checks_option(self):
+        self.counter = 0
+
+        def patched_check(self_, **kwargs):
+            self.counter += 1
+
+        command = dance.Command()
+        saved_check = BaseCommand.check
+        BaseCommand.check = patched_check
+        try:
+            command.run_from_argv(['manage.py', 'dance', '--skip-checks'])
+            self.assertEqual(self.counter, 0)
+            command.run_from_argv(['manage.py', 'dance'])
+            self.assertEqual(self.counter, 1)
+        finally:
+            BaseCommand.check = saved_check
+
     def test_check_migrations(self):
         requires_migrations_checks = dance.Command.requires_migrations_checks
         self.assertIs(requires_migrations_checks, False)

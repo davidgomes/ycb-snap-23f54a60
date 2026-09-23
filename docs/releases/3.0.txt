@@ -169,6 +169,9 @@ Internationalization
 Management Commands
 ~~~~~~~~~~~~~~~~~~~
 
+* The new :option:`--skip-checks` option skips running system checks prior to
+  running the command.
+
 * The new :option:`compilemessages --ignore` option allows ignoring specific
   directories when searching for ``.po`` files to compile.
 

@@ -223,7 +223,7 @@ class BaseCommand:
     requires_system_checks = True
     # Arguments, common to all commands, which aren't defined by the argument
     # parser.
-    base_stealth_options = ('skip_checks', 'stderr', 'stdout')
+    base_stealth_options = ('stderr', 'stdout')
     # Command-specific options not defined by the argument parser.
     stealth_options = ()
 
@@ -285,6 +285,10 @@ class BaseCommand:
         parser.add_argument(
             '--force-color', action='store_true',
             help='Force colorization of the command output.',
+        )
+        parser.add_argument(
+            '--skip-checks', action='store_true',
+            help='Skip system checks.',
         )
         self.add_arguments(parser)
         return parser

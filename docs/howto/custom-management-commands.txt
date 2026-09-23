@@ -217,6 +217,7 @@ All attributes can be set in your derived class and can be used in
 
     A boolean; if ``True``, the entire Django project will be checked for
     potential problems prior to executing the command. Default value is ``True``.
+    To skip checks from the command line, pass :option:`--skip-checks`.
 
 .. attribute:: BaseCommand.style
 
