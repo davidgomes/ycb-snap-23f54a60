@@ -13,6 +13,8 @@ def test_Str():
     raises(TypeError, lambda: Str())
 
 def test_Symbol():
+    # Symbol uses __slots__; a parent without slots would add __dict__.
+    assert not hasattr(Symbol('s'), '__dict__')
     a = Symbol("a")
     x1 = Symbol("x")
     x2 = Symbol("x")

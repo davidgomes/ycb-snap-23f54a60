@@ -17,6 +17,10 @@ class Printable:
     This also adds support for LaTeX printing in jupyter notebooks.
     """
 
+    # Empty slots so subclasses that declare __slots__ (e.g. Symbol) do not
+    # gain a per-instance __dict__.
+    __slots__ = ()
+
     # Note, we always use the default ordering (lex) in __str__ and __repr__,
     # regardless of the global setting. See issue 5487.
     def __str__(self):
