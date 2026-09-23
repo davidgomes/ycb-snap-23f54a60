@@ -168,7 +168,7 @@ def test_cdf_closed_forms():
         (1 + (S(3)/2)**(-S(1)/5))**(-S(1)/3)
     assert cdf(Erlang("x", 1, 1))(1) == 1 - exp(-1)
     assert cdf(Frechet("x", S(4)/3, 1, 2))(3) == exp(-1)
-    assert abs(N(cdf(Gamma("x", 0.1, 2))(3)) - 0.9443868) < 1e-6
+    assert abs(N(cdf(Gamma("x", 0.1, 2))(3)) - 0.988655983362195) < 1e-12
     assert cdf(GammaInverse("x", S(5)/7, 2))(3) == \
         uppergamma(S(5)/7, S(2)/3)/gamma(S(5)/7)
     assert cdf(Kumaraswamy("x", S(1)/123, 5))(S(1)/3) == \
@@ -179,7 +179,7 @@ def test_cdf_closed_forms():
         lowergamma(S(7)/3, S(28)/3)/gamma(S(7)/3)
     assert abs(N(cdf(StudentT("x", 10))(2)) - 0.963305982614630) < 1e-12
     X = UniformSum("x", 5)
-    assert cdf(X)(2).doit() == S(1)/2
+    assert cdf(X)(2).doit() == S(9)/40
     assert cdf(X)(-1) == 0
     assert cdf(X)(7) == 1
 
