@@ -171,6 +171,32 @@ def test_inheritance_diagram_svg_html(app, status, warning):
     assert re.search(pattern, content, re.M)
 
 
+@pytest.mark.sphinx('html', testroot='ext-inheritance_diagram-nested',
+                    confoverrides={'graphviz_output_format': 'svg'})
+@pytest.mark.usefixtures('if_graphviz_found')
+def test_inheritance_diagram_svg_html_nested(app, status, warning):
+    app.builder.build_all()
+
+    def svg_links(docname):
+        content = (app.outdir / f'{docname}.html').read_text(encoding='utf8')
+        image_path = re.search(r'<object data="([^"]+\.svg)"', content).group(1)
+        svg = (app.outdir / docname).parent.joinpath(image_path).read_text(encoding='utf8')
+        return set(re.findall(r'href="([^"]+)"', svg))
+
+    # links in the SVG are relative to the image directory, not the embedding page
+    assert svg_links('index') == {
+        '../index.html#nested_test.Foo',
+        '../subdir/other.html#nested_test.Bar',
+        '../subdir/other.html#nested_test.Baz',
+    }
+    assert svg_links('subdir/index') == {
+        '../index.html#nested_test.Foo',
+        '../subdir/index.html#nested_test.Qux',
+        '../subdir/other.html#nested_test.Bar',
+        '../subdir/other.html#nested_test.Baz',
+    }
+
+
 @pytest.mark.sphinx('latex', testroot='ext-inheritance_diagram')
 @pytest.mark.usefixtures('if_graphviz_found')
 def test_inheritance_diagram_latex(app, status, warning):
