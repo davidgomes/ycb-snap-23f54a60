@@ -56,10 +56,12 @@ class Combinable:
     def _combine(self, other, connector, reversed):
         if not hasattr(other, 'resolve_expression'):
             # everything must be resolvable to an expression
-            if isinstance(other, datetime.timedelta):
-                other = DurationValue(other, output_field=fields.DurationField())
-            else:
-                other = Value(other)
+            output_field = (
+                fields.DurationField()
+                if isinstance(other, datetime.timedelta) else
+                None
+            )
+            other = Value(other, output_field=output_field)
 
         if reversed:
             return CombinedExpression(other, connector, self)
@@ -449,9 +451,15 @@ class CombinedExpression(SQLiteNumericMixin, Expression):
             rhs_output = self.rhs.output_field
         except FieldError:
             rhs_output = None
+        lhs_type = lhs_output.get_internal_type() if lhs_output else None
+        rhs_type = rhs_output.get_internal_type() if rhs_output else None
+        # DurationField is stored as an integer on databases without a native
+        # duration type, so arithmetic between two durations is numeric.
+        # DurationExpression is only needed when mixing a duration with a
+        # date/time value.
         if (not connection.features.has_native_duration_field and
-                ((lhs_output and lhs_output.get_internal_type() == 'DurationField') or
-                 (rhs_output and rhs_output.get_internal_type() == 'DurationField'))):
+                'DurationField' in {lhs_type, rhs_type} and
+                lhs_type != rhs_type):
             return DurationExpression(self.lhs, self.connector, self.rhs).as_sql(compiler, connection)
         if (lhs_output and rhs_output and self.connector == self.SUB and
             lhs_output.get_internal_type() in {'DateField', 'DateTimeField', 'TimeField'} and
@@ -480,15 +488,14 @@ class CombinedExpression(SQLiteNumericMixin, Expression):
 
 class DurationExpression(CombinedExpression):
     def compile(self, side, compiler, connection):
-        if not isinstance(side, DurationValue):
-            try:
-                output = side.output_field
-            except FieldError:
-                pass
-            else:
-                if output.get_internal_type() == 'DurationField':
-                    sql, params = compiler.compile(side)
-                    return connection.ops.format_for_duration_arithmetic(sql), params
+        try:
+            output = side.output_field
+        except FieldError:
+            pass
+        else:
+            if output.get_internal_type() == 'DurationField':
+                sql, params = compiler.compile(side)
+                return connection.ops.format_for_duration_arithmetic(sql), params
         return compiler.compile(side)
 
     def as_sql(self, compiler, connection):
@@ -707,14 +714,6 @@ class Value(Expression):
 
     def get_group_by_cols(self, alias=None):
         return []
-
-
-class DurationValue(Value):
-    def as_sql(self, compiler, connection):
-        connection.ops.check_expression_support(self)
-        if connection.features.has_native_duration_field:
-            return super().as_sql(compiler, connection)
-        return connection.ops.date_interval_sql(self.value), []
 
 
 class RawSQL(Expression):
