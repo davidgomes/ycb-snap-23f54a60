@@ -6,7 +6,9 @@ This module contains python code printers for plain python as well as NumPy & Sc
 from collections import defaultdict
 from itertools import chain
 from sympy.core import S
-from .precedence import precedence
+from sympy.core.mod import Mod
+from sympy.core.mul import _keep_coeff
+from .precedence import precedence, PRECEDENCE
 from .codeprinter import CodePrinter
 
 _kw_py2and3 = {
@@ -231,6 +233,20 @@ class AbstractPythonCodePrinter(CodePrinter):
 
     def _print_ComplexInfinity(self, expr):
         return self._print_NaN(expr)
+
+    def parenthesize(self, item, level, strict=False):
+        # Mod is printed with the ``%`` operator, which binds like ``*``
+        if (isinstance(item, Mod) and level >= PRECEDENCE["Mul"] and
+                type(self)._print_Mod is AbstractPythonCodePrinter._print_Mod):
+            return "(%s)" % self._print(item)
+        return super().parenthesize(item, level, strict=strict)
+
+    def _print_Mul(self, expr):
+        # a negated Mod has Add precedence, so the Mod would not get parenthesized
+        c, e = expr.as_coeff_Mul()
+        if c < 0 and isinstance(e, Mod):
+            return "-" + self.parenthesize(_keep_coeff(-c, e), PRECEDENCE["Mul"])
+        return super()._print_Mul(expr)
 
     def _print_Mod(self, expr):
         PREC = precedence(expr)
