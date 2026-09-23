@@ -1,0 +1,2 @@
+Fix issues with double quotes in CONTINUE cards: null strings (``''``) and
+quotes followed by a space in long string values were not correctly parsed.
