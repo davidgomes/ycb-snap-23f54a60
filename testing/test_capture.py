@@ -912,6 +912,16 @@ class TestFDCapture:
         cap.done()
         assert s == "hello\n"
 
+    def test_snap_preserves_carriage_return(self):
+        # TextIOWrapper translates \r to \n by default; FD capture must keep
+        # the original ending so progress lines (print(..., end="\r")) round-trip.
+        cap = capture.FDCapture(1)
+        cap.start()
+        sys.stdout.write("Greetings from DOS\r")
+        s = cap.snap()
+        cap.done()
+        assert s == "Greetings from DOS\r"
+
     def test_stdin(self):
         cap = capture.FDCapture(0)
         cap.start()

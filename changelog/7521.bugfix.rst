@@ -1,0 +1,1 @@
+Fixed capture of ``\r`` with ``capfd`` and related fixtures so it is no longer translated to ``\n``.
