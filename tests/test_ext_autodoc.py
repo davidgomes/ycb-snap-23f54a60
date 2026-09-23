@@ -986,6 +986,19 @@ def test_autodoc_member_order(app):
 
 
 @pytest.mark.sphinx('html', testroot='ext-autodoc')
+def test_autodoc_module_empty_all(app):
+    options = {"members": None}
+    actual = do_autodoc(app, 'module', 'target.empty_all', options)
+    assert list(actual) == [
+        '',
+        '.. py:module:: target.empty_all',
+        '',
+        'docsting of empty_all module.',
+        '',
+    ]
+
+
+@pytest.mark.sphinx('html', testroot='ext-autodoc')
 def test_autodoc_module_member_order(app):
     # case member-order='bysource'
     options = {"members": 'foo, Bar, baz, qux, Quux, foobar',
