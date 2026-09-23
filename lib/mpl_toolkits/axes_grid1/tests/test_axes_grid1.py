@@ -1,4 +1,5 @@
 from itertools import product
+import io
 import platform
 
 import matplotlib as mpl
@@ -245,6 +246,13 @@ def test_inset_axes_complete():
     with pytest.warns(UserWarning):
         ins = inset_axes(ax, width="40%", height="30%",
                          bbox_transform=ax.transAxes)
+
+
+def test_inset_axes_tight_bbox():
+    # The inset locator is invoked with renderer=None during bbox_inches='tight'.
+    fig, (ax, ax2) = plt.subplots(1, 2, figsize=[5.5, 2.8])
+    inset_axes(ax, width=1.3, height=0.9)
+    fig.savefig(io.BytesIO(), bbox_inches="tight")
 
 
 @image_comparison(['fill_facecolor.png'], remove_text=True, style='mpl20')

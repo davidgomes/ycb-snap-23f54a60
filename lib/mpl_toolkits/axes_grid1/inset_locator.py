@@ -69,6 +69,11 @@ class AnchoredLocatorBase(AnchoredOffsetbox):
         raise RuntimeError("No draw method should be called")
 
     def __call__(self, ax, renderer):
+        # renderer is None when called from tight-bbox adjustment.  This
+        # locator is not attached to a figure, so OffsetBox.get_window_extent
+        # cannot fall back to self.figure._get_renderer().
+        if renderer is None:
+            renderer = ax.figure._get_renderer()
         self.axes = ax
         bbox = self.get_window_extent(renderer)
         px, py = self.get_offset(bbox.width, bbox.height, 0, 0, renderer)
