@@ -3045,6 +3045,14 @@ class TestDataset:
         d0 = D.isel(x=0)
         assert_identical(d0, x0)
 
+    def test_to_stacked_array_to_unstacked_dataset_single_dim(self):
+        # regression test for GH4049
+        arr = xr.DataArray(np.arange(3), coords=[("x", [0, 1, 2])])
+        data = xr.Dataset({"a": arr, "b": arr})
+        stacked = data.to_stacked_array("y", sample_dims=["x"])
+        unstacked = stacked.to_unstacked_dataset("y")
+        assert_identical(unstacked, data)
+
     def test_to_stacked_array_to_unstacked_dataset_different_dimension(self):
         # test when variables have different dimensionality
         a, b = create_test_stacked_array()
