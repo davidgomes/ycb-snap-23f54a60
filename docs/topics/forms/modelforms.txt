@@ -565,6 +565,22 @@ field, you could do the following::
                 'slug': MySlugFormField,
             }
 
+or::
+
+    from django.forms import ModelForm
+    from myapp.models import Article
+
+    def formfield_for_dbfield(db_field, **kwargs):
+        if db_field.name == "slug":
+            return MySlugFormField()
+        return db_field.formfield(**kwargs)
+
+    class ArticleForm(ModelForm):
+        class Meta:
+            model = Article
+            fields = ["pub_date", "headline", "content", "reporter", "slug"]
+            formfield_callback = formfield_for_dbfield
+
 
 Finally, if you want complete control over of a field -- including its type,
 validators, required, etc. -- you can do this by declaratively specifying
