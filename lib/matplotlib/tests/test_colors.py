@@ -117,6 +117,37 @@ def test_register_cmap():
             cm.register_cmap('nome', cmap='not a cmap')
 
 
+def test_colormaps_register_sets_name():
+    cmap = mcolors.LinearSegmentedColormap.from_list(
+        'some_cmap_name', ['r', 'g', 'b'])
+    matplotlib.colormaps.register(cmap, name='my_cmap_name')
+    try:
+        assert matplotlib.colormaps['my_cmap_name'].name == 'my_cmap_name'
+        # The user's colormap instance is left untouched.
+        assert cmap.name == 'some_cmap_name'
+    finally:
+        matplotlib.colormaps.unregister('my_cmap_name')
+
+
+def test_set_cmap_mismatched_name():
+    cmap = matplotlib.colormaps["viridis"].with_extremes(over='r')
+    # register it with different names
+    cmap.name = "test-cmap"
+    matplotlib.colormaps.register(name='wrong-cmap', cmap=cmap)
+    try:
+        plt.set_cmap("wrong-cmap")
+        cmap_returned = plt.get_cmap("wrong-cmap")
+        assert cmap_returned == cmap
+        assert cmap_returned.name == "wrong-cmap"
+        # The default colormap is resolved through the registered name.
+        fig, ax = plt.subplots()
+        im = ax.imshow([[1, 1], [2, 2]])
+        assert im.get_cmap() == cmap
+        plt.close(fig)
+    finally:
+        matplotlib.colormaps.unregister("wrong-cmap")
+
+
 def test_colormaps_get_cmap():
     cr = mpl.colormaps
 
@@ -195,10 +226,10 @@ def test_colormap_equals():
     # Make sure we can compare different sizes without failure
     cm_copy._lut = cm_copy._lut[:10, :]
     assert cm_copy != cmap
-    # Test different names are not equal
+    # Test different names are equal if the lookup table is the same
     cm_copy = cmap.copy()
     cm_copy.name = "Test"
-    assert cm_copy != cmap
+    assert cm_copy == cmap
     # Test colorbar extends
     cm_copy = cmap.copy()
     cm_copy.colorbar_extend = not cmap.colorbar_extend

@@ -1,0 +1,14 @@
+Colormaps registered under a name other than their own
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+When a colormap is registered with ``matplotlib.colormaps.register(cmap,
+name=name)`` (or the deprecated ``matplotlib.cm.register_cmap``), the copy
+stored in the registry now has its ``name`` attribute set to *name*, rather
+than keeping ``cmap.name``. Previously, a mismatch between the two names
+caused lookups by the original name to fail, e.g. after
+``pyplot.set_cmap(name)``. The colormap instance passed in is not modified.
+
+``Colormap`` equality no longer compares names
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Two `.Colormap` instances now compare equal if their lookup tables (including
+the *bad*, *under* and *over* colors) and ``colorbar_extend`` are the same,
+regardless of their ``name`` attributes.
