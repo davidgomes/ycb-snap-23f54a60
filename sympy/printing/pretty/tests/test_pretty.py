@@ -6089,6 +6089,16 @@ def test_MatrixElement_printing():
     assert upretty(F) == ucode_str1
 
 
+def test_MatrixSymbol_printing():
+    A = MatrixSymbol("A", 3, 3)
+    B = MatrixSymbol("B", 3, 3)
+
+    assert pretty(A - A*B - B) == "-B - A*B + A"
+    assert upretty(A - A*B - B) == u("-B - A⋅B + A")
+    assert pretty(A*B - (A + B)) == "-(A + B) + A*B"
+    assert upretty(-2*A + B) == u("-2⋅A + B")
+
+
 def test_degree_printing():
     expr1 = 90*degree
     assert pretty(expr1) == u'90°'

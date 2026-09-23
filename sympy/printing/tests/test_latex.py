@@ -1212,7 +1212,7 @@ def test_matMul():
     assert l._print_MatMul(-2*A) == '-2 A'
     assert l._print_MatMul(1.5*A) == '1.5 A'
     assert l._print_MatMul(sqrt(2)*A) == r'\sqrt{2} A'
-    assert l._print_MatMul(-sqrt(2)*A) == r'- \sqrt{2} A'
+    assert l._print_MatMul(-sqrt(2)*A) == r'-\sqrt{2} A'
     assert l._print_MatMul(2*sqrt(2)*x*A) == r'2 \sqrt{2} x A'
     assert l._print_MatMul(-2*A*(A + 2*B)) in [r'-2 A \left(A + 2 B\right)',
         r'-2 A \left(2 B + A\right)']
@@ -1710,7 +1710,15 @@ def test_MatrixElement_printing():
     assert latex(3 * A[0, 0]) == r"3 A_{0, 0}"
 
     F = C[0, 0].subs(C, A - B)
-    assert latex(F) == r"\left(-1 B + A\right)_{0, 0}"
+    assert latex(F) == r"\left(-B + A\right)_{0, 0}"
+
+
+def test_MatrixSymbol_printing():
+    A = MatrixSymbol("A", 3, 3)
+    B = MatrixSymbol("B", 3, 3)
+
+    assert latex(A - A*B - B) == r"-B - A B + A"
+    assert latex(A*B - (A+B)) == r"-\left(A + B\right) + A B"
 
 
 def test_Quaternion_latex_printing():

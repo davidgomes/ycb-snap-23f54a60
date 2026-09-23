@@ -1477,17 +1477,31 @@ class LatexPrinter(Printer):
             return r"%s^\dagger" % self._print(mat)
 
     def _print_MatAdd(self, expr):
-        terms = list(expr.args)
-        tex = " + ".join(map(self._print, terms))
+        tex = ""
+        for i, term in enumerate(expr.args):
+            t = self._print(term)
+            if i == 0:
+                pass
+            elif t.startswith('-'):
+                tex += " - "
+                t = t[1:]
+            else:
+                tex += " + "
+            tex += t
         return tex
 
     def _print_MatMul(self, expr):
         from sympy import Add, MatAdd, HadamardProduct
+        from sympy.core.mul import _keep_coeff
 
         def parens(x):
             if isinstance(x, (Add, MatAdd, HadamardProduct)):
                 return r"\left(%s\right)" % self._print(x)
             return self._print(x)
+
+        c, m = expr.as_coeff_mmul()
+        if _coeff_isneg(c):
+            return '-' + ' '.join(map(parens, _keep_coeff(-c, m).args))
         return ' '.join(map(parens, expr.args))
 
     def _print_Mod(self, expr, exp=None):
