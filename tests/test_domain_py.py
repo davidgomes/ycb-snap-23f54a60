@@ -113,12 +113,12 @@ def test_domain_py_xrefs(app, status, warning):
                    'ModTopLevel', 'class')
     assert_refnode(refnodes[8], 'module_b.submodule', 'ModTopLevel',
                    'ModNoModule', 'class')
-    assert_refnode(refnodes[9], False, False, 'int', 'class')
-    assert_refnode(refnodes[10], False, False, 'tuple', 'class')
-    assert_refnode(refnodes[11], False, False, 'str', 'class')
-    assert_refnode(refnodes[12], False, False, 'float', 'class')
-    assert_refnode(refnodes[13], False, False, 'list', 'class')
-    assert_refnode(refnodes[14], False, False, 'ModTopLevel', 'class')
+    assert_refnode(refnodes[9], 'module_b.submodule', None, 'int', 'class')
+    assert_refnode(refnodes[10], 'module_b.submodule', None, 'tuple', 'class')
+    assert_refnode(refnodes[11], 'module_b.submodule', None, 'str', 'class')
+    assert_refnode(refnodes[12], 'module_b.submodule', None, 'float', 'class')
+    assert_refnode(refnodes[13], 'module_b.submodule', None, 'list', 'class')
+    assert_refnode(refnodes[14], 'module_b.submodule', None, 'ModTopLevel', 'class')
     assert_refnode(refnodes[15], False, False, 'index', 'doc', domain='std')
     assert len(refnodes) == 16
 
@@ -742,6 +742,55 @@ def test_pyattribute(app):
     assert_node(doctree[1][1][1][0][1][3], pending_xref, **{"py:class": "Class"})
     assert 'Class.attr' in domain.objects
     assert domain.objects['Class.attr'] == ('index', 'Class.attr', 'attribute')
+
+
+def test_info_field_list(app):
+    text = (".. py:module:: example\n"
+            ".. py:class:: Class\n"
+            "\n"
+            "   :param str name: blah blah\n"
+            "   :param age: blah blah\n"
+            "   :type age: int\n"
+            "\n"
+            "   .. py:method:: meth()\n"
+            "\n"
+            "      :rtype: list\n"
+            "\n"
+            "   .. py:attribute:: attr\n"
+            "\n"
+            "      :type: dict\n")
+    doctree = restructuredtext.parse(app, text)
+    refnodes = list(doctree.traverse(pending_xref))
+    assert [node['reftarget'] for node in refnodes] == ['str', 'int', 'list', 'dict']
+    for node in refnodes:
+        assert_node(node, pending_xref, refdomain="py", reftype="class",
+                    **{"py:module": "example", "py:class": "Class"})
+
+
+def test_info_field_list_resolves_in_current_module(app, warning):
+    text = (".. py:class:: mod.A\n"
+            ".. py:class:: mod.submod.A\n"
+            "\n"
+            ".. py:currentmodule:: mod\n"
+            "\n"
+            ".. py:function:: f()\n"
+            "\n"
+            "   :param A a:\n"
+            "   :rtype: A\n"
+            "\n"
+            ".. py:currentmodule:: mod.submod\n"
+            "\n"
+            ".. py:function:: g()\n"
+            "\n"
+            "   :param A a:\n"
+            "   :rtype: A\n")
+    doctree = restructuredtext.parse(app, text)
+    app.env.apply_post_transforms(doctree, 'index')
+
+    assert 'more than one target found' not in warning.getvalue()
+    refnodes = list(doctree.traverse(nodes.reference))
+    assert [node['reftitle'] for node in refnodes] == ['mod.A', 'mod.A',
+                                                       'mod.submod.A', 'mod.submod.A']
 
 
 def test_pydecorator_signature(app):

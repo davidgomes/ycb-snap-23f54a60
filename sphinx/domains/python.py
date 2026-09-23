@@ -1224,6 +1224,10 @@ class PythonDomain(Domain):
             if mod.docname == docname:
                 del self.modules[modname]
 
+    def process_field_xref(self, pnode: pending_xref) -> None:
+        pnode['py:module'] = self.env.ref_context.get('py:module')
+        pnode['py:class'] = self.env.ref_context.get('py:class')
+
     def merge_domaindata(self, docnames: List[str], otherdata: Dict) -> None:
         # XXX check duplicates?
         for fullname, obj in otherdata['objects'].items():
