@@ -236,6 +236,37 @@ class ModelFormBaseTest(TestCase):
         obj = f2.save()
         self.assertEqual(obj.character, char)
 
+    def test_blank_foreign_key_with_radio(self):
+        class BookForm(forms.ModelForm):
+            class Meta:
+                model = Book
+                fields = ['author']
+                widgets = {'author': forms.RadioSelect()}
+
+        writer = Writer.objects.create(name='Joe Doe')
+        form = BookForm()
+        self.assertEqual(list(form.fields['author'].choices), [
+            ('', '---------'),
+            (writer.pk, 'Joe Doe'),
+        ])
+
+    def test_non_blank_foreign_key_with_radio(self):
+        class AwardForm(forms.ModelForm):
+            class Meta:
+                model = Award
+                fields = ['character']
+                widgets = {'character': forms.RadioSelect()}
+
+        character = Character.objects.create(
+            username='user',
+            last_action=datetime.datetime.today(),
+        )
+        form = AwardForm()
+        self.assertEqual(
+            list(form.fields['character'].choices),
+            [(character.pk, str(character))],
+        )
+
     def test_blank_false_with_null_true_foreign_key_field(self):
         """
         A ModelForm with a model having ForeignKey(blank=False, null=True)
