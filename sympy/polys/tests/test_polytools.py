@@ -3441,3 +3441,19 @@ def test_deserialized_poly_equals_original():
         "Deserialized polynomial not equal to original.")
     assert poly.gens == deserialized.gens, (
         "Deserialized polynomial has different generators than original.")
+
+
+def test_issue_20427():
+    f = Poly(-117968192370600*18**Rational(1, 3)/(217603955769048*(24201 +
+        253*sqrt(9165))**Rational(1, 3) + 2273005839412*sqrt(9165)*(24201 +
+        253*sqrt(9165))**Rational(1, 3)) - 15720318185*2**Rational(2, 3)*3**Rational(1, 3)*(24201
+        + 253*sqrt(9165))**Rational(2, 3)/(217603955769048*(24201 + 253*sqrt(9165))**
+        Rational(1, 3) + 2273005839412*sqrt(9165)*(24201 + 253*sqrt(9165))**Rational(1, 3))
+        + 15720318185*12**Rational(1, 3)*(24201 + 253*sqrt(9165))**Rational(2, 3)/(
+        217603955769048*(24201 + 253*sqrt(9165))**Rational(1, 3) + 2273005839412*
+        sqrt(9165)*(24201 + 253*sqrt(9165))**Rational(1, 3)) + 117968192370600*2**(
+        Rational(1, 3))*3**Rational(2, 3)/(217603955769048*(24201 + 253*sqrt(9165))**
+        Rational(1, 3) + 2273005839412*sqrt(9165)*(24201 + 253*sqrt(9165))**Rational(1, 3)), x)
+    coeff, bad_poly = f.clear_denoms()
+    assert bad_poly.is_zero
+    assert bad_poly.rep.rep == []
