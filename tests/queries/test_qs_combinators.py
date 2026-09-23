@@ -98,6 +98,11 @@ class QuerySetSetOperationTests(TestCase):
         self.assertEqual(len(qs2.union(qs1, qs1, all=True)), 20)
         self.assertEqual(len(qs2.union(qs2)), 0)
         self.assertEqual(len(qs3.union(qs3)), 0)
+        self.assertEqual(len(qs1.union(qs2).none()), 0)
+        self.assertEqual(len(qs2.union(qs1).none()), 0)
+        self.assertNumbersEqual(qs1.union(qs2).none(), [], ordered=False)
+        # none() must not empty the original combined queryset.
+        self.assertEqual(len(qs1.union(qs2)), 10)
 
     def test_limits(self):
         qs1 = Number.objects.all()

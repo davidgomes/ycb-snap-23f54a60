@@ -328,6 +328,10 @@ class Query(BaseExpression):
             obj.subq_aliases = self.subq_aliases.copy()
         obj.used_aliases = self.used_aliases.copy()
         obj._filtered_relations = self._filtered_relations.copy()
+        # Clone combined queries so that QuerySet.none() can mark them empty
+        # without mutating the originals.
+        if self.combined_queries:
+            obj.combined_queries = tuple(query.clone() for query in self.combined_queries)
         # Clear the cached_property
         try:
             del obj.base_table
@@ -1777,6 +1781,8 @@ class Query(BaseExpression):
 
     def set_empty(self):
         self.where.add(NothingNode(), AND)
+        for query in self.combined_queries:
+            query.set_empty()
 
     def is_empty(self):
         return any(isinstance(c, NothingNode) for c in self.where.children)
