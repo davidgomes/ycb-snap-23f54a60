@@ -85,6 +85,7 @@ New Features
 
 Bug fixes
 ~~~~~~~~~
+- Fix weighted mean when passing boolean weights (:issue:`4074`).
 - Support dark mode in VS code (:issue:`4024`)
   By `Keisuke Fujii <https://github.com/fujiisoup>`_.
 - ``ValueError`` is raised when ``fill_value`` is not a scalar in :py:meth:`full_like`. (:issue:`3977`)
