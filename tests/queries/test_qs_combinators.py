@@ -124,6 +124,12 @@ class QuerySetSetOperationTests(TestCase):
         reserved_name = qs1.union(qs1).values_list('name', 'order', 'id').get()
         self.assertEqual(reserved_name[:2], ('a', 2))
 
+    def test_union_with_values_list_multiple_columns(self):
+        ReservedName.objects.create(name='a', order=2)
+        qs1 = ReservedName.objects.all()
+        self.assertEqual(qs1.union(qs1).values_list('name', 'order').get(), ('a', 2))
+        self.assertEqual(qs1.union(qs1).values_list('order').get(), (2,))
+
     def test_union_with_two_annotated_values_list(self):
         qs1 = Number.objects.filter(num=1).annotate(
             count=Value(0, IntegerField()),
