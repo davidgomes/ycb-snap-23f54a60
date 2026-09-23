@@ -28,7 +28,7 @@ from sklearn.multioutput import MultiOutputRegressor
 from sklearn.svm import LinearSVC
 from sklearn.base import ClassifierMixin
 from sklearn.utils import shuffle
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import GridSearchCV, cross_val_predict
 
 
 def test_multi_target_regression():
@@ -215,6 +215,7 @@ def test_multi_output_classification_partial_fit():
     half_index = X.shape[0] // 2
     multi_target_linear.partial_fit(
         X[:half_index], y[:half_index], classes=classes)
+    assert_array_equal(multi_target_linear.classes_, classes)
 
     first_predictions = multi_target_linear.predict(X)
     assert (n_samples, n_outputs) == first_predictions.shape
@@ -254,6 +255,8 @@ def test_multi_output_classification():
 
     # train the multi_target_forest and also get the predictions.
     multi_target_forest.fit(X, y)
+    assert_array_equal(multi_target_forest.classes_,
+                       [e.classes_ for e in multi_target_forest.estimators_])
 
     predictions = multi_target_forest.predict(X)
     assert (n_samples, n_outputs) == predictions.shape
@@ -274,6 +277,25 @@ def test_multi_output_classification():
         assert list(forest_.predict(X)) == list(predictions[:, i])
         assert_array_equal(list(forest_.predict_proba(X)),
                            list(predict_proba[i]))
+
+
+def test_multi_output_classification_cross_val_predict_proba():
+    # MultiOutputClassifier has no top-level classes_ unless fit stores the
+    # per-output labels. cross_val_predict(method='predict_proba') needs them
+    # to align probability columns across folds.
+    from sklearn.datasets import make_multilabel_classification
+
+    X, Y = make_multilabel_classification(
+        n_samples=80, n_features=10, n_classes=3, n_labels=2, random_state=0)
+    mo_clf = MultiOutputClassifier(
+        LogisticRegression(solver='liblinear', random_state=0))
+    pred = cross_val_predict(mo_clf, X, Y, cv=3)
+    assert pred.shape == Y.shape
+    pred_proba = cross_val_predict(mo_clf, X, Y, cv=3, method='predict_proba')
+    assert len(pred_proba) == Y.shape[1]
+    for proba in pred_proba:
+        assert proba.shape == (X.shape[0], 2)
+        assert_almost_equal(proba.sum(axis=1), np.ones(X.shape[0]))
 
 
 def test_multiclass_multioutput_estimator():

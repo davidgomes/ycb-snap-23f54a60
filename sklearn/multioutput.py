@@ -318,12 +318,75 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
 
     Attributes
     ----------
+    classes_ : list of ndarray of shape (n_classes,)
+        Class labels for each output.
+
     estimators_ : list of ``n_output`` estimators
         Estimators used for predictions.
     """
 
     def __init__(self, estimator, n_jobs=None):
         super().__init__(estimator, n_jobs)
+
+    def fit(self, X, y, sample_weight=None):
+        """Fit the model to data matrix X and targets y.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            The input data.
+
+        y : array-like, shape (n_samples, n_outputs)
+            The target values.
+
+        sample_weight : array-like, shape (n_samples,) or None
+            Sample weights. If None, then samples are equally weighted.
+            Only supported if the underlying classifier supports sample
+            weights.
+
+        Returns
+        -------
+        self : object
+        """
+        super().fit(X, y, sample_weight)
+        self.classes_ = [estimator.classes_ for estimator in self.estimators_]
+        return self
+
+    @if_delegate_has_method('estimator')
+    def partial_fit(self, X, y, classes=None, sample_weight=None):
+        """Incrementally fit the model to data.
+        Fit a separate model for each class output.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Data.
+
+        y : {array-like, sparse matrix}, shape (n_samples, n_outputs)
+            Multi-output targets.
+
+        classes : list of numpy arrays, shape (n_outputs)
+            Each array is unique classes for one output in str/int.
+            Can be obtained via
+            ``[np.unique(y[:, i]) for i in range(y.shape[1])]``, where `y`
+            is the target matrix of the entire dataset.
+            This argument is required for the first call to partial_fit
+            and can be omitted in the subsequent calls.
+            Note that `y` doesn't need to contain all labels in `classes`.
+
+        sample_weight : array-like, shape (n_samples,) or None
+            Sample weights. If None, then samples are equally weighted.
+            Only supported if the underlying classifier supports sample
+            weights.
+
+        Returns
+        -------
+        self : object
+        """
+        super().partial_fit(
+            X, y, classes=classes, sample_weight=sample_weight)
+        self.classes_ = [estimator.classes_ for estimator in self.estimators_]
+        return self
 
     def predict_proba(self, X):
         """Probability estimates.
