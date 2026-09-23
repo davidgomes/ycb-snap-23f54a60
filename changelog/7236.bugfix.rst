@@ -1,0 +1,1 @@
+Fixed ``unittest.TestCase.tearDown`` being called for skipped tests (and for tests whose ``setUp`` failed) when ``--pdb`` is given.

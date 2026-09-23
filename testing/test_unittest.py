@@ -1193,6 +1193,40 @@ def test_pdb_teardown_called(testdir, monkeypatch):
     ]
 
 
+def test_pdb_teardown_skipped(testdir, monkeypatch):
+    """tearDown() must not run for tests skipped by unittest when --pdb is given.
+
+    Regression: postponing tearDown() for --pdb invoked it even when
+    TestCase.run() returned early for @unittest.skip.
+    """
+    teardowns = []
+    monkeypatch.setattr(
+        pytest, "test_pdb_teardown_skipped_teardowns", teardowns, raising=False
+    )
+
+    testdir.makepyfile(
+        """
+        import unittest
+        import pytest
+
+        class MyTestCase(unittest.TestCase):
+
+            def tearDown(self):
+                pytest.test_pdb_teardown_skipped_teardowns.append(self.id())
+
+            @unittest.skip("hello")
+            def test_skipped(self):
+                pass
+
+            def test_ok(self):
+                pass
+    """
+    )
+    result = testdir.runpytest_inprocess("--pdb")
+    result.assert_outcomes(passed=1, skipped=1)
+    assert teardowns == ["test_pdb_teardown_skipped.MyTestCase.test_ok"]
+
+
 def test_async_support(testdir):
     pytest.importorskip("unittest.async_case")
 

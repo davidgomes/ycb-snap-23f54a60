@@ -115,6 +115,10 @@ class TestCaseFunction(Function):
     def setup(self):
         # a bound method to be called during teardown() if set (see 'runtest()')
         self._explicit_tearDown = None
+        # True when unittest's TestCase.run() actually invokes tearDown().
+        # With --pdb we replace tearDown with a sentinel so it can run after
+        # the debugger; skipped tests and failed setUp() never call it.
+        self._explicit_tearDown_requested = False
         self._testcase = self.parent.obj(self.name)
         self._obj = getattr(self._testcase, self.name)
         if hasattr(self, "_request"):
@@ -122,8 +126,10 @@ class TestCaseFunction(Function):
 
     def teardown(self):
         if self._explicit_tearDown is not None:
-            self._explicit_tearDown()
+            if self._explicit_tearDown_requested:
+                self._explicit_tearDown()
             self._explicit_tearDown = None
+            self._explicit_tearDown_requested = False
         self._testcase = None
         self._obj = None
 
@@ -222,7 +228,11 @@ class TestCaseFunction(Function):
             # when absolutely needed
             if self.config.getoption("usepdb"):
                 self._explicit_tearDown = self._testcase.tearDown
-                setattr(self._testcase, "tearDown", lambda *args: None)
+
+                def deferred_tearDown(*args, **kwargs):
+                    self._explicit_tearDown_requested = True
+
+                setattr(self._testcase, "tearDown", deferred_tearDown)
 
             # we need to update the actual bound method with self.obj, because
             # wrap_pytest_function_for_tracing replaces self.obj by a wrapper
