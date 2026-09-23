@@ -244,6 +244,12 @@ The special document names (and pages generated for them) are:
   JavaScript to full-text search the generated documents for search words; it
   should work on every major browser that supports modern JavaScript.
 
+  These names can be listed in a :rst:dir:`toctree` to link to the generated
+  pages.
+
+  .. versionchanged:: 5.2
+     ``genindex``, ``modindex`` and ``search`` are accepted in a toctree.
+
 * every name beginning with ``_``
 
   Though few such names are currently used by Sphinx, you should not
