@@ -562,6 +562,25 @@ def test_issue_24062():
     assert SI._collect_factor_and_dimension(exp_expr) == (1 + E, Dimension(1))
 
 
+def test_issue_24211():
+    from sympy.physics.units import velocity, acceleration
+
+    v1 = Quantity('v1')
+    SI.set_quantity_dimension(v1, velocity)
+    SI.set_quantity_scale_factor(v1, 2 * meter / second)
+
+    a1 = Quantity('a1')
+    SI.set_quantity_dimension(a1, acceleration)
+    SI.set_quantity_scale_factor(a1, -Rational(49, 5) * meter / second**2)
+
+    t1 = Quantity('t1')
+    SI.set_quantity_dimension(t1, time)
+    SI.set_quantity_scale_factor(t1, 5 * second)
+
+    expr = a1*t1 + v1
+    assert SI._collect_factor_and_dimension(expr) == (-47, acceleration*time)
+
+
 def test_prefixed_property():
     assert not meter.is_prefixed
     assert not joule.is_prefixed
