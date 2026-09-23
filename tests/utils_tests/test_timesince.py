@@ -1,6 +1,6 @@
 import datetime
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.test.utils import requires_tz_support
 from django.utils import timezone, translation
 from django.utils.timesince import timesince, timeuntil
@@ -119,6 +119,13 @@ class TimesinceTests(TestCase):
                         timesince(self.t, now, time_strings=time_strings),
                         "0\xa0minut",
                     )
+
+    @requires_tz_support
+    @override_settings(USE_TZ=True)
+    def test_long_interval_with_tz(self):
+        now = timezone.now()
+        d = now - datetime.timedelta(days=31)
+        self.assertEqual(timesince(d), "1\xa0month")
 
     @requires_tz_support
     def test_different_timezones(self):
