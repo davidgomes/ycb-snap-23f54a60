@@ -175,6 +175,32 @@ class ModelInheritanceTests(TestCase):
         self.assertIs(C._meta.parents[A], C._meta.get_field('a'))
 
     @isolate_apps('model_inheritance')
+    def test_multiple_onetoone_to_parent_uses_explicit_parent_link(self):
+        class Document(models.Model):
+            pass
+
+        class Picking(Document):
+            document_ptr = models.OneToOneField(
+                Document, models.CASCADE, parent_link=True, related_name='+',
+            )
+            origin = models.OneToOneField(Document, models.PROTECT, related_name='picking')
+
+        self.assertIs(Picking._meta.parents[Document], Picking._meta.get_field('document_ptr'))
+        self.assertIs(Picking._meta.pk, Picking._meta.get_field('document_ptr'))
+
+        class PickingReversed(Document):
+            origin = models.OneToOneField(Document, models.PROTECT, related_name='picking_reversed')
+            document_ptr = models.OneToOneField(
+                Document, models.CASCADE, parent_link=True, related_name='+',
+            )
+
+        self.assertIs(
+            PickingReversed._meta.parents[Document],
+            PickingReversed._meta.get_field('document_ptr'),
+        )
+        self.assertIs(PickingReversed._meta.pk, PickingReversed._meta.get_field('document_ptr'))
+
+    @isolate_apps('model_inheritance')
     def test_init_subclass(self):
         saved_kwargs = {}
 
