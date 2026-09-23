@@ -106,6 +106,11 @@ class Weighted:
                 "Missing values can be replaced by `weights.fillna(0)`."
             )
 
+        # bool -> int, because ``dot([True, True], [True, True])`` -> True
+        # (and not 2); https://github.com/pydata/xarray/issues/4074
+        if weights.dtype == bool:
+            weights = weights.astype(int)
+
         self.obj = obj
         self.weights = weights
 

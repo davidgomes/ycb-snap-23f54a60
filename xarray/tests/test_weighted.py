@@ -29,6 +29,21 @@ def test_weighted_weights_nan_raises(as_dataset, weights):
         data.weighted(DataArray(weights))
 
 
+def test_weighted_mean_bool_weights():
+    # GH4074: boolean weights must be promoted so sum-of-weights is numeric
+    dta = DataArray([1.0, 1.0, 1.0])
+    wgt = DataArray(np.array([True, True, False]))
+
+    expected = DataArray(1.0)
+    result = dta.weighted(wgt).mean()
+
+    assert_equal(expected, result)
+
+    expected_sum = DataArray(2)
+    result_sum = dta.weighted(wgt).sum_of_weights()
+    assert_equal(expected_sum, result_sum)
+
+
 @pytest.mark.parametrize(
     ("weights", "expected"),
     (([1, 2], 3), ([2, 0], 2), ([0, 0], np.nan), ([-1, 1], np.nan)),
