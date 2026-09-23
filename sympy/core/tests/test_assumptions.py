@@ -111,7 +111,7 @@ def test_infinity():
     assert oo.is_negative is False
     assert oo.is_nonpositive is False
     assert oo.is_nonnegative is True
-    assert oo.is_even is None
+    assert oo.is_even is False
     assert oo.is_odd is None
     assert oo.is_finite is False
     assert oo.is_infinite is True
@@ -138,7 +138,7 @@ def test_neg_infinity():
     assert mm.is_negative is True
     assert mm.is_nonpositive is True
     assert mm.is_nonnegative is False
-    assert mm.is_even is None
+    assert mm.is_even is False
     assert mm.is_odd is None
     assert mm.is_finite is False
     assert mm.is_infinite is True
@@ -594,6 +594,7 @@ def test_other_symbol():
     assert x.is_even is True
     assert x.is_odd is False
     assert x.is_integer is True
+    assert x.is_finite is True
 
     x = Symbol('x', even=False)
     assert x.is_even is False
