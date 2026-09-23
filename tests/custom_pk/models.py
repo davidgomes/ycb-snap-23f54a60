@@ -7,7 +7,7 @@ this behavior by explicitly adding ``primary_key=True`` to a field.
 
 from django.db import models
 
-from .fields import MyAutoField
+from .fields import MyAutoField, MyWrapperAutoField
 
 
 class Employee(models.Model):
@@ -36,3 +36,7 @@ class Bar(models.Model):
 
 class Foo(models.Model):
     bar = models.ForeignKey(Bar, models.CASCADE)
+
+
+class CustomAutoFieldModel(models.Model):
+    id = MyWrapperAutoField(primary_key=True)

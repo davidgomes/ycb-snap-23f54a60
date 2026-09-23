@@ -58,3 +58,18 @@ class MyAutoField(models.CharField):
         if isinstance(value, MyWrapper):
             return str(value)
         return value
+
+
+class MyWrapperAutoField(models.BigAutoField):
+
+    def from_db_value(self, value, expression, connection):
+        if value is None:
+            return None
+        return MyWrapper(value)
+
+    def get_prep_value(self, value):
+        if value is None:
+            return None
+        if isinstance(value, MyWrapper):
+            return int(value.value)
+        return int(value)
