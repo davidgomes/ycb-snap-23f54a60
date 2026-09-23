@@ -1119,6 +1119,44 @@ class EvaluateFalseTransformer(ast.NodeTransformer):
         'exp', 'ln', 'log', 'sqrt', 'cbrt',
     )
 
+    relational_operators = {
+        ast.NotEq: 'Ne',
+        ast.Lt: 'Lt',
+        ast.LtE: 'Le',
+        ast.Gt: 'Gt',
+        ast.GtE: 'Ge',
+        ast.Eq: 'Eq',
+    }
+
+    def visit_Compare(self, node):
+        if any(op.__class__ not in self.relational_operators for op in node.ops):
+            return node
+
+        left = node.left
+        args = []
+        for op, right in zip(node.ops, node.comparators):
+            args.append(ast.Call(
+                func=ast.Name(id=self.relational_operators[op.__class__], ctx=ast.Load()),
+                args=[self.visit(left), self.visit(right)],
+                keywords=[ast.keyword(arg='evaluate', value=ast.NameConstant(value=False, ctx=ast.Load()))],
+                starargs=None,
+                kwargs=None
+            ))
+            left = right
+
+        if len(args) == 1:
+            return args[0]
+
+        # Chained comparisons (``a < b < c``) are pairwise relations combined
+        # with ``And``, matching Python's evaluation of the chain.
+        return ast.Call(
+            func=ast.Name(id='And', ctx=ast.Load()),
+            args=args,
+            keywords=[ast.keyword(arg='evaluate', value=ast.NameConstant(value=False, ctx=ast.Load()))],
+            starargs=None,
+            kwargs=None
+        )
+
     def flatten(self, args, func):
         result = []
         for arg in args:
