@@ -390,17 +390,19 @@ class GoogleDocstring:
                                 field_role: str = 'param', type_role: str = 'type'
                                 ) -> List[str]:
         lines = []
-        for _name, _type, _desc in fields:
+        for _names, _type, _desc in fields:
             _desc = self._strip_empty(_desc)
             if any(_desc):
                 _desc = self._fix_field_desc(_desc)
-                field = ':%s %s: ' % (field_role, _name)
-                lines.extend(self._format_block(field, _desc))
-            else:
-                lines.append(':%s %s:' % (field_role, _name))
+            for _name in _names.split(', '):
+                if any(_desc):
+                    field = ':%s %s: ' % (field_role, _name)
+                    lines.extend(self._format_block(field, _desc))
+                else:
+                    lines.append(':%s %s:' % (field_role, _name))
 
-            if _type:
-                lines.append(':%s %s: %s' % (type_role, _name, _type))
+                if _type:
+                    lines.append(':%s %s: %s' % (type_role, _name, _type))
         return lines + ['']
 
     def _format_field(self, _name: str, _type: str, _desc: List[str]) -> List[str]:
