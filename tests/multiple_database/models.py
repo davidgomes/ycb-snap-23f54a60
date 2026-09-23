@@ -65,12 +65,24 @@ class Book(models.Model):
         return self.title
 
 
+class PetManager(models.Manager):
+    def get_by_natural_key(self, name, owner_name):
+        return self.get(name=name, owner__name=owner_name)
+
+
 class Pet(models.Model):
     name = models.CharField(max_length=100)
     owner = models.ForeignKey(Person, models.CASCADE)
 
+    objects = PetManager()
+
     class Meta:
         ordering = ("name",)
+
+    def natural_key(self):
+        return (self.name, self.owner.name)
+
+    natural_key.dependencies = ["multiple_database.Person"]
 
 
 class UserProfile(models.Model):

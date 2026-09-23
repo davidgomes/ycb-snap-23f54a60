@@ -6,7 +6,7 @@ from unittest.mock import Mock
 
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
-from django.core import management
+from django.core import management, serializers
 from django.db import DEFAULT_DB_ALIAS, router, transaction
 from django.db.models import signals
 from django.db.utils import ConnectionRouter
@@ -2015,6 +2015,19 @@ class FixtureTestCase(TestCase):
         self.assertEqual(
             command_output, "Installed 0 object(s) (of 2) from 1 fixture(s)"
         )
+
+    def test_natural_key_with_foreign_key_on_other_database(self):
+        owner = Person.objects.using("other").create(name="Owner")
+        Pet.objects.using("other").create(name="Fido", owner=owner)
+        data = serializers.serialize(
+            "json",
+            Pet.objects.using("other").all(),
+            use_natural_foreign_keys=True,
+            use_natural_primary_keys=True,
+        )
+        objs = list(serializers.deserialize("json", data, using="other"))
+        self.assertEqual(len(objs), 1)
+        self.assertEqual(objs[0].object.pk, Pet.objects.using("other").get().pk)
 
 
 class PickleQuerySetTestCase(TestCase):
