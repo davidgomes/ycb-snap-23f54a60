@@ -29,6 +29,12 @@ def format(number, decimal_sep, decimal_pos=None, grouping=0, thousand_sep='',
     if isinstance(number, Decimal):
         # Format values with more than 200 digits (an arbitrary cutoff) using
         # scientific notation to avoid high memory usage in {:f}'.format().
+        # Values too small to be represented with decimal_pos are rendered
+        # as zero instead.
+        if decimal_pos is not None:
+            cutoff = Decimal('0.' + '1'.rjust(decimal_pos, '0'))
+            if abs(number) < cutoff:
+                number = Decimal('0')
         _, digits, exponent = number.as_tuple()
         if abs(exponent) + len(digits) > 200:
             number = '{:e}'.format(number)
