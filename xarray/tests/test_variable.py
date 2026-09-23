@@ -2308,6 +2308,31 @@ class TestAsCompatibleData:
         orig = Variable(dims=("x"), data=array, attrs={"foo": "bar"})
         assert isinstance(orig._data, CustomIndexable)
 
+        # Type with data stored in the values attribute (GH2097). A ``values``
+        # attribute must not be treated as array data.
+        class CustomWithValuesAttr:
+            def __init__(self, array):
+                self.values = array
+
+        array = CustomWithValuesAttr(np.arange(3))
+        orig = Variable(dims=(), data=array)
+        assert isinstance(orig._data.item(), CustomWithValuesAttr)
+
+    def test_setitem_object_with_values_attr(self):
+        # Regression test for GH2097: indexed assignment into an object array
+        # must store the object itself, not the contents of a ``values``
+        # attribute.
+        class HasValues:
+            values = 5
+
+        variable = Variable(["dim_0"], np.array([None], dtype=object))
+        variable[dict(dim_0=0)] = HasValues()
+        assert isinstance(variable.values[0], HasValues)
+
+        untouched = Variable(["dim_0"], np.array([None], dtype=object))
+        untouched[dict(dim_0=0)] = set()
+        assert untouched.values[0] == set()
+
 
 def test_raise_no_warning_for_nan_in_binary_ops():
     with pytest.warns(None) as record:
