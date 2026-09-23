@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import os
 import re
+from os.path import abspath, relpath
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
 from docutils import nodes
@@ -8,6 +11,7 @@ from docutils.parsers.rst import directives
 from docutils.parsers.rst.directives.admonitions import BaseAdmonition
 from docutils.parsers.rst.directives.misc import Class
 from docutils.parsers.rst.directives.misc import Include as BaseInclude
+from docutils.statemachine import StateMachine
 
 from sphinx import addnodes
 from sphinx.domains.changeset import VersionChange  # noqa: F401  # for compatibility
@@ -373,6 +377,25 @@ class Include(BaseInclude, SphinxDirective):
            self.arguments[0].endswith('>'):
             # docutils "standard" includes, do not do path processing
             return super().run()
+        # Emit the "source-read" event for included files so that extensions
+        # can modify their content, as they can for regular documents.
+        def _insert_input(include_lines, source):
+            text = "\n".join(include_lines[:-2])
+
+            path = Path(relpath(abspath(source), start=self.env.srcdir))
+            docname = self.env.path2doc(os.fspath(path))
+
+            arg = [text]
+            self.env.app.events.emit('source-read', docname, arg)
+            text = arg[0]
+
+            include_lines = text.splitlines() + include_lines[-2:]
+            return StateMachine.insert_input(self.state_machine, include_lines, source)
+
+        # Only override insert_input when a source-read listener exists.
+        if self.env.app.events.listeners.get('source-read'):
+            self.state_machine.insert_input = _insert_input
+
         rel_filename, filename = self.env.relfn2path(self.arguments[0])
         self.arguments[0] = filename
         self.env.note_included(filename)
