@@ -1009,6 +1009,66 @@ def test_info_field_list(app):
                 **{"py:module": "example", "py:class": "Class"})
 
 
+def test_info_field_list_piped_union(app):
+    text = (".. py:module:: example\n"
+            ".. py:class:: Class\n"
+            "\n"
+            "   :param text: a text\n"
+            "   :type text: bytes | str\n"
+            "   :param mode: mode\n"
+            "   :type mode: bytes|str\n"
+            "   :rtype: int | None\n"
+            "   :vartype attr: list | tuple\n"
+            "   :var attr: an attribute\n")
+    doctree = restructuredtext.parse(app, text)
+
+    assert_node(doctree[3][1][0][0][1][0][0][0],
+                ([addnodes.literal_strong, "text"],
+                 " (",
+                 [pending_xref, addnodes.literal_emphasis, "bytes"],
+                 [addnodes.literal_emphasis, " | "],
+                 [pending_xref, addnodes.literal_emphasis, "str"],
+                 ")",
+                 " -- ",
+                 "a text"))
+    assert_node(doctree[3][1][0][0][1][0][0][0][2], pending_xref,
+                refdomain="py", reftype="class", reftarget="bytes",
+                **{"py:module": "example", "py:class": "Class"})
+    assert_node(doctree[3][1][0][0][1][0][0][0][4], pending_xref,
+                refdomain="py", reftype="class", reftarget="str",
+                **{"py:module": "example", "py:class": "Class"})
+
+    assert_node(doctree[3][1][0][0][1][0][1][0],
+                ([addnodes.literal_strong, "mode"],
+                 " (",
+                 [pending_xref, addnodes.literal_emphasis, "bytes"],
+                 [addnodes.literal_emphasis, "|"],
+                 [pending_xref, addnodes.literal_emphasis, "str"],
+                 ")",
+                 " -- ",
+                 "mode"))
+
+    assert_node(doctree[3][1][0][1],
+                ([nodes.field_name, "Return type"],
+                 [nodes.field_body, nodes.paragraph, ([pending_xref, "int"],
+                                                      " | ",
+                                                      [pending_xref, "None"])]))
+    assert_node(doctree[3][1][0][1][1][0][0], pending_xref,
+                refdomain="py", reftype="class", reftarget="int")
+    assert_node(doctree[3][1][0][1][1][0][2], pending_xref,
+                refdomain="py", reftype="obj", reftarget="None")
+
+    assert_node(doctree[3][1][0][2][1][0],
+                ([addnodes.literal_strong, "attr"],
+                 " (",
+                 [pending_xref, addnodes.literal_emphasis, "list"],
+                 [addnodes.literal_emphasis, " | "],
+                 [pending_xref, addnodes.literal_emphasis, "tuple"],
+                 ")",
+                 " -- ",
+                 "an attribute"))
+
+
 def test_info_field_list_var(app):
     text = (".. py:class:: Class\n"
             "\n"
