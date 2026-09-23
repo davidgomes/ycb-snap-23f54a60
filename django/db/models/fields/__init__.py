@@ -763,8 +763,9 @@ class Field(RegisterLookupMixin):
             if not getattr(cls, self.attname, None):
                 setattr(cls, self.attname, self.descriptor_class(self))
         if self.choices is not None:
-            setattr(cls, 'get_%s_display' % self.name,
-                    partialmethod(cls._get_FIELD_display, field=self))
+            display_method_name = 'get_%s_display' % self.name
+            if display_method_name not in cls.__dict__:
+                setattr(cls, display_method_name, partialmethod(cls._get_FIELD_display, field=self))
 
     def get_filter_kwargs_for_object(self, obj):
         """
