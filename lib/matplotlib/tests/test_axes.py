@@ -938,6 +938,19 @@ def test_inverted_limits():
     assert ax.get_ylim() == (5, -3)
     plt.close()
 
+    # Test inverting nonlinear axes.
+    fig, ax = plt.subplots()
+    ax.set_yscale("log")
+    ax.set_ylim(10, 1)
+    assert ax.get_ylim() == (10, 1)
+    plt.close()
+
+    fig, ax = plt.subplots()
+    ax.set_yscale("logit")
+    ax.set_ylim(0.9, 0.1)
+    assert ax.get_ylim() == (0.9, 0.1)
+    plt.close()
+
 
 @image_comparison(baseline_images=['nonfinite_limits'])
 def test_nonfinite_limits():
