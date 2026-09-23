@@ -7,7 +7,7 @@ from django.test import TestCase, override_settings
 from django.test.utils import CaptureQueriesContext
 
 from .models import (
-    Author, Author2, AuthorAddress, AuthorWithAge, Bio, Book, Bookmark,
+    Article, Author, Author2, AuthorAddress, AuthorWithAge, Bio, Book, Bookmark,
     BookReview, BookWithYear, Comment, Department, Employee, FavoriteAuthors,
     House, LessonEntry, ModelIterableSubclass, Person, Qualification, Reader,
     Room, TaggedItem, Teacher, WordEntry,
@@ -884,6 +884,12 @@ class GenericRelationTests(TestCase):
         with self.assertNumQueries(2):
             qs = Comment.objects.prefetch_related('content_object')
             [c.content_object for c in qs]
+
+    def test_prefetch_GFK_uuid_pk(self):
+        article = Article.objects.create(name='Django')
+        Comment.objects.create(comment='awesome', content_object=article)
+        qs = Comment.objects.prefetch_related('content_object')
+        self.assertEqual([c.content_object for c in qs], [article])
 
     def test_traverse_GFK(self):
         """

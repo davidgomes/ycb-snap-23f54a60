@@ -196,6 +196,11 @@ class Comment(models.Model):
         ordering = ['id']
 
 
+class Article(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=20)
+
+
 # Models for lookup ordering tests
 
 class House(models.Model):
