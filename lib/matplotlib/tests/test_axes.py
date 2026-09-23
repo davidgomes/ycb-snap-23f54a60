@@ -2867,6 +2867,19 @@ def test_stackplot():
     ax.set_ylim((0, 70))
 
 
+def test_stackplot_colors_cycle_refs():
+    # stackplot should not change the Axes cycler, and should accept cycle
+    # references ("CN") as colors.
+    fig, ax = plt.subplots()
+    ax.plot([1, 2], [1, 2])
+    colls = ax.stackplot([1, 2, 3], np.ones((3, 3)),
+                         colors=['C2', 'C3', 'C4'])
+    line, = ax.plot([1, 2], [1, 2])
+    assert mcolors.same_color(line.get_color(), 'C1')
+    assert mcolors.same_color([c.get_facecolor()[0] for c in colls],
+                              ['C2', 'C3', 'C4'])
+
+
 @image_comparison(['stackplot_test_baseline'], remove_text=True)
 def test_stackplot_baseline():
     np.random.seed(0)
