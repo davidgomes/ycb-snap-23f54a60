@@ -25,7 +25,8 @@ from .models import (
     ImprovedArticle, ImprovedArticleWithParentLink, Inventory,
     NullableUniqueCharFieldModel, Person, Photo, Post, Price, Product,
     Publication, PublicationDefaults, StrictAssignmentAll,
-    StrictAssignmentFieldSpecific, Student, StumpJoke, TextFile, Triple,
+    StrictAssignmentFieldSpecific, Student, StudentFavorite, StumpJoke,
+    TextFile, Triple,
     Writer, WriterProfile, test_images,
 )
 
@@ -2818,6 +2819,13 @@ class LimitChoicesToTests(TestCase):
     def test_fields_for_model_applies_limit_choices_to(self):
         fields = fields_for_model(StumpJoke, ['has_fooled_today'])
         self.assertSequenceEqual(fields['has_fooled_today'].queryset, [self.threepwood])
+
+    def test_limit_choices_to_no_duplicates(self):
+        Student.objects.create(character=self.threepwood, study='history')
+        Student.objects.create(character=self.threepwood, study='history of art')
+        Student.objects.create(character=self.marley, study='math')
+        fields = fields_for_model(StudentFavorite, ['character'])
+        self.assertSequenceEqual(fields['character'].queryset, [self.threepwood])
 
     def test_callable_called_each_time_form_is_instantiated(self):
         field = StumpJokeForm.base_fields['most_recently_fooled']

@@ -422,6 +422,15 @@ class Student(models.Model):
     study = models.CharField(max_length=30)
 
 
+class StudentFavorite(models.Model):
+    character = models.ForeignKey(
+        Character,
+        models.CASCADE,
+        limit_choices_to=models.Q(student__study__startswith='hist'),
+        related_name='+',
+    )
+
+
 # Model for #639
 class Photo(models.Model):
     title = models.CharField(max_length=30)
