@@ -281,6 +281,20 @@ def test_sparse_liblinear_intercept_handling():
     test_svm.test_dense_liblinear_intercept_handling(svm.LinearSVC)
 
 
+def test_sparse_fit_support_vectors_empty():
+    # Regression test for #14893
+    X_train = sparse.csr_matrix([[0, 1, 0, 0],
+                                 [0, 0, 0, 1],
+                                 [0, 0, 1, 0],
+                                 [0, 0, 0, 1]])
+    y_train = np.array([0.04, 0.04, 0.10, 0.16])
+    model = svm.SVR(kernel='linear')
+    model.fit(X_train, y_train)
+    assert not model.support_vectors_.data.size
+    assert not model.dual_coef_.data.size
+    assert model.dual_coef_.shape == (1, 0)
+
+
 @pytest.mark.parametrize("datasets_index", range(4))
 @pytest.mark.parametrize("kernel", ["linear", "poly", "rbf", "sigmoid"])
 @skip_if_32bit
