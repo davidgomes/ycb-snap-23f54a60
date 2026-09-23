@@ -204,6 +204,18 @@ class BulkUpdateTests(TestCase):
             [cat.special_name for cat in special_categories]
         )
 
+    def test_f_expression(self):
+        # F() does not subclass Expression, so bulk_update() must treat it as
+        # an expression rather than a literal value.
+        notes = [
+            Note.objects.create(note='test_note', misc='test_misc')
+            for _ in range(10)
+        ]
+        for note in notes:
+            note.misc = F('note')
+        Note.objects.bulk_update(notes, ['misc'])
+        self.assertCountEqual(Note.objects.filter(misc='test_note'), notes)
+
     def test_field_references(self):
         numbers = [Number.objects.create(num=0) for _ in range(10)]
         for number in numbers:
