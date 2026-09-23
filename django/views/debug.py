@@ -425,7 +425,13 @@ class ExceptionReporter:
         exc_value = exceptions.pop()
         tb = self.tb if not exceptions else exc_value.__traceback__
 
-        while tb is not None:
+        while tb is not None or exceptions:
+            # If the traceback for the current exception is consumed (or
+            # missing), try the next exception in the chain.
+            if tb is None:
+                exc_value = exceptions.pop()
+                tb = exc_value.__traceback__
+                continue
             # Support for __traceback_hide__ which is used by a few libraries
             # to hide internal frames.
             if tb.tb_frame.f_locals.get('__traceback_hide__'):
@@ -460,13 +466,7 @@ class ExceptionReporter:
                 'pre_context_lineno': pre_context_lineno + 1,
             })
 
-            # If the traceback for current exception is consumed, try the
-            # other exception.
-            if not tb.tb_next and exceptions:
-                exc_value = exceptions.pop()
-                tb = exc_value.__traceback__
-            else:
-                tb = tb.tb_next
+            tb = tb.tb_next
 
         return frames
 

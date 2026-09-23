@@ -497,6 +497,29 @@ class ExceptionReporterTests(SimpleTestCase):
         self.assertIn(implicit_exc.format('<p>Second exception</p>'), text)
         self.assertEqual(3, text.count('<p>Final exception</p>'))
 
+    def test_innermost_exception_without_traceback(self):
+        try:
+            try:
+                raise RuntimeError('Oops')
+            except Exception as exc:
+                new_exc = RuntimeError('My context')
+                exc.__context__ = new_exc
+                raise
+        except Exception:
+            exc_type, exc_value, tb = sys.exc_info()
+
+        reporter = ExceptionReporter(None, exc_type, exc_value, tb)
+        frames = reporter.get_traceback_frames()
+        self.assertEqual(len(frames), 1)
+        self.assertEqual(frames[0]['function'], 'test_innermost_exception_without_traceback')
+        html = reporter.get_traceback_html()
+        self.assertIn('<h2>Traceback ', html)
+        self.assertIn(
+            'During handling of the above exception (My context), '
+            'another exception occurred',
+            html,
+        )
+
     def test_reporting_frames_without_source(self):
         try:
             source = "def funcName():\n    raise Error('Whoops')\nfuncName()"
