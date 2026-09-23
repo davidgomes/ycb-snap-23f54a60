@@ -110,6 +110,10 @@ Extensions
 Other Changes
 =============
 
+* ``--recursive=y`` now honors ``ignore``, ``ignore-patterns``, and ``ignore-paths``.
+
+  Closes #6471
+
 * Started ignoring underscore as a local variable for ``too-many-locals``.
 
   Closes #6488
