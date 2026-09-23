@@ -1270,6 +1270,23 @@ This can be used to change the default ordering of the queryset:
     >>> Restaurant.objects.prefetch_related(
     ...     Prefetch('pizzas__toppings', queryset=Toppings.objects.order_by('name')))
 
+The queryset may also be sliced. The slice is applied per parent object, so
+the following prefetches three pizzas for each restaurant without loading
+every related pizza:
+
+    >>> Restaurant.objects.prefetch_related(Prefetch(
+    ...     'pizzas',
+    ...     queryset=Pizza.objects.order_by('name')[:3],
+    ...     to_attr='example_pizzas',
+    ... ))
+
+This requires a database backend that supports window functions. Other
+backends raise :exc:`~django.db.NotSupportedError`.
+
+.. versionchanged:: 4.2
+
+    ``Prefetch`` objects now accept sliced querysets.
+
 Or to call :meth:`~django.db.models.query.QuerySet.select_related()` when
 applicable to reduce the number of queries even further:
 
