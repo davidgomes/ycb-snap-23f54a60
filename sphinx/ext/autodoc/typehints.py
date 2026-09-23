@@ -52,6 +52,9 @@ def merge_typehints(app: Sphinx, domain: str, objtype: str, contentnode: Element
 
     annotations = app.env.temp_data.get('annotations', {})
     if annotations.get(fullname, {}):
+        if objtype == 'class':
+            annotations = {fullname: {k: v for k, v in annotations[fullname].items()
+                                      if k != 'return'}}
         field_lists = [n for n in contentnode if isinstance(n, nodes.field_list)]
         if field_lists == []:
             field_list = insert_field_list(contentnode)
