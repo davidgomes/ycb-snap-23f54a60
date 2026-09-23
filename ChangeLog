@@ -320,6 +320,10 @@ Release date: TBA
 
   Closes #6539
 
+* Respect ignore configuration options with ``--recursive=y``.
+
+  Closes #6471
+
 
 What's New in Pylint 2.13.8?
 ============================

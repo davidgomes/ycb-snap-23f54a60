@@ -653,3 +653,7 @@ Other Changes
 * Fix ``IndexError`` crash in ``uninferable_final_decorators`` method.
 
  Relates to #6531
+
+* Respect ignore configuration options with ``--recursive=y``.
+
+  Closes #6471
