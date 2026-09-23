@@ -1,5 +1,6 @@
 from sympy.core.basic import Basic
-from sympy.core.numbers import (I, Rational, pi)
+from sympy.core.numbers import (I, Integer, Rational, pi)
+from sympy.core.parameters import evaluate
 from sympy.core.singleton import S
 from sympy.core.symbol import Symbol
 from sympy.core.sympify import sympify
@@ -36,6 +37,12 @@ def test_point():
     raises(TypeError, lambda: Point(1))
     raises(ValueError, lambda: Point([1]))
     raises(ValueError, lambda: Point(3, I))
+    # real coordinates must still construct when evaluation is disabled;
+    # ``im(Integer(1))`` is the unevaluated (truthy) expression ``im(1)``
+    with evaluate(False):
+        assert Point2D(Integer(1), Integer(2)) == Point2D(1, 2)
+        assert sympify('Point2D(Integer(1),Integer(2))') == Point2D(1, 2)
+        raises(ValueError, lambda: Point(3, I))
     raises(ValueError, lambda: Point(2*I, I))
     raises(ValueError, lambda: Point(3 + I, I))
 

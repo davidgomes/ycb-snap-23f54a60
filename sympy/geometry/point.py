@@ -152,7 +152,11 @@ class Point(GeometryEntity):
                         'warn' or 'ignore'.'''))
         if any(coords[dim:]):
             raise ValueError('Nonzero coordinates cannot be removed.')
-        if any(a.is_number and im(a) for a in coords):
+        # ``im`` stays unevaluated when ``evaluate`` is False, so a real
+        # coordinate such as ``Integer(1)`` yields the truthy expression
+        # ``im(1)``. Reject only a coordinate whose imaginary part is known
+        # to be nonzero (``is_zero`` is None for NaN, which stays rejected).
+        if any(a.is_number and not im(a).is_zero for a in coords):
             raise ValueError('Imaginary coordinates are not permitted.')
         if not all(isinstance(a, Expr) for a in coords):
             raise TypeError('Coordinates must be valid SymPy expressions.')
