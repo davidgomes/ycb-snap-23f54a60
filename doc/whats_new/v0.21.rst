@@ -33,6 +33,12 @@ Changelog
   ``tol`` required too strict types. :pr:`14092` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+:mod:`sklearn.utils`
+....................
+
+- |Fix| :func:`utils.show_versions` now also reports the installed version of
+  joblib. :pr:`14141`.
+
 .. _changes_0_21_2:
 
 Version 0.21.2
