@@ -267,6 +267,58 @@ def get_verifier(verify, verify_re):
         '\\sphinxkeyboard{\\sphinxupquote{M\\sphinxhyphen{}x  M\\sphinxhyphen{}s}}',
     ),
     (
+        # kbd role
+        'verify',
+        ':kbd:`-`',
+        '<p><kbd class="kbd docutils literal notranslate">-</kbd></p>',
+        '\\sphinxkeyboard{\\sphinxupquote{\\sphinxhyphen{}}}',
+    ),
+    (
+        # kbd role
+        'verify',
+        ':kbd:`+`',
+        '<p><kbd class="kbd docutils literal notranslate">+</kbd></p>',
+        '\\sphinxkeyboard{\\sphinxupquote{+}}',
+    ),
+    (
+        # kbd role
+        'verify',
+        ':kbd:`Shift-+`',
+        ('<p><kbd class="kbd docutils literal notranslate">'
+         '<kbd class="kbd docutils literal notranslate">Shift</kbd>'
+         '-'
+         '<kbd class="kbd docutils literal notranslate">+</kbd>'
+         '</kbd></p>'),
+        '\\sphinxkeyboard{\\sphinxupquote{Shift\\sphinxhyphen{}+}}',
+    ),
+    (
+        # kbd role
+        'verify',
+        ':kbd:`Alt+^`',
+        ('<p><kbd class="kbd docutils literal notranslate">'
+         '<kbd class="kbd docutils literal notranslate">Alt</kbd>'
+         '+'
+         '<kbd class="kbd docutils literal notranslate">^</kbd>'
+         '</kbd></p>'),
+        '\\sphinxkeyboard{\\sphinxupquote{Alt+\\textasciicircum{}}}',
+    ),
+    (
+        # kbd role
+        'verify',
+        ':kbd:`Ctrl-+ Ctrl--`',
+        ('<p><kbd class="kbd docutils literal notranslate">'
+         '<kbd class="kbd docutils literal notranslate">Ctrl</kbd>'
+         '-'
+         '<kbd class="kbd docutils literal notranslate">+</kbd>'
+         ' '
+         '<kbd class="kbd docutils literal notranslate">Ctrl</kbd>'
+         '-'
+         '<kbd class="kbd docutils literal notranslate">-</kbd>'
+         '</kbd></p>'),
+        ('\\sphinxkeyboard{\\sphinxupquote{'
+         'Ctrl\\sphinxhyphen{}+ Ctrl\\sphinxhyphen{}\\sphinxhyphen{}}}'),
+    ),
+    (
         # non-interpolation of dashes in option role
         'verify_re',
         ':option:`--with-option`',

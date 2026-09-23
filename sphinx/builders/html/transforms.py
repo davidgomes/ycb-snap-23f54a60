@@ -37,7 +37,7 @@ class KeyboardTransform(SphinxPostTransform):
     """
     default_priority = 400
     builders = ('html',)
-    pattern = re.compile(r'(-|\+|\^|\s+)')
+    pattern = re.compile(r'(?<=.)(-|\+|\^|\s+)(?=.)')
 
     def run(self, **kwargs: Any) -> None:
         matcher = NodeMatcher(nodes.literal, classes=["kbd"])
@@ -49,6 +49,10 @@ class KeyboardTransform(SphinxPostTransform):
             node.pop()
             while parts:
                 key = parts.pop(0)
+                if not key:
+                    # a separator directly following another one is a keystroke
+                    # (ex. the "+" in "Shift-+")
+                    key = parts.pop(0) + parts.pop(0)
                 node += nodes.literal('', key, classes=["kbd"])
 
                 try:
