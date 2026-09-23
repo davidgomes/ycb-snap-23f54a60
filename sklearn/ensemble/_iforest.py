@@ -345,7 +345,11 @@ class IsolationForest(OutlierMixin, BaseBagging):
             return self
 
         # else, define offset_ wrt contamination parameter
-        self.offset_ = np.percentile(self.score_samples(X), 100.0 * self.contamination)
+        # X has already been validated: bypass score_samples to avoid re-running
+        # the feature names check on the converted array.
+        self.offset_ = np.percentile(
+            -self._compute_chunked_score_samples(X), 100.0 * self.contamination
+        )
 
         return self
 
