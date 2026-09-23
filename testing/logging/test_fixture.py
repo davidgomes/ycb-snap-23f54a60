@@ -149,6 +149,10 @@ def test_clear(caplog):
     caplog.clear()
     assert not len(caplog.records)
     assert not caplog.text
+    # get_records shares the handler list; clear() must empty that same list.
+    assert caplog.get_records("call") == []
+    logger.info("after clear")
+    assert [r.getMessage() for r in caplog.get_records("call")] == ["after clear"]
 
 
 @pytest.fixture

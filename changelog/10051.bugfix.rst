@@ -1,0 +1,1 @@
+Fixed :meth:`caplog.get_records` staying frozen after :meth:`caplog.clear`.

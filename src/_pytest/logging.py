@@ -440,7 +440,11 @@ class LogCaptureFixture:
 
     def clear(self) -> None:
         """Reset the list of log records and the captured log text."""
-        self.handler.reset()
+        # Clear in place so get_records(), which aliases handler.records at
+        # the start of the phase, stays in sync. reset() replaces the list,
+        # which is only appropriate between phases.
+        self.handler.records.clear()
+        self.handler.stream = StringIO()
 
     def set_level(self, level: Union[int, str], logger: Optional[str] = None) -> None:
         """Set the level of a logger for the duration of a test.
