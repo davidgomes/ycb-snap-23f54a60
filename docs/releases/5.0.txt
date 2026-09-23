@@ -240,7 +240,8 @@ backends.
 Miscellaneous
 -------------
 
-* ...
+* The development server (:djadmin:`runserver`) no longer returns response
+  bodies for ``HEAD`` requests, as required by :rfc:`9110#section-9.3.2`.
 
 .. _deprecated-features-5.0:
 
