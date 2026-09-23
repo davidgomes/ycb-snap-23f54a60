@@ -2249,13 +2249,18 @@ class XAxis(Axis):
         )
         self.label_position = 'bottom'
 
+        # Offset text is part of the tick labeling, so it follows
+        # xtick.labelcolor (falling back to xtick.color when that is inherit).
+        labelcolor = mpl.rcParams['xtick.labelcolor']
+        if labelcolor == 'inherit':
+            labelcolor = mpl.rcParams['xtick.color']
         self.offsetText.set(
             x=1, y=0,
             verticalalignment='top', horizontalalignment='right',
             transform=mtransforms.blended_transform_factory(
                 self.axes.transAxes, mtransforms.IdentityTransform()),
             fontsize=mpl.rcParams['xtick.labelsize'],
-            color=mpl.rcParams['xtick.color'],
+            color=labelcolor,
         )
         self.offset_text_position = 'bottom'
 
@@ -2509,13 +2514,18 @@ class YAxis(Axis):
         )
         self.label_position = 'left'
         # x in axes coords, y in display coords(!).
+        # Offset text is part of the tick labeling, so it follows
+        # ytick.labelcolor (falling back to ytick.color when that is inherit).
+        labelcolor = mpl.rcParams['ytick.labelcolor']
+        if labelcolor == 'inherit':
+            labelcolor = mpl.rcParams['ytick.color']
         self.offsetText.set(
             x=0, y=0.5,
             verticalalignment='baseline', horizontalalignment='left',
             transform=mtransforms.blended_transform_factory(
                 self.axes.transAxes, mtransforms.IdentityTransform()),
             fontsize=mpl.rcParams['ytick.labelsize'],
-            color=mpl.rcParams['ytick.color'],
+            color=labelcolor,
         )
         self.offset_text_position = 'left'
 

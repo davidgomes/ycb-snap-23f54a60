@@ -7799,6 +7799,8 @@ def test_xtickcolor_is_not_xticklabelcolor():
     for tick in ticks:
         assert tick.tick1line.get_color() == 'yellow'
         assert tick.label1.get_color() == 'blue'
+    # The scientific-notation offset is a tick label, so it uses labelcolor.
+    assert ax.xaxis.offsetText.get_color() == 'blue'
 
 
 def test_ytickcolor_is_not_yticklabelcolor():
@@ -7809,6 +7811,18 @@ def test_ytickcolor_is_not_yticklabelcolor():
     for tick in ticks:
         assert tick.tick1line.get_color() == 'yellow'
         assert tick.label1.get_color() == 'blue'
+    # The scientific-notation offset is a tick label, so it uses labelcolor.
+    assert ax.yaxis.offsetText.get_color() == 'blue'
+
+
+def test_offset_text_color_inherits_tick_color():
+    plt.rcParams['xtick.color'] = 'green'
+    plt.rcParams['xtick.labelcolor'] = 'inherit'
+    plt.rcParams['ytick.color'] = 'purple'
+    plt.rcParams['ytick.labelcolor'] = 'inherit'
+    ax = plt.axes()
+    assert ax.xaxis.offsetText.get_color() == 'green'
+    assert ax.yaxis.offsetText.get_color() == 'purple'
 
 
 @pytest.mark.parametrize('size', [size for size in mfont_manager.font_scalings
