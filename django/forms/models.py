@@ -257,11 +257,14 @@ class ModelFormOptions:
 
 class ModelFormMetaclass(DeclarativeFieldsMetaclass):
     def __new__(mcs, name, bases, attrs):
-        base_formfield_callback = None
-        for b in bases:
-            if hasattr(b, "Meta") and hasattr(b.Meta, "formfield_callback"):
-                base_formfield_callback = b.Meta.formfield_callback
-                break
+        if "Meta" in attrs and hasattr(attrs["Meta"], "formfield_callback"):
+            base_formfield_callback = attrs["Meta"].formfield_callback
+        else:
+            base_formfield_callback = None
+            for b in bases:
+                if hasattr(b, "Meta") and hasattr(b.Meta, "formfield_callback"):
+                    base_formfield_callback = b.Meta.formfield_callback
+                    break
 
         formfield_callback = attrs.pop("formfield_callback", base_formfield_callback)
 
@@ -636,7 +639,7 @@ def modelform_factory(
     class_name = model.__name__ + "Form"
 
     # Class attributes for the new form class.
-    form_class_attrs = {"Meta": Meta, "formfield_callback": formfield_callback}
+    form_class_attrs = {"Meta": Meta}
 
     if getattr(Meta, "fields", None) is None and getattr(Meta, "exclude", None) is None:
         raise ImproperlyConfigured(
