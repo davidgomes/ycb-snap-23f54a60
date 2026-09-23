@@ -224,6 +224,56 @@ class FilteredRelationTests(TestCase):
             [self.author1],
         )
 
+    def test_multiple(self):
+        qs = (
+            Author.objects.annotate(
+                book_title_alice=FilteredRelation(
+                    "book", condition=Q(book__title__contains="Alice")
+                ),
+                book_title_jane=FilteredRelation(
+                    "book", condition=Q(book__title__icontains="Jane")
+                ),
+            )
+            .filter(name="Jane")
+            .values("book_title_alice__title", "book_title_jane__title")
+        )
+        empty = "" if connection.features.interprets_empty_strings_as_nulls else None
+        self.assertCountEqual(
+            qs,
+            [
+                {
+                    "book_title_alice__title": empty,
+                    "book_title_jane__title": "The book by Jane A",
+                },
+                {
+                    "book_title_alice__title": empty,
+                    "book_title_jane__title": "The book by Jane B",
+                },
+            ],
+        )
+
+    def test_multiple_nested_with_case_fallback(self):
+        qs = (
+            Author.objects.alias(
+                editor_b=FilteredRelation(
+                    "book__editor", condition=Q(book__editor__name="b")
+                ),
+                editor_a=FilteredRelation(
+                    "book__editor", condition=Q(book__editor__name="a")
+                ),
+                editor_b_name=F("editor_b__name"),
+            )
+            .annotate(
+                editor_name=Case(
+                    When(editor_b_name__isnull=True, then=F("editor_a__name")),
+                    default=F("editor_b_name"),
+                )
+            )
+            .values_list("name", "editor_name")
+            .distinct()
+        )
+        self.assertCountEqual(qs, [("Alice", "a"), ("Jane", "b")])
+
     def test_multiple_times(self):
         self.assertSequenceEqual(
             Author.objects.annotate(
