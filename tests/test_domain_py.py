@@ -841,6 +841,37 @@ def test_modindex_common_prefix(app):
     )
 
 
+def test_info_field_list_xref_context(app):
+    text = (".. py:module:: example\n"
+            ".. py:class:: Class\n"
+            "\n"
+            "   .. py:method:: meth(arg1, arg2)\n"
+            "\n"
+            "      :param A arg1: blah blah\n"
+            "      :param arg2: blah blah\n"
+            "      :type arg2: B\n"
+            "      :rtype: C\n")
+    doctree = restructuredtext.parse(app, text)
+    xrefs = [node for node in doctree.traverse(pending_xref)]
+    assert [node['reftarget'] for node in xrefs] == ['A', 'B', 'C']
+    for node in xrefs:
+        assert_node(node, pending_xref, refdomain='py', reftype='class', refspecific=True,
+                    **{'py:module': 'example', 'py:class': 'Class'})
+
+
+@pytest.mark.sphinx('html', testroot='domain-py-info-field-xref')
+def test_info_field_list_xref_resolution(app, status, warning):
+    app.build()
+    assert 'more than one target found' not in warning.getvalue()
+
+    content = (app.outdir / 'index.html').read_text()
+    submod_section = content.split('id="mod.submod.f"')[1]
+    assert ('<a class="reference internal" href="#mod.submod.A" title="mod.submod.A">'
+            '<em>A</em></a>' in submod_section)
+    assert ('<a class="reference internal" href="#mod.A" title="mod.A">'
+            '<em>A</em></a>' not in submod_section)
+
+
 def test_noindexentry(app):
     text = (".. py:function:: f()\n"
             ".. py:function:: g()\n"
