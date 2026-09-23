@@ -1702,7 +1702,12 @@ class Query(BaseExpression):
         handle.
         """
         filter_lhs, filter_rhs = filter_expr
-        if isinstance(filter_rhs, F):
+        if isinstance(filter_rhs, OuterRef):
+            # Keep the reference pointed at the outer query. split_exclude()
+            # pushes the lookup into a nested query, which would otherwise
+            # resolve OuterRef against this query's model.
+            filter_expr = (filter_lhs, OuterRef(filter_rhs))
+        elif isinstance(filter_rhs, F):
             filter_expr = (filter_lhs, OuterRef(filter_rhs.name))
         # Generate the inner query.
         query = Query(self.model)
