@@ -597,6 +597,22 @@ def test_grouper_private():
         assert mapping[ref(o)] is base_set
 
 
+class _PicklableDummy:
+    pass
+
+
+def test_grouper_pickle():
+    objs = [_PicklableDummy() for _ in range(5)]
+    g = cbook.Grouper()
+    g.join(*objs[:3])
+    g.join(*objs[3:])
+    g2, objs2 = pickle.loads(pickle.dumps((g, objs)))
+    assert g2.joined(objs2[0], objs2[2])
+    assert g2.joined(objs2[3], objs2[4])
+    assert not g2.joined(objs2[0], objs2[3])
+    assert g2._mapping[ref(objs2[0])] is g2._mapping[ref(objs2[1])]
+
+
 def test_flatiter():
     x = np.arange(5)
     it = x.flat
