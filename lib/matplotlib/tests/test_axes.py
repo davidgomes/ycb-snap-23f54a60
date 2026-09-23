@@ -8744,3 +8744,14 @@ def test_tick_param_labelfont():
     plt.title('Title in sans-serif')
     for text in ax.get_xticklabels():
         assert text.get_fontfamily()[0] == 'monospace'
+
+
+def test_twinx_stackplot_datalim_with_units():
+    # gh-26184: a unit change on a twinned Axes must not reset the dataLim
+    # contributed by collections on the original Axes.
+    fig, ax1 = plt.subplots()
+    ax1.stackplot(['16 May', '17 May'], [-22.7, 26.6])
+    expected = ax1.dataLim.intervaly.copy()
+    ax2 = ax1.twinx()
+    ax2.plot(['16 May', '17 May'], [-0.085, -2.98])
+    assert_allclose(ax1.dataLim.intervaly, expected)

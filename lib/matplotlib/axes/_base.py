@@ -2445,6 +2445,16 @@ class _AxesBase(martist.Artist):
         for line in self.lines:
             line.recache_always()
         self.relim()
+        # relim() ignores Collections; re-add their limits so that e.g. a
+        # unit change triggered through a shared (twinned) axis does not
+        # wipe out limits coming from collections (such as stackplot).
+        for artist in self._children:
+            if isinstance(artist, mcoll.Collection):
+                datalim = artist.get_datalim(self.transData)
+                points = datalim.get_points()
+                if not np.isinf(datalim.minpos).all():
+                    points = np.concatenate([points, [datalim.minpos]])
+                self.update_datalim(points)
         self._request_autoscale_view(axis_name)
 
     def relim(self, visible_only=False):
