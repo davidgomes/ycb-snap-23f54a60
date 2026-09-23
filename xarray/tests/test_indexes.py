@@ -422,6 +422,20 @@ class TestPandasMultiIndex:
                 "z",
             )
 
+    @pytest.mark.parametrize("dtype", ["int32", "float32"])
+    def test_stack_keep_level_dtype(self, dtype) -> None:
+        prod_vars = {
+            "x": xr.Variable("x", np.array([0, 1], dtype=dtype)),
+            "y": xr.Variable("y", np.array([2, 3], dtype=dtype)),
+        }
+
+        index = PandasMultiIndex.stack(prod_vars, "z")
+        variables = index.create_variables()
+
+        assert variables["x"].dtype == dtype
+        assert variables["x"].values.dtype == dtype
+        assert variables["y"].values.dtype == dtype
+
     def test_stack_non_unique(self) -> None:
         prod_vars = {
             "x": xr.Variable("x", pd.Index(["b", "a"]), attrs={"foo": "bar"}),
