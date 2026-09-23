@@ -21,3 +21,7 @@ Bugfixes
 * Fixed migrations crash on PostgreSQL when adding an
   :class:`~django.db.models.Index` with fields ordering and
   :attr:`~.Index.opclasses` (:ticket:`30903`).
+
+* Fixed a regression in Django 2.2 that caused ``Model.get_FOO_display()`` to
+  override an explicitly defined ``get_FOO_display()`` method on the model
+  (:ticket:`30931`).
