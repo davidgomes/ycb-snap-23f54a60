@@ -339,6 +339,10 @@ Models
   :class:`~django.db.models.DateTimeField`, and the new :lookup:`iso_week_day`
   lookup allows querying by an ISO-8601 day of week.
 
+* :meth:`.QuerySet.in_bulk` now accepts a ``field_name`` that is unique by a
+  single-field :class:`~django.db.models.UniqueConstraint` without a condition,
+  in addition to fields with ``unique=True``.
+
 * :meth:`.QuerySet.explain` now supports:
 
   * ``TREE`` format on MySQL 8.0.16+,

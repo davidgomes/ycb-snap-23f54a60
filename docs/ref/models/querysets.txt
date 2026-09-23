@@ -2183,8 +2183,9 @@ database query like ``count()`` would.
 Takes a list of field values (``id_list``) and the ``field_name`` for those
 values, and returns a dictionary mapping each value to an instance of the
 object with the given field value. If ``id_list`` isn't provided, all objects
-in the queryset are returned. ``field_name`` must be a unique field, and it
-defaults to the primary key.
+in the queryset are returned. ``field_name`` must be a unique field or a
+field listed in a single-field :class:`~django.db.models.UniqueConstraint`
+without a condition, and it defaults to the primary key.
 
 Example::
 

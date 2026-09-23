@@ -194,6 +194,23 @@ class LookupTests(TestCase):
         with self.assertRaisesMessage(ValueError, msg):
             Article.objects.in_bulk([self.au1], field_name='author')
 
+    def test_in_bulk_meta_constraint(self):
+        season_2011 = Season.objects.create(year=2011)
+        season_2012 = Season.objects.create(year=2012)
+        Season.objects.create(year=2013)
+        self.assertEqual(
+            Season.objects.in_bulk(
+                [season_2011.year, season_2012.year],
+                field_name='year',
+            ),
+            {season_2011.year: season_2011, season_2012.year: season_2012},
+        )
+
+    def test_in_bulk_non_unique_meta_constraint(self):
+        msg = "in_bulk()'s field_name must be a unique field but 'gt' isn't."
+        with self.assertRaisesMessage(ValueError, msg):
+            Season.objects.in_bulk([None], field_name='gt')
+
     def test_values(self):
         # values() returns a list of dictionaries instead of object instances --
         # and you can specify which fields you want to retrieve.
