@@ -65,6 +65,12 @@ Minor features
 * The default iteration count for the PBKDF2 password hasher is increased from
   600,000 to 720,000.
 
+* The new
+  :meth:`.AbstractBaseUser.get_session_auth_fallback_hash`
+  method allows user sessions to be validated with
+  :setting:`SECRET_KEY_FALLBACKS`, so that rotating the :setting:`SECRET_KEY`
+  no longer logs out users.
+
 * ``AuthenticationMiddleware`` now adds an :meth:`.HttpRequest.auser`
   asynchronous method that returns the currently logged-in user.
 
