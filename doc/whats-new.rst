@@ -54,6 +54,8 @@ Bug fixes
 - :py:meth:`open_dataset` with dask and ``~`` in the path now resolves the home directory
   instead of raising an error. (:issue:`6707`, :pull:`6710`)
   By `Michael Niklas <https://github.com/headtr1ck>`_.
+- Iterating over a :py:class:`~core.rolling.DataArrayRolling` object now respects
+  ``center=True`` and yields centered windows. (:issue:`6739`, :pull:`6744`)
 
 Documentation
 ~~~~~~~~~~~~~
