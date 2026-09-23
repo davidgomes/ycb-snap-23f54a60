@@ -1928,6 +1928,30 @@ def test_where_attrs() -> None:
     expected = xr.DataArray([1, 0], dims="x", attrs={"attr": "x"})
     assert_identical(expected, actual)
 
+    # ensure keep_attrs can handle scalar values
+    actual = xr.where(cond, 1, 0, keep_attrs=True)
+    assert actual.attrs == {}
+
+    actual = xr.where(cond, 1, y, keep_attrs=True)
+    assert actual.attrs == {}
+
+    actual = xr.where(cond.values, x, y, keep_attrs=True)
+    assert actual.attrs == {"attr": "x"}
+
+    # coordinates and data variables keep the attrs of their counterparts in x
+    coords = {"x": ("x", [0, 1], {"attr": "x_coord"})}
+    ds = xr.Dataset(
+        {"a": ("x", [1, 1], {"attr": "a"})}, coords=coords, attrs={"attr": "ds"}
+    )
+    actual = xr.where(cond, ds, 0, keep_attrs=True)
+    assert actual.attrs == {"attr": "ds"}
+    assert actual["a"].attrs == {"attr": "a"}
+    assert actual["x"].attrs == {"attr": "x_coord"}
+
+    actual = xr.where(cond, x.assign_coords(coords), 0, keep_attrs=True)
+    assert actual.attrs == {"attr": "x"}
+    assert actual["x"].attrs == {"attr": "x_coord"}
+
 
 @pytest.mark.parametrize("use_dask", [True, False])
 @pytest.mark.parametrize("use_datetime", [True, False])
