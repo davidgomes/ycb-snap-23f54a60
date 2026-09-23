@@ -2434,7 +2434,11 @@ class _AxesBase(martist.Artist):
         # Get all vertices on the path
         # Loop through each segment to get extrema for Bezier curve sections
         vertices = []
-        for curve, code in p.iter_bezier():
+        # Path simplification is tuned for display units. Autoscaling works in
+        # data units, and simplifying there can drop histogram steps whose
+        # heights are small (for example density histograms), so the view
+        # limits miss the true extrema. See #24097.
+        for curve, code in p.iter_bezier(simplify=False):
             # Get distance along the curve of any extrema
             _, dzeros = curve.axis_aligned_extrema()
             # Calculate vertices of start, end and any extrema in between
