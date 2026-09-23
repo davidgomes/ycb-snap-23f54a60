@@ -56,6 +56,31 @@ class TemplateReloadTests(SimpleTestCase):
         self.assertIsNone(autoreload.template_changed(None, Path(__file__)))
         mock_reset.assert_not_called()
 
+    @override_settings(
+        TEMPLATES=[
+            {
+                "DIRS": [""],
+                "BACKEND": "django.template.backends.django.DjangoTemplates",
+            }
+        ]
+    )
+    @mock.patch("django.template.autoreload.reset_loaders")
+    def test_template_changed_empty_dir(self, mock_reset):
+        template_path = Path(__file__).parent / "templates" / "index.html"
+        self.assertIsNone(autoreload.template_changed(None, template_path))
+        mock_reset.assert_not_called()
+
+    @override_settings(
+        TEMPLATES=[
+            {
+                "DIRS": [""],
+                "BACKEND": "django.template.backends.django.DjangoTemplates",
+            }
+        ]
+    )
+    def test_get_template_directories_empty_dir(self):
+        self.assertSetEqual(autoreload.get_template_directories(), set())
+
     def test_watch_for_template_changes(self):
         mock_reloader = mock.MagicMock()
         autoreload.watch_for_template_changes(mock_reloader)
