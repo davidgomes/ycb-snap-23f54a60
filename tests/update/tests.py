@@ -15,6 +15,8 @@ from .models import (
     DataPoint,
     Foo,
     RelatedPoint,
+    InheritanceChild,
+    InheritanceOtherBase,
     UniqueNumber,
     UniqueNumberChild,
 )
@@ -112,6 +114,36 @@ class AdvancedTests(TestCase):
         self.assertEqual(resp, 1)
         resp = RelatedPoint.objects.filter(data__name="d0")
         self.assertEqual(list(resp), [self.r1])
+
+    def test_update_multiple_inheritance_second_parent(self):
+        """
+        QuerySet.update() on a child of multiple concrete parents must update
+        the targeted parent rows, using that parent's primary keys.
+        """
+        other_1 = InheritanceOtherBase.objects.create(field_otherbase=100)
+        other_2 = InheritanceOtherBase.objects.create(field_otherbase=101)
+        child_1 = InheritanceChild.objects.create(field_base=0, field_otherbase=0)
+        child_2 = InheritanceChild.objects.create(field_base=1, field_otherbase=1)
+
+        updated = InheritanceChild.objects.update(field_otherbase=55)
+        self.assertEqual(updated, 2)
+
+        child_1.refresh_from_db()
+        child_2.refresh_from_db()
+        self.assertEqual(child_1.field_otherbase, 55)
+        self.assertEqual(child_2.field_otherbase, 55)
+        other_1.refresh_from_db()
+        other_2.refresh_from_db()
+        self.assertEqual(other_1.field_otherbase, 100)
+        self.assertEqual(other_2.field_otherbase, 101)
+
+        # The first parent's primary key chain is unchanged.
+        updated = InheritanceChild.objects.filter(field_base=0).update(field_base=7)
+        self.assertEqual(updated, 1)
+        child_1.refresh_from_db()
+        child_2.refresh_from_db()
+        self.assertEqual(child_1.field_base, 7)
+        self.assertEqual(child_2.field_base, 1)
 
     def test_update_multiple_fields(self):
         """

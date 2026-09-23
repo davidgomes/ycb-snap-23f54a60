@@ -49,3 +49,17 @@ class UniqueNumber(models.Model):
 
 class UniqueNumberChild(UniqueNumber):
     pass
+
+
+class InheritanceBase(models.Model):
+    base_id = models.AutoField(primary_key=True)
+    field_base = models.IntegerField()
+
+
+class InheritanceOtherBase(models.Model):
+    otherbase_id = models.AutoField(primary_key=True)
+    field_otherbase = models.IntegerField()
+
+
+class InheritanceChild(InheritanceBase, InheritanceOtherBase):
+    pass
