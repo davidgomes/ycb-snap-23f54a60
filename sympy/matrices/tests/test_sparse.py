@@ -587,3 +587,9 @@ def test_hermitian():
     assert a.is_hermitian is None
     a[0, 1] = a[1, 0]*I
     assert a.is_hermitian is False
+
+
+def test_hstack_vstack_null():
+    M = SparseMatrix
+    assert M.hstack(*[M.zeros(0, i) for i in range(4)]).shape == (0, 6)
+    assert M.vstack(*[M.zeros(i, 0) for i in range(4)]).shape == (6, 0)
