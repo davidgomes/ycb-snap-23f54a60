@@ -591,6 +591,46 @@ class ListFiltersTests(TestCase):
         expected = [(self.john.pk, 'John Blue'), (self.jack.pk, 'Jack Red')]
         self.assertEqual(filterspec.lookup_choices, expected)
 
+    def test_relatedfieldlistfilter_foreignkey_default_ordering(self):
+        """RelatedFieldListFilter falls back to the related model's Meta.ordering."""
+        class BookAdmin(ModelAdmin):
+            list_filter = ('employee',)
+
+        modeladmin = BookAdmin(Book, site)
+
+        request = self.request_factory.get('/')
+        request.user = self.alfred
+        changelist = modeladmin.get_changelist_instance(request)
+        filterspec = changelist.get_filters(request)[0][0]
+        expected = [(self.jack.pk, 'Jack Red'), (self.john.pk, 'John Blue')]
+        self.assertEqual(filterspec.lookup_choices, expected)
+
+    def test_relatedonlyfieldlistfilter_foreignkey_ordering(self):
+        """RelatedOnlyFieldListFilter ordering respects ModelAdmin.ordering."""
+        class EmployeeAdminWithOrdering(ModelAdmin):
+            ordering = ('-name',)
+
+        class BookAdmin(ModelAdmin):
+            list_filter = (
+                ('employee', RelatedOnlyFieldListFilter),
+            )
+
+        self.bio_book.employee = self.jack
+        self.bio_book.save()
+        self.django_book.employee = self.john
+        self.django_book.save()
+
+        site.register(Employee, EmployeeAdminWithOrdering)
+        self.addCleanup(lambda: site.unregister(Employee))
+        modeladmin = BookAdmin(Book, site)
+
+        request = self.request_factory.get('/')
+        request.user = self.alfred
+        changelist = modeladmin.get_changelist_instance(request)
+        filterspec = changelist.get_filters(request)[0][0]
+        expected = [(self.john.pk, 'John Blue'), (self.jack.pk, 'Jack Red')]
+        self.assertEqual(filterspec.lookup_choices, expected)
+
     def test_relatedfieldlistfilter_manytomany(self):
         modeladmin = BookAdmin(Book, site)
 
