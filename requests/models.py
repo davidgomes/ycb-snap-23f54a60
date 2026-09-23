@@ -386,12 +386,22 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):
         self.body = body
 
     def prepare_content_length(self, body):
-        self.headers['Content-Length'] = '0'
+        """Set Content-Length when there is a body.
+
+        Requests with no body (typical GET and HEAD) must not send
+        Content-Length. Some servers reject those requests.
+        """
+        if body is None:
+            if (self.method not in ('GET', 'HEAD') and
+                    'Content-Length' not in self.headers):
+                self.headers['Content-Length'] = '0'
+            return
+
         if hasattr(body, 'seek') and hasattr(body, 'tell'):
             body.seek(0, 2)
             self.headers['Content-Length'] = str(body.tell())
             body.seek(0, 0)
-        elif body is not None:
+        else:
             self.headers['Content-Length'] = str(len(body))
 
     def prepare_auth(self, auth):

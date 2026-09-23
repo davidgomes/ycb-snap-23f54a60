@@ -48,6 +48,19 @@ class RequestsTestCase(unittest.TestCase):
     def test_invalid_url(self):
         self.assertRaises(ValueError, requests.get, 'hiwpefhipowhefopw')
 
+    def test_get_does_not_send_content_length(self):
+        req = requests.Request('GET', 'http://example.com/').prepare()
+        assert 'Content-Length' not in req.headers
+
+        head = requests.Request('HEAD', 'http://example.com/').prepare()
+        assert 'Content-Length' not in head.headers
+
+        post = requests.Request('POST', 'http://example.com/').prepare()
+        assert post.headers['Content-Length'] == '0'
+
+        with_body = requests.Request('GET', 'http://example.com/', data='x').prepare()
+        assert with_body.headers['Content-Length'] == '1'
+
     def test_basic_building(self):
         req = requests.Request()
         req.url = 'http://kennethreitz.org/'
