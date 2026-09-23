@@ -95,6 +95,23 @@ class BulkUpdateNoteTests(TestCase):
         Note.objects.bulk_update(self.notes, ['note'])
         self.assertEqual(set(Note.objects.values_list('note', flat=True)), {'test'})
 
+    def test_rows_matched(self):
+        for note in self.notes:
+            note.note = 'test-%s' % note.id
+        self.assertEqual(Note.objects.bulk_update(self.notes, ['note']), len(self.notes))
+
+    def test_rows_matched_with_batch_size(self):
+        self.assertEqual(
+            Note.objects.bulk_update(self.notes, ['note'], batch_size=3),
+            len(self.notes),
+        )
+
+    def test_rows_matched_duplicates_and_deleted(self):
+        deleted = self.notes[0]
+        Note.objects.filter(pk=deleted.pk).delete()
+        objs = self.notes + [self.notes[1]]
+        self.assertEqual(Note.objects.bulk_update(objs, ['note']), len(self.notes) - 1)
+
     # Tests that use self.notes go here, otherwise put them in another class.
 
 
@@ -125,7 +142,8 @@ class BulkUpdateTests(TestCase):
 
     def test_empty_objects(self):
         with self.assertNumQueries(0):
-            Note.objects.bulk_update([], ['note'])
+            rows_updated = Note.objects.bulk_update([], ['note'])
+        self.assertEqual(rows_updated, 0)
 
     def test_large_batch(self):
         Note.objects.bulk_create([
@@ -133,7 +151,8 @@ class BulkUpdateTests(TestCase):
             for i in range(0, 2000)
         ])
         notes = list(Note.objects.all())
-        Note.objects.bulk_update(notes, ['note'])
+        rows_updated = Note.objects.bulk_update(notes, ['note'])
+        self.assertEqual(rows_updated, 2000)
 
     def test_only_concrete_fields_allowed(self):
         obj = Valid.objects.create(valid='test')
