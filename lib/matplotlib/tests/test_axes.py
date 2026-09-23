@@ -946,6 +946,7 @@ def test_inverted_limits():
 ])
 def test_inverted_limits_nonlinear_scale(scale, limits):
     fig, ax = plt.subplots()
+    ax.plot(limits, limits)
     ax.set_xscale(scale)
     ax.set_yscale(scale)
     ax.set_xlim(*limits)
