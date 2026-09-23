@@ -648,6 +648,28 @@ class TestSkip:
         result = testdir.runpytest("-rs")
         result.stdout.fnmatch_lines(["*unconditional skip*", "*1 skipped*"])
 
+    @pytest.mark.parametrize("runxfail", [False, True])
+    @pytest.mark.parametrize(
+        "marker, msg",
+        [("skip", "unconditional skip"), ('skipif(True, reason="lolz")', "lolz")],
+    )
+    def test_skip_location(self, testdir, marker, msg, runxfail):
+        testdir.makepyfile(
+            test_sample="""
+            import pytest
+            @pytest.mark.{}
+            def test_skip_location():
+                assert 0
+        """.format(
+                marker
+            )
+        )
+        args = ["-rs", "--runxfail"] if runxfail else ["-rs"]
+        result = testdir.runpytest(*args)
+        result.stdout.fnmatch_lines(
+            ["SKIPPED [1] test_sample.py:2: {}".format(msg), "*1 skipped*"]
+        )
+
 
 class TestSkipif:
     def test_skipif_conditional(self, testdir):
