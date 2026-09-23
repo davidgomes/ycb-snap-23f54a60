@@ -3,7 +3,7 @@ from decimal import Decimal, Rounded
 
 from django.db import NotSupportedError, connection
 from django.db.backends.utils import (
-    format_number, split_identifier, truncate_name,
+    format_number, split_identifier, split_tzname_delta, truncate_name,
 )
 from django.test import (
     SimpleTestCase, TransactionTestCase, skipIfDBFeature, skipUnlessDBFeature,
@@ -27,6 +27,22 @@ class TestUtils(SimpleTestCase):
         self.assertEqual(split_identifier('"some_table"'), ('', 'some_table'))
         self.assertEqual(split_identifier('namespace"."some_table'), ('namespace', 'some_table'))
         self.assertEqual(split_identifier('"namespace"."some_table"'), ('namespace', 'some_table'))
+
+    def test_split_tzname_delta(self):
+        tests = [
+            ('Asia/Ust+05:00', ('Asia/Ust', '+', '05:00')),
+            ('Asia/Ust-05:00', ('Asia/Ust', '-', '05:00')),
+            ('Asia/Ust+05:30', ('Asia/Ust', '+', '05:30')),
+            ('UTC+05:00', ('UTC', '+', '05:00')),
+            ('UTC-05:00', ('UTC', '-', '05:00')),
+            ('Asia/Ust-Nera', ('Asia/Ust-Nera', None, None)),
+            ('Etc/GMT-10', ('Etc/GMT-10', None, None)),
+            ('Etc/GMT+10', ('Etc/GMT+10', None, None)),
+            ('UTC', ('UTC', None, None)),
+        ]
+        for tzname, expected in tests:
+            with self.subTest(tzname=tzname):
+                self.assertEqual(split_tzname_delta(tzname), expected)
 
     def test_format_number(self):
         def equal(value, max_d, places, result):

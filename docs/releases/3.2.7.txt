@@ -9,4 +9,6 @@ Django 3.2.7 fixes several bugs in 3.2.6.
 Bugfixes
 ========
 
-* ...
+* Fixed a regression in Django 3.2 that caused the incorrect conversion of
+  time zones whose names contain ``+`` or ``-`` (e.g. ``Etc/GMT-10``) in
+  ``Trunc()`` and ``Extract()`` database functions (:ticket:`32992`).

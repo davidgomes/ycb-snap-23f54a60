@@ -1200,6 +1200,44 @@ class DateFunctionWithTimeZoneTests(DateFunctionTests):
                 self.assertEqual(melb_model.hour, 9)
                 self.assertEqual(melb_model.hour_melb, 9)
 
+    def test_extract_func_with_timezone_minus_no_offset(self):
+        start_datetime = datetime(2015, 6, 15, 23, 30, 1, 321)
+        end_datetime = datetime(2015, 6, 16, 13, 11, 27, 123)
+        start_datetime = timezone.make_aware(start_datetime, is_dst=False)
+        end_datetime = timezone.make_aware(end_datetime, is_dst=False)
+        self.create_model(start_datetime, end_datetime)
+        for ust_nera in self.get_timezones('Asia/Ust-Nera'):
+            with self.subTest(repr(ust_nera)):
+                qs = DTModel.objects.annotate(
+                    hour=ExtractHour('start_datetime'),
+                    hour_tz=ExtractHour('start_datetime', tzinfo=ust_nera),
+                ).order_by('start_datetime')
+
+                utc_model = qs.get()
+                self.assertEqual(utc_model.hour, 23)
+                self.assertEqual(utc_model.hour_tz, 9)
+
+                with timezone.override(ust_nera):
+                    ust_nera_model = qs.get()
+
+                self.assertEqual(ust_nera_model.hour, 9)
+                self.assertEqual(ust_nera_model.hour_tz, 9)
+
+    def test_extract_func_with_etc_gmt_timezone(self):
+        start_datetime = datetime(2015, 6, 15, 23, 30, 1, 321)
+        end_datetime = datetime(2015, 6, 16, 13, 11, 27, 123)
+        start_datetime = timezone.make_aware(start_datetime, is_dst=False)
+        end_datetime = timezone.make_aware(end_datetime, is_dst=False)
+        self.create_model(start_datetime, end_datetime)
+        for tz in self.get_timezones('Etc/GMT-10'):
+            with self.subTest(repr(tz)):
+                model = DTModel.objects.annotate(
+                    day=ExtractDay('start_datetime', tzinfo=tz),
+                    hour=ExtractHour('start_datetime', tzinfo=tz),
+                ).get()
+                self.assertEqual(model.day, 16)
+                self.assertEqual(model.hour, 9)
+
     def test_extract_func_explicit_timezone_priority(self):
         start_datetime = datetime(2015, 6, 15, 23, 30, 1, 321)
         end_datetime = datetime(2015, 6, 16, 13, 11, 27, 123)
@@ -1262,6 +1300,22 @@ class DateFunctionWithTimeZoneTests(DateFunctionTests):
                 self.assertEqual(model.pacific_date, pacific_start_datetime.date())
                 self.assertEqual(model.melb_time, melb_start_datetime.time())
                 self.assertEqual(model.pacific_time, pacific_start_datetime.time())
+
+    def test_trunc_func_with_etc_gmt_timezone(self):
+        start_datetime = datetime(2016, 1, 1, 15, 30, 50, 321)
+        end_datetime = datetime(2016, 6, 15, 14, 10, 50, 123)
+        start_datetime = timezone.make_aware(start_datetime, is_dst=False)
+        end_datetime = timezone.make_aware(end_datetime, is_dst=False)
+        self.create_model(start_datetime, end_datetime)
+        for tz in self.get_timezones('Etc/GMT-10'):
+            with self.subTest(repr(tz)):
+                model = DTModel.objects.annotate(
+                    day=TruncDay('start_datetime', tzinfo=tz),
+                    date=TruncDate('start_datetime', tzinfo=tz),
+                ).get()
+                self.assertEqual(model.day, truncate_to(start_datetime, 'day', tz))
+                self.assertEqual(model.day.date(), datetime(2016, 1, 2).date())
+                self.assertEqual(model.date, datetime(2016, 1, 2).date())
 
     def test_trunc_ambiguous_and_invalid_times(self):
         sao = pytz.timezone('America/Sao_Paulo')

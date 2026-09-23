@@ -7,6 +7,7 @@ import time
 from contextlib import contextmanager
 
 from django.db import NotSupportedError
+from django.utils.dateparse import parse_time
 
 logger = logging.getLogger('django.db.backends')
 
@@ -179,6 +180,21 @@ def typecast_timestamp(s):  # does NOT store time zone information
 ###############################################
 # Converters from Python to database (string) #
 ###############################################
+
+def split_tzname_delta(tzname):
+    """
+    Split a time zone name into a 3-tuple of (name, sign, offset).
+
+    Only a trailing HH:MM offset (e.g. 'UTC+05:00') is split off, so that
+    names such as 'Etc/GMT-10' are returned intact.
+    """
+    for sign in ['+', '-']:
+        if sign in tzname:
+            name, offset = tzname.rsplit(sign, 1)
+            if offset and ':' in offset and parse_time(offset):
+                return name, sign, offset
+    return tzname, None, None
+
 
 def split_identifier(identifier):
     """
