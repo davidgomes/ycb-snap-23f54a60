@@ -100,6 +100,12 @@ Documentation
   By `Ray Bell <https://github.com/raybellwaves>`_ and
   `Justus Magin <https://github.com/keewis>`_.
 
+Deprecations
+~~~~~~~~~~~~
+- The ``dim`` keyword argument of :py:meth:`DataArray.integrate` is deprecated
+  in favor of ``coord``, matching :py:meth:`Dataset.integrate` and
+  :py:meth:`DataArray.differentiate`. Positional use is unchanged.
+
 Internal Changes
 ~~~~~~~~~~~~~~~~
 - Speed up of the continuous integration tests on azure.

@@ -6603,6 +6603,13 @@ def test_integrate(dask):
     with pytest.raises(ValueError):
         da.integrate("x2d")
 
+    with pytest.warns(FutureWarning, match="renamed to `coord`"):
+        deprecated = da.integrate(dim="x")
+    assert_allclose(expected_x, deprecated.compute())
+
+    with pytest.raises(TypeError, match="both"):
+        da.integrate("x", dim="y")
+
 
 @pytest.mark.parametrize("dask", [True, False])
 @pytest.mark.parametrize("which_datetime", ["np", "cftime"])
