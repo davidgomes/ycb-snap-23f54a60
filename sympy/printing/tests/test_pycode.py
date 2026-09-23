@@ -8,6 +8,7 @@ from sympy.core.numbers import pi
 from sympy.functions import acos, Piecewise, sign
 from sympy.logic import And, Or
 from sympy.matrices import SparseMatrix, MatrixSymbol
+from sympy.tensor import IndexedBase
 from sympy.printing.pycode import (
     MpmathPrinter, NumPyPrinter, PythonCodePrinter, pycode, SciPyPrinter
 )
@@ -34,6 +35,9 @@ def test_PythonCodePrinter():
                         (3, Gt(x, 0)), evaluate=False)) == '((2) if (x <= 0) else'\
                                                         ' (3) if (x > 0) else None)'
     assert prntr.doprint(sign(x)) == '(0.0 if x == 0 else math.copysign(1, x))'
+    p = IndexedBase("p")
+    assert prntr.doprint(p[0]) == 'p[0]'
+    assert prntr.doprint(p[0, 1]) == 'p[0, 1]'
 
 
 def test_MpmathPrinter():
