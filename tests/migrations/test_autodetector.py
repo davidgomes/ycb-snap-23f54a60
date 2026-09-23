@@ -18,6 +18,21 @@ from django.test.utils import isolate_lru_cache
 from .models import FoodManager, FoodQuerySet
 
 
+class CustomFKField(models.ForeignKey):
+    """
+    ForeignKey that hardcodes its target and omits ``to`` from deconstruction.
+    """
+
+    def __init__(self, *args, **kwargs):
+        kwargs['to'] = 'testapp.HardcodedModel'
+        super().__init__(*args, **kwargs)
+
+    def deconstruct(self):
+        name, path, args, kwargs = super().deconstruct()
+        del kwargs['to']
+        return name, path, args, kwargs
+
+
 class DeconstructibleObject:
     """
     A custom deconstructible object.
@@ -1127,6 +1142,24 @@ class AutodetectorTests(TestCase):
         self.assertNumberMigrations(changes, 'otherapp', 1)
         self.assertOperationTypes(changes, 'otherapp', 0, ["RenameField"])
         self.assertOperationAttributes(changes, 'otherapp', 0, 0, old_name="author", new_name="writer")
+
+    def test_custom_fk_omitting_to_from_deconstruct(self):
+        """
+        A custom ForeignKey that hardcodes ``to`` and removes it from
+        deconstruct() kwargs must not crash rename detection.
+        """
+        before = [
+            ModelState('testapp', 'HardcodedModel', []),
+        ]
+        after = [
+            ModelState('testapp', 'HardcodedModel', []),
+            ModelState('testapp', 'TestModel', [
+                ('custom', CustomFKField(on_delete=models.CASCADE)),
+            ]),
+        ]
+        changes = self.get_changes(before, after)
+        self.assertNumberMigrations(changes, 'testapp', 1)
+        self.assertOperationTypes(changes, 'testapp', 0, ['CreateModel'])
 
     def test_rename_model_with_fks_in_different_position(self):
         """
