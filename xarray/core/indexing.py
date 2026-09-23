@@ -1531,8 +1531,14 @@ class PandasMultiIndexingAdapter(PandasIndexingAdapter):
         self.level = level
 
     def __array__(self, dtype: DTypeLike = None) -> np.ndarray:
+        if dtype is None:
+            dtype = self.dtype
         if self.level is not None:
-            return self.array.get_level_values(self.level).values
+            # pandas stores MultiIndex integer/float levels as int64/float64;
+            # cast back so stacked coordinates keep their original dtype.
+            return np.asarray(
+                self.array.get_level_values(self.level).values, dtype=dtype
+            )
         else:
             return super().__array__(dtype)
 
