@@ -184,6 +184,19 @@ class AdminFormfieldForDBFieldTests(SimpleTestCase):
             'Hold down “Control”, or “Command” on a Mac, to select more than one.'
         )
 
+    def test_m2m_widget_override(self):
+        """A widget passed to formfield_for_manytomany() is not overwritten."""
+        class AdvisorAdmin(admin.ModelAdmin):
+            filter_vertical = ['companies']
+
+        ma = AdvisorAdmin(Advisor, admin.site)
+        field = ma.formfield_for_manytomany(
+            Advisor._meta.get_field('companies'),
+            request=None,
+            widget=forms.CheckboxSelectMultiple,
+        )
+        self.assertIsInstance(field.widget, forms.CheckboxSelectMultiple)
+
 
 @override_settings(ROOT_URLCONF='admin_widgets.urls')
 class AdminFormfieldForDBFieldWithRequestTests(TestDataMixin, TestCase):
