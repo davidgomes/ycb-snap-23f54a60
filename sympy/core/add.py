@@ -554,7 +554,8 @@ class Add(Expr, AssocOp):
                 return
         if z == len(self.args):
             return True
-        if len(nz) == len(self.args):
+        # issue 15873: an empty Add is 0, but imaginary terms may cancel
+        if len(nz) == 0 or len(nz) == len(self.args):
             return None
         b = self.func(*nz)
         if b.is_zero:
