@@ -1,0 +1,2 @@
+Fixed a regression where running with ``--pdb`` would call ``unittest.TestCase.tearDown`` for skipped tests.
+
