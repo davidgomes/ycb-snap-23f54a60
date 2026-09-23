@@ -1,11 +1,12 @@
 import datetime
+from decimal import Decimal
 from unittest import mock, skipIf
 
 from django.core.exceptions import FieldError
 from django.db import NotSupportedError, connection
 from django.db.models import (
-    Avg, BooleanField, Case, F, Func, Max, Min, OuterRef, Q, RowRange,
-    Subquery, Sum, Value, ValueRange, When, Window, WindowFrame,
+    Avg, BooleanField, Case, DecimalField, F, Func, Max, Min, OuterRef, Q,
+    RowRange, Subquery, Sum, Value, ValueRange, When, Window, WindowFrame,
 )
 from django.db.models.functions import (
     CumeDist, DenseRank, ExtractYear, FirstValue, Lag, LastValue, Lead,
@@ -200,6 +201,40 @@ class WindowFunctionTests(TestCase):
             ('Johnson', 40000, 'Marketing', 38000),
             ('Brown', 53000, 'Sales', None),
             ('Smith', 55000, 'Sales', 53000),
+        ], transform=lambda row: (row.name, row.salary, row.department, row.lag))
+
+    def test_lag_decimalfield(self):
+        """
+        DecimalField window expressions must CAST the entire OVER clause.
+        CAST(LAG(...)) OVER (...) is invalid on SQLite.
+        """
+        qs = Employee.objects.annotate(lag=Window(
+            expression=Lag(
+                expression='salary',
+                offset=1,
+                output_field=DecimalField(max_digits=10, decimal_places=2),
+            ),
+            partition_by=F('department'),
+            order_by=[F('salary').asc(), F('name').asc()],
+        )).order_by('department', F('salary').asc(), F('name').asc())
+        sql = str(qs.query)
+        self.assertIn('OVER', sql)
+        if connection.vendor == 'sqlite':
+            self.assertNotIn('AS NUMERIC) OVER', sql)
+            self.assertIn('AS NUMERIC', sql)
+        self.assertQuerysetEqual(qs, [
+            ('Williams', 37000, 'Accounting', None),
+            ('Jenson', 45000, 'Accounting', Decimal('37000')),
+            ('Jones', 45000, 'Accounting', Decimal('45000')),
+            ('Adams', 50000, 'Accounting', Decimal('45000')),
+            ('Moore', 34000, 'IT', None),
+            ('Wilkinson', 60000, 'IT', Decimal('34000')),
+            ('Johnson', 80000, 'Management', None),
+            ('Miller', 100000, 'Management', Decimal('80000')),
+            ('Smith', 38000, 'Marketing', None),
+            ('Johnson', 40000, 'Marketing', Decimal('38000')),
+            ('Brown', 53000, 'Sales', None),
+            ('Smith', 55000, 'Sales', Decimal('53000')),
         ], transform=lambda row: (row.name, row.salary, row.department, row.lag))
 
     def test_first_value(self):

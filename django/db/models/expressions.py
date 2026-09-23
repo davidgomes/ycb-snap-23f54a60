@@ -1253,7 +1253,7 @@ class OrderBy(BaseExpression):
         self.descending = True
 
 
-class Window(Expression):
+class Window(SQLiteNumericMixin, Expression):
     template = '%(expression)s OVER (%(window)s)'
     # Although the main expression may either be an aggregate or an
     # expression with an aggregate function, the GROUP BY that will
@@ -1302,7 +1302,24 @@ class Window(Expression):
         connection.ops.check_expression_support(self)
         if not connection.features.supports_over_clause:
             raise NotSupportedError('This backend does not support window expressions.')
-        expr_sql, params = compiler.compile(self.source_expression)
+        # SQLiteNumericMixin wraps DecimalField results in CAST(). That cast
+        # must surround the whole window expression; CAST(func()) OVER (...)
+        # is a syntax error on SQLite.
+        # Compile via as_sql() when the source is a DecimalField so
+        # SQLiteNumericMixin does not wrap only the source function.
+        # CAST() on Window surrounds the full OVER clause instead.
+        compile_source_as_sql = False
+        if connection.vendor == 'sqlite':
+            try:
+                compile_source_as_sql = (
+                    self.source_expression.output_field.get_internal_type() == 'DecimalField'
+                )
+            except FieldError:
+                compile_source_as_sql = False
+        if compile_source_as_sql:
+            expr_sql, params = self.source_expression.as_sql(compiler, connection)
+        else:
+            expr_sql, params = compiler.compile(self.source_expression)
         window_sql, window_params = [], []
 
         if self.partition_by is not None:
