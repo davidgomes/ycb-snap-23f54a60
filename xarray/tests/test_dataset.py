@@ -2985,6 +2985,14 @@ class TestDataset:
         actual = original.swap_dims(x="u")
         assert_identical(expected, actual)
 
+        # the original object should not be modified
+        ds = Dataset({"y": ("z", [1, 2, 3]), "lev": ("z", [10, 20, 30])})
+        ds2 = ds.swap_dims(z="lev").rename_dims(lev="z").reset_index("lev")
+        original2 = ds2.copy()
+        ds2.swap_dims(z="lev")
+        assert_identical(original2, ds2)
+        assert ds2["lev"].dims == ("z",)
+
         # handle multiindex case
         idx = pd.MultiIndex.from_arrays([list("aab"), list("yzz")], names=["y1", "y2"])
         original = Dataset({"x": [1, 2, 3], "y": ("x", idx), "z": 42})
