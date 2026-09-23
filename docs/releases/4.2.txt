@@ -215,6 +215,10 @@ Migrations
 Models
 ~~~~~~
 
+* :meth:`.QuerySet.aggregate` and :meth:`.QuerySet.count` no longer select
+  annotations that are not referenced by filters, other annotations, or
+  ordering.
+
 * ``QuerySet`` now extensively supports filtering against
   :ref:`window-functions` with the exception of disjunctive filter lookups
   against window functions when performing aggregation.
