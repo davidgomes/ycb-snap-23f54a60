@@ -171,6 +171,12 @@ def lazy(func, *resultclasses):
         def __hash__(self):
             return hash(self.__cast())
 
+        def __add__(self, other):
+            return self.__cast() + other
+
+        def __radd__(self, other):
+            return other + self.__cast()
+
         def __mod__(self, rhs):
             if self._delegate_text:
                 return str(self) % rhs
