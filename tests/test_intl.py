@@ -14,8 +14,10 @@ import re
 
 import pytest
 from babel.messages import pofile, mofile
+from babel.messages.catalog import Catalog
 from docutils import nodes
 
+from sphinx import locale
 from sphinx.testing.util import (
     path, etree_parse, strip_escseq,
     assert_re_search, assert_not_re_search, assert_startswith, assert_node
@@ -1285,6 +1287,34 @@ def test_image_glob_intl_using_figure_language_filename(app):
     assert_node(doctree[0][3][0], nodes.image, uri='subdir/svgimg.*',
                 candidates={'application/pdf': 'subdir/svgimg.pdf',
                             'image/svg+xml': 'subdir/svgimg.svg'})
+
+
+@pytest.mark.sphinx('html', testroot='basic', srcdir='test_customize_system_message',
+                    confoverrides={'language': 'de'})
+def test_customize_system_message(make_app, app_params):
+    try:
+        locale.translators.clear()
+
+        args, kwargs = app_params
+        locale_dir = kwargs['srcdir'] / 'locales' / 'de' / 'LC_MESSAGES'
+        locale_dir.makedirs()
+        with (locale_dir / 'sphinx.po').open('wb') as f:
+            catalog = Catalog()
+            catalog.add('Quick search', 'QUICK SEARCH')
+            pofile.write_po(f, catalog)
+
+        # construct application and convert po file to .mo
+        app = make_app(*args, **kwargs)
+        assert (locale_dir / 'sphinx.mo').exists()
+        assert app.translator.gettext('Quick search') == 'QUICK SEARCH'
+        # messages not in the user catalog fall back to the built-in translation
+        assert app.translator.gettext('Fig. %s') == 'Abb. %s'
+
+        app.build()
+        content = (app.outdir / 'index.html').read_text()
+        assert 'QUICK SEARCH' in content
+    finally:
+        locale.translators.clear()
 
 
 def getwarning(warnings):
