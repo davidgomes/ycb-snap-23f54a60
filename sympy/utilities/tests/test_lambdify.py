@@ -1182,6 +1182,21 @@ def test_lambdify_inspect():
     assert 'x**2' in inspect.getsource(f)
 
 
+def test_issue_23261():
+    # A one-element tuple must be emitted with a trailing comma so the
+    # generated function returns a tuple, not the bare element.
+    f = lambdify([], tuple([1]))
+    assert f() == (1,)
+    assert 'return (1,)' in inspect.getsource(f)
+
+    f = lambdify([], tuple([tuple([1])]))
+    assert f() == ((1,),)
+    assert 'return ((1,),)' in inspect.getsource(f)
+
+    f = lambdify([], tuple([1, 2]))
+    assert f() == (1, 2)
+
+
 def test_issue_14941():
     x, y = Dummy(), Dummy()
 
