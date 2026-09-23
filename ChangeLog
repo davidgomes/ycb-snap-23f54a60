@@ -171,6 +171,11 @@ Closes #4555
 
   Closes #4023
 
+* ``pyreverse`` now uses type annotations (PEP 484) to determine the type of class attributes.
+  A ``None`` default value is displayed as ``Optional``.
+
+  Closes #1548
+
 
 What's New in Pylint 2.8.3?
 ===========================
