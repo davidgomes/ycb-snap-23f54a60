@@ -434,6 +434,11 @@ class RequestsTestCase(unittest.TestCase):
         assert b'name="stuff"' in prep.body
         assert b'name="b\'stuff\'"' not in prep.body
 
+    def test_unicode_method_name(self):
+        files = {'file': open('test_requests.py', 'rb')}
+        r = requests.request(method=u'POST', url=httpbin('post'), files=files)
+        assert r.status_code == 200
+
     def test_custom_content_type(self):
         r = requests.post(httpbin('post'),
                           data={'stuff': json.dumps({'a': 123})},
