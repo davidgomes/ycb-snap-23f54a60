@@ -6,9 +6,9 @@ from django.db.models.sql.constants import GET_ITERATOR_CHUNK_SIZE
 from django.test import TestCase, skipIfDBFeature, skipUnlessDBFeature
 
 from .models import (
-    MR, A, Avatar, Base, Child, HiddenUser, HiddenUserProfile, M, M2MFrom,
-    M2MTo, MRNull, Origin, Parent, R, RChild, RChildChild, Referrer, S, T,
-    User, create_a, get_default_r,
+    MR, A, Author, Avatar, Base, Child, HiddenUser, HiddenUserProfile, M,
+    M2MFrom, M2MTo, MRNull, Note, Origin, Parent, Person, R, RChild,
+    RChildChild, Referrer, S, T, User, create_a, get_default_r,
 )
 
 
@@ -570,6 +570,25 @@ class FastDeleteTests(TestCase):
         # that + fast delete of the related objs.
         self.assertNumQueries(2, a.delete)
         self.assertEqual(User.objects.count(), 0)
+
+    def test_fast_delete_combined_relationships(self):
+        # Multiple CASCADE relations to the same model are deleted together.
+        author = Author.objects.create()
+        Note.objects.create(created_by=author, updated_by=author)
+        # One combined DELETE for Note, one DELETE for Author.
+        with self.assertNumQueries(2):
+            author.delete()
+        self.assertFalse(Note.objects.exists())
+        self.assertFalse(Author.objects.exists())
+
+        person = Person.objects.create()
+        friend = Person.objects.create()
+        person.friends.add(friend)
+        # One combined DELETE for the M2M table, one DELETE for Person.
+        with self.assertNumQueries(2):
+            person.delete()
+        self.assertFalse(Person.objects.filter(pk=person.pk).exists())
+        self.assertTrue(Person.objects.filter(pk=friend.pk).exists())
 
     def test_fast_delete_empty_no_update_can_self_select(self):
         """

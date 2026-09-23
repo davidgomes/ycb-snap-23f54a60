@@ -100,6 +100,19 @@ class User(models.Model):
     avatar = models.ForeignKey(Avatar, models.CASCADE, null=True)
 
 
+class Author(models.Model):
+    pass
+
+
+class Note(models.Model):
+    created_by = models.ForeignKey(Author, models.CASCADE, related_name='+')
+    updated_by = models.ForeignKey(Author, models.CASCADE, related_name='+')
+
+
+class Person(models.Model):
+    friends = models.ManyToManyField('self')
+
+
 class HiddenUser(models.Model):
     r = models.ForeignKey(R, models.CASCADE, related_name="+")
 
