@@ -126,6 +126,8 @@ def test_ZeroMatrix():
     assert A*Z.T == ZeroMatrix(n, n)
     assert Z*A.T == ZeroMatrix(n, n)
     assert A - A == ZeroMatrix(*A.shape)
+    assert Add(Z, Z) == Z
+    assert isinstance(Add(Z, Z), ZeroMatrix)
 
     assert not Z
 
