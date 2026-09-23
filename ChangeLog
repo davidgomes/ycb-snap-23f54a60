@@ -29,6 +29,11 @@ Release date: TBA
 
   Closes #4612
 
+* Fix false positive ``unused-import`` for a module used as an attribute in a type comment,
+  e.g. ``# type: abc.ABC``.
+
+  Closes #4603
+
 * Appveyor is no longer used in the continuous integration
 
 * Added ``deprecated-decorator``: Emitted when deprecated decorator is used.
