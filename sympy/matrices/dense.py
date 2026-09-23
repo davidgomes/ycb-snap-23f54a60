@@ -193,17 +193,24 @@ class DenseMatrix(MatrixBase):
                 row, col = i // new_mat_cols, i % new_mat_cols
                 row_indices = range(self_cols*row, self_cols*(row+1))
                 col_indices = range(col, other_len, other_cols)
-                vec = (mat[a]*other_mat[b] for a,b in zip(row_indices, col_indices))
+                # Materialize so a failed Add can retry the same products.
+                # Block matrices don't work with `sum` or `Add` (ISSUE #11599):
+                # `sum` starts from the scalar 0, and mixing that with a matrix
+                # raises TypeError. `Add` of ZeroMatrix blocks also collapses to
+                # the scalar 0 (ISSUE #17622), which has no `.cols`. In both
+                # cases, add the products with matrix addition.
+                terms = [mat[a]*other_mat[b] for a, b in zip(row_indices, col_indices)]
+                summed = None
                 try:
-                    new_mat[i] = Add(*vec)
+                    summed = Add(*terms)
                 except (TypeError, SympifyError):
-                    # Block matrices don't work with `sum` or `Add` (ISSUE #11599)
-                    # They don't work with `sum` because `sum` tries to add `0`
-                    # initially, and for a matrix, that is a mix of a scalar and
-                    # a matrix, which raises a TypeError. Fall back to a
-                    # block-matrix-safe way to multiply if the `sum` fails.
-                    vec = (mat[a]*other_mat[b] for a,b in zip(row_indices, col_indices))
-                    new_mat[i] = reduce(lambda a,b: a + b, vec)
+                    summed = None
+                if summed is None or (
+                        any(getattr(t, 'is_Matrix', False) for t in terms) and
+                        not getattr(summed, 'is_Matrix', False)):
+                    new_mat[i] = reduce(lambda a, b: a + b, terms)
+                else:
+                    new_mat[i] = summed
         return classof(self, other)._new(new_mat_rows, new_mat_cols, new_mat, copy=False)
 
     def _eval_matrix_mul_elementwise(self, other):

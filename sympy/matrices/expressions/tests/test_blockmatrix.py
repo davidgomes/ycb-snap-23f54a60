@@ -3,7 +3,7 @@ from sympy.matrices.expressions.blockmatrix import (
     BlockMatrix, bc_dist, bc_matadd, bc_transpose, bc_inverse,
     blockcut, reblock_2x2, deblock)
 from sympy.matrices.expressions import (MatrixSymbol, Identity,
-        Inverse, trace, Transpose, det)
+        Inverse, trace, Transpose, det, ZeroMatrix)
 from sympy.matrices import (
     Matrix, ImmutableMatrix, ImmutableSparseMatrix)
 from sympy.core import Tuple, symbols, Expr
@@ -211,6 +211,22 @@ def test_deblock():
                     for i in range(4)])
 
     assert deblock(reblock_2x2(B)) == B
+
+def test_blockmul_zeromatrix():
+    # Issue 17622: products of ZeroMatrix blocks must stay matrices so a
+    # second block multiplication can still read block sizes.
+    a = MatrixSymbol('a', 2, 2)
+    z = ZeroMatrix(2, 2)
+    b = BlockMatrix([[a, z], [z, z]])
+    once = b._blockmul(b)
+    assert once.blocks[0, 1] == ZeroMatrix(2, 2)
+    assert once.blocks[1, 0] == ZeroMatrix(2, 2)
+    assert once.blocks[1, 1] == ZeroMatrix(2, 2)
+    twice = once._blockmul(b)
+    assert twice.blocks[0, 0] == a**3
+    assert twice.blocks[0, 1] == ZeroMatrix(2, 2)
+    assert block_collapse(b*b*b) == BlockMatrix([[a**3, z], [z, z]])
+
 
 def test_block_collapse_type():
     bm1 = BlockDiagMatrix(ImmutableMatrix([1]), ImmutableMatrix([2]))
