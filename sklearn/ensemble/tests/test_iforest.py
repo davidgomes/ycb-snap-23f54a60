@@ -359,3 +359,32 @@ def test_iforest_chunks_works2(
 ):
     test_iforest_works(contamination)
     assert mocked_get_chunk.call_count == n_predict_calls
+
+
+@pytest.mark.filterwarnings('ignore:default contamination')
+@pytest.mark.filterwarnings('ignore:behaviour="old"')
+def test_iforest_warm_start():
+    # Fitting incrementally with warm_start should give a forest of the right
+    # size and the same results as a forest grown in one call.
+    X = iris.data
+
+    clf = IsolationForest(n_estimators=10, warm_start=True, random_state=42,
+                          behaviour='new', contamination='auto')
+    clf.fit(X)
+    assert_equal(len(clf.estimators_), 10)
+
+    clf.set_params(n_estimators=20)
+    clf.fit(X)
+    assert_equal(len(clf.estimators_), 20)
+
+    clf_no_ws = IsolationForest(n_estimators=20, warm_start=False,
+                                random_state=42, behaviour='new',
+                                contamination='auto')
+    clf_no_ws.fit(X)
+
+    assert_array_almost_equal(clf.decision_function(X),
+                              clf_no_ws.decision_function(X))
+    assert_array_equal(clf.predict(X), clf_no_ws.predict(X))
+
+    clf.set_params(n_estimators=15)
+    assert_raises(ValueError, clf.fit, X)

@@ -21,6 +21,10 @@ Random partitioning produces noticeable shorter paths for anomalies.
 Hence, when a forest of random trees collectively produce shorter path lengths
 for particular samples, they are highly likely to be anomalies.
 
+``warm_start=True`` reuses trees from a previous ``fit`` and adds more
+estimators when ``n_estimators`` is increased, in the same way as
+:class:`sklearn.ensemble.RandomForestClassifier`.
+
 """
 print(__doc__)
 
