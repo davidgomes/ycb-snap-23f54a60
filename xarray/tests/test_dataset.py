@@ -2069,6 +2069,26 @@ class TestDataset:
 
             assert data.attrs['Test'] is not copied.attrs['Test']
 
+    def test_copy_deep_preserves_unicode_index_dtype(self):
+        # regression test for GH3094
+        ds = xr.Dataset(
+            coords={'x': ['foo'], 'y': ('x', ['bar'])},
+            data_vars={'z': ('x', ['baz'])})
+
+        for copied in [ds.copy(deep=True), deepcopy(ds)]:
+            assert copied['x'].dtype == ds['x'].dtype
+            assert copied['y'].dtype == ds['y'].dtype
+            assert copied['z'].dtype == ds['z'].dtype
+            assert_identical(ds, copied)
+
+        array = ds['z']
+        for copied in [array.copy(), array.copy(deep=True),
+                       array.copy(deep=False), copy(array), deepcopy(array)]:
+            assert copied['x'].dtype == array['x'].dtype
+            assert copied['y'].dtype == array['y'].dtype
+            assert copied.dtype == array.dtype
+            assert_identical(array, copied)
+
     def test_copy_with_data(self):
         orig = create_test_data()
         new_data = {k: np.random.randn(*v.shape)

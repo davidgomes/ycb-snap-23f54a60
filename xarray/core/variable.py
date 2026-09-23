@@ -1942,14 +1942,10 @@ class IndexVariable(Variable):
             data copied from original.
         """
         if data is None:
-            if deep:
-                # self._data should be a `PandasIndexAdapter` instance at this
-                # point, which doesn't have a copy method, so make a deep copy
-                # of the underlying `pandas.MultiIndex` and create a new
-                # `PandasIndexAdapter` instance with it.
-                data = PandasIndexAdapter(self._data.array.copy(deep=True))
-            else:
-                data = self._data
+            # ``PandasIndexAdapter.copy`` keeps the original numpy dtype.
+            # Rebuilding the adapter from ``index.copy()`` alone would see
+            # pandas' object dtype for unicode indexes (GH3094).
+            data = self._data.copy(deep=deep)
         else:
             data = as_compatible_data(data)
             if self.shape != data.shape:
