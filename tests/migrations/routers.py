@@ -8,6 +8,8 @@ class TestRouter:
         """
         The Tribble model should be the only one to appear in the 'other' db.
         """
+        if model_name == 'migration':
+            return True
         if model_name == 'tribble':
             return db == 'other'
         elif db != 'default':

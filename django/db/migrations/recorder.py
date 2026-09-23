@@ -1,5 +1,5 @@
 from django.apps.registry import Apps
-from django.db import DatabaseError, models
+from django.db import DatabaseError, models, router
 from django.utils.functional import classproperty
 from django.utils.timezone import now
 
@@ -62,12 +62,21 @@ class MigrationRecorder:
         # in the codebase.
         if self.has_table():
             return
+        if not self._allow_migrate():
+            return
         # Make the table
         try:
             with self.connection.schema_editor() as editor:
                 editor.create_model(self.Migration)
         except DatabaseError as exc:
             raise MigrationSchemaMissing("Unable to create the django_migrations table (%s)" % exc)
+
+    def _allow_migrate(self):
+        return router.allow_migrate(
+            self.connection.alias,
+            self.Migration._meta.app_label,
+            model_name=self.Migration._meta.model_name,
+        )
 
     def applied_migrations(self):
         """
@@ -83,14 +92,20 @@ class MigrationRecorder:
 
     def record_applied(self, app, name):
         """Record that a migration was applied."""
+        if not self._allow_migrate():
+            return
         self.ensure_schema()
         self.migration_qs.create(app=app, name=name)
 
     def record_unapplied(self, app, name):
         """Record that a migration was unapplied."""
+        if not self._allow_migrate():
+            return
         self.ensure_schema()
         self.migration_qs.filter(app=app, name=name).delete()
 
     def flush(self):
         """Delete all migration records. Useful for testing migrations."""
+        if not self._allow_migrate():
+            return
         self.migration_qs.all().delete()
