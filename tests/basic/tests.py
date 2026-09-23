@@ -1,3 +1,4 @@
+import inspect
 import threading
 from datetime import datetime, timedelta
 from unittest import mock
@@ -734,6 +735,23 @@ class ManagerTest(SimpleTestCase):
         self.assertEqual(
             sorted(BaseManager._get_queryset_methods(models.QuerySet)),
             sorted(self.QUERYSET_PROXY_METHODS),
+        )
+
+    def test_manager_method_signature(self):
+        """
+        Manager methods copied from QuerySet keep the original callable
+        metadata so inspect.signature() reports the QuerySet parameters.
+        """
+        self.assertEqual(Article.objects.bulk_create.__name__, "bulk_create")
+        self.assertEqual(
+            Article.objects.bulk_create.__doc__, models.QuerySet.bulk_create.__doc__
+        )
+        manager_signature = inspect.signature(Article.objects.bulk_create)
+        queryset_signature = inspect.signature(models.QuerySet.bulk_create)
+        queryset_params = tuple(queryset_signature.parameters.values())[1:]
+        self.assertEqual(
+            manager_signature,
+            queryset_signature.replace(parameters=queryset_params),
         )
 
 
