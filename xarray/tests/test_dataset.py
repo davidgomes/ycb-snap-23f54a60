@@ -3260,6 +3260,27 @@ class TestDataset:
         assert_identical(obj, ds, check_default_indexes=False)
         assert len(obj.xindexes) == 0
 
+    @pytest.mark.parametrize("arg", ["z", "a", ["a", "b"], ["a", "z"]])
+    def test_reset_index_drop_coord_names(self, arg) -> None:
+        # https://github.com/pydata/xarray/issues/7036
+        ds = Dataset(
+            data_vars={"foo": 1},
+            coords={"a": ("x", [1, 2, 3]), "b": ("x", ["a", "b", "c"])},
+        ).set_index(z=["a", "b"])
+        reset = ds.reset_index(arg, drop=True)
+
+        assert reset._coord_names <= set(reset._variables)
+        for name in [arg] if isinstance(arg, str) else arg:
+            assert name not in reset.variables
+            assert name not in reset.coords
+        assert list(reset.data_vars) == ["foo"]
+        repr(reset)
+
+    def test_reset_index_drop_dims(self) -> None:
+        ds = Dataset(coords={"x": [1, 2]})
+        reset = ds.reset_index("x", drop=True)
+        assert len(reset.dims) == 0
+
     def test_reorder_levels(self) -> None:
         ds = create_test_multiindex()
         mindex = ds["x"].to_index()

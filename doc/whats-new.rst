@@ -79,6 +79,9 @@ Bug fixes
 - Allow writing NetCDF files including only dimensionless variables using the distributed or multiprocessing scheduler
   (:issue:`7013`, :pull:`7040`).
   By `Francesco Nattino <https://github.com/fnattino>`_.
+- Fix :py:meth:`Dataset.reset_index` with ``drop=True`` leaving dropped
+  variables in the dataset's coordinate names and dimensions, which broke
+  e.g. ``Dataset.data_vars`` and the repr (:issue:`7036`, :pull:`6992`).
 
 Documentation
 ~~~~~~~~~~~~~
