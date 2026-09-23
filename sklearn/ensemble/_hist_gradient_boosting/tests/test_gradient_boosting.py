@@ -132,6 +132,47 @@ def test_early_stopping_classification(data, scoring, validation_fraction,
         assert gb.n_iter_ == max_iter
 
 
+@pytest.mark.parametrize('y_kind', ('string', 'non_contiguous_int'))
+@pytest.mark.parametrize('scoring', (None, 'accuracy'))
+@pytest.mark.parametrize('validation_fraction', (0.2, None))
+def test_early_stopping_original_class_labels(y_kind, scoring,
+                                              validation_fraction):
+    # Early-stopping scorers must see the original classes. predict() returns
+    # classes_ while the training loop stores y encoded as 0 .. n_classes-1.
+    # String labels used to raise TypeError; integer labels that are not
+    # 0 .. n_classes-1 used to be scored against the wrong values.
+    rng = np.random.RandomState(0)
+    n_samples = 120
+    X = rng.randn(n_samples, 8)
+    y_encoded = np.array([0] * 40 + [1] * 40 + [2] * 40)
+    X[y_encoded == 0] += 1.0
+    X[y_encoded == 1] -= 1.0
+
+    if y_kind == 'string':
+        mapping = np.array(['x', 'y', 'z'], dtype=object)
+    else:
+        mapping = np.array([10, 20, 30])
+    y = mapping[y_encoded]
+
+    params = dict(
+        scoring=scoring,
+        validation_fraction=validation_fraction,
+        n_iter_no_change=5,
+        max_iter=25,
+        min_samples_leaf=5,
+        random_state=0,
+    )
+    gb = HistGradientBoostingClassifier(**params)
+    gb.fit(X, y)
+
+    gb_ref = HistGradientBoostingClassifier(**params)
+    gb_ref.fit(X, y_encoded)
+
+    assert_allclose(gb.train_score_, gb_ref.train_score_)
+    assert_allclose(gb.validation_score_, gb_ref.validation_score_)
+    assert gb.score(X, y) == pytest.approx(gb_ref.score(X, y_encoded))
+
+
 @pytest.mark.parametrize(
     'scores, n_iter_no_change, tol, stopping',
     [
