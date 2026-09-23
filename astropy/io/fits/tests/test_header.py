@@ -468,6 +468,13 @@ class TestHeaderFunctions(FitsTestCase):
             "CONTINUE  'xml'                                                                 "
         )
 
+    @pytest.mark.parametrize("suffix", ["''", "''xxxxxxxxxx", "'' xxx", "''''"])
+    def test_long_string_value_with_quotes(self, suffix):
+        for n in range(50, 150):
+            value = "x" * n + suffix
+            c = fits.Card("CONFIG", value)
+            assert fits.Card.fromstring(c.image).value == value
+
     def test_long_unicode_string(self):
         """Regression test for
         https://github.com/spacetelescope/PyFITS/issues/1
