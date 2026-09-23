@@ -23,6 +23,26 @@ class FKDataNaturalKey(models.Model):
     data = models.ForeignKey(NaturalKeyAnchor, models.SET_NULL, null=True)
 
 
+class NaturalKeyWithFKManager(models.Manager):
+    def get_by_natural_key(self, name, data):
+        return self.get(name=name, data__data=data)
+
+
+class NaturalKeyWithFK(models.Model):
+    name = models.CharField(max_length=100)
+    data = models.ForeignKey(NaturalKeyAnchor, models.CASCADE)
+
+    objects = NaturalKeyWithFKManager()
+
+    def natural_key(self):
+        return (self.name,) + self.data.natural_key()
+
+    natural_key.dependencies = ["serializers.NaturalKeyAnchor"]
+
+    class Meta:
+        unique_together = [["name", "data"]]
+
+
 class NaturalKeyThing(models.Model):
     key = models.CharField(max_length=100, unique=True)
     other_thing = models.ForeignKey(

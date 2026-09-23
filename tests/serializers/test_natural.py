@@ -8,6 +8,7 @@ from .models import (
     FKDataNaturalKey,
     NaturalKeyAnchor,
     NaturalKeyThing,
+    NaturalKeyWithFK,
     NaturalPKWithDefault,
 )
 from .tests import register_tests
@@ -246,6 +247,43 @@ def fk_as_pk_natural_key_not_called(self, format):
     self.assertEqual(len(deserialized_objects), 2)
     for obj in deserialized_objects:
         self.assertEqual(obj.object.pk, o1.pk)
+
+
+class NaturalKeyNonDefaultDatabaseTests(TestCase):
+    databases = {"default", "other"}
+
+    def test_fk_natural_key_on_non_default_database(self):
+        """
+        natural_key() that walks a foreign key must query the database being
+        deserialized, including when that is not the default connection.
+        """
+        anchor = NaturalKeyAnchor.objects.using("other").create(data="JR Tolkien")
+        book = NaturalKeyWithFK.objects.using("other").create(
+            name="The Ring", data=anchor
+        )
+        serialized = serializers.serialize(
+            "json",
+            [anchor, book],
+            use_natural_foreign_keys=True,
+            use_natural_primary_keys=True,
+        )
+        # Existing rows are only on the non-default database.
+        self.assertFalse(NaturalKeyAnchor.objects.using("default").exists())
+        self.assertFalse(NaturalKeyWithFK.objects.using("default").exists())
+
+        loaded = list(serializers.deserialize("json", serialized, using="other"))
+        self.assertEqual(loaded[1].object.pk, book.pk)
+        self.assertEqual(loaded[1].object.name, "The Ring")
+        self.assertEqual(loaded[1].object.data_id, anchor.pk)
+
+        NaturalKeyWithFK.objects.using("other").all().delete()
+        NaturalKeyAnchor.objects.using("other").all().delete()
+        for obj in serializers.deserialize("json", serialized, using="other"):
+            obj.save(using="other")
+        restored = NaturalKeyWithFK.objects.using("other").get()
+        self.assertEqual(restored.name, "The Ring")
+        self.assertEqual(restored.data.data, "JR Tolkien")
+        self.assertFalse(NaturalKeyWithFK.objects.using("default").exists())
 
 
 # Dynamically register tests for each serializer
