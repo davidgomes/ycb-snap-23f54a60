@@ -93,6 +93,9 @@ Deprecations
 Bug fixes
 ~~~~~~~~~
 
+- Fix :py:func:`polyval` on ``timedelta64`` coordinates. Timedeltas are now
+  cast to their numeric values instead of being offset from 1970-01-01, which
+  raised or produced incorrect polynomial results (:issue:`6597`).
 - Set ``skipna=None`` for all ``quantile`` methods (e.g. :py:meth:`Dataset.quantile`) and
   ensure it skips missing values for float dtypes (consistent with other methods). This should
   not change the behavior (:pull:`6303`).
