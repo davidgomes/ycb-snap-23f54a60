@@ -345,7 +345,11 @@ Signals
 Templates
 ~~~~~~~~~
 
-* ...
+* The new :tfilter:`escapeseq` template filter applies :tfilter:`escape` to
+  each element of a sequence. This is useful when applying other filters to
+  the results, such as :tfilter:`join`. For example::
+
+      {{ some_list|escapeseq|join:"," }}
 
 Tests
 ~~~~~
