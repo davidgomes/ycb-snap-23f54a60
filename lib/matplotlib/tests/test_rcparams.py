@@ -496,6 +496,38 @@ def test_keymaps():
         assert isinstance(mpl.rcParams[k], list)
 
 
+def test_no_backend_reset_rccontext():
+    assert mpl.rcParams['backend'] != 'module://aardvark'
+    with mpl.rc_context():
+        mpl.rcParams['backend'] = 'module://aardvark'
+    assert mpl.rcParams['backend'] == 'module://aardvark'
+
+
+def test_rc_context_keeps_figures_after_get_backend(tmp_path):
+    # The first figure created while the backend is still the auto sentinel
+    # used to be dropped from Gcf when rc_context restored that sentinel and
+    # get_backend() resolved it again (which closes all figures).
+    env = {**os.environ, "MPLBACKEND": "", "MPLCONFIGDIR": str(tmp_path)}
+    env.pop("MATPLOTLIBRC", None)
+    script = (
+        "import matplotlib.pyplot as plt\n"
+        "from matplotlib import get_backend, rc_context\n"
+        "with rc_context():\n"
+        "    fig = plt.figure()\n"
+        "before = list(plt.get_fignums())\n"
+        "get_backend()\n"
+        "after = list(plt.get_fignums())\n"
+        "assert before == after and before, (before, after)\n"
+        "plt.close(fig)\n"
+        "assert plt.get_fignums() == []\n"
+    )
+    proc = subprocess.run(
+        [sys.executable, "-c", script], env=env, cwd=tmp_path, check=False,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        universal_newlines=True)
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+
+
 def test_rcparams_reset_after_fail():
     # There was previously a bug that meant that if rc_context failed and
     # raised an exception due to issues in the supplied rc parameters, the

@@ -1059,6 +1059,8 @@ def rc_context(rc=None, fname=None):
     """
     Return a context manager for temporarily changing rcParams.
 
+    The :rc:`backend` will not be reset by the context manager.
+
     Parameters
     ----------
     rc : dict
@@ -1087,7 +1089,11 @@ def rc_context(rc=None, fname=None):
              plt.plot(x, y)  # uses 'print.rc'
 
     """
-    orig = rcParams.copy()
+    orig = dict(rcParams.copy())
+    # Do not restore 'backend'.  If the auto-backend sentinel was resolved
+    # inside this context, putting it back would make a later get_backend()
+    # call switch backends again and close every pyplot figure.
+    del orig['backend']
     try:
         if fname:
             rc_file(fname)
