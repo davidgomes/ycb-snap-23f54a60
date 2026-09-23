@@ -12,6 +12,14 @@ Version 0.21.3
 Changelog
 ---------
 
+:mod:`sklearn.linear_model`
+...........................
+
+- |Fix| Fixed a bug in :class:`linear_model.LogisticRegressionCV` where
+  ``refit=False`` would raise an ``IndexError`` depending on the
+  ``multi_class`` and ``penalty`` parameters (regression introduced in 0.21).
+  :pr:`14087`.
+
 
 .. _changes_0_21_2:
 

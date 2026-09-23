@@ -1554,6 +1554,36 @@ def test_LogisticRegressionCV_no_refit(multi_class):
     assert lrcv.coef_.shape == (n_classes, n_features)
 
 
+@pytest.mark.parametrize('penalty', ('l2', 'elasticnet'))
+@pytest.mark.parametrize('multi_class', ('ovr', 'multinomial', 'auto'))
+@pytest.mark.parametrize('solver', ('liblinear', 'saga'))
+def test_LogisticRegressionCV_no_refit_binary_and_list_l1_ratios(
+        penalty, multi_class, solver):
+    # Non-regression test for IndexError raised with refit=False on binary
+    # problems, with the default multi_class='auto', and with l1_ratios given
+    # as a plain list.
+    if solver == 'liblinear' and (penalty == 'elasticnet' or
+                                  multi_class == 'multinomial'):
+        pytest.skip("Unsupported combination for liblinear")
+
+    rng = np.random.RandomState(29)
+    X = rng.normal(size=(1000, 3))
+    beta = rng.normal(size=3)
+    intercept = rng.normal(size=None)
+    y = np.sign(intercept + X @ beta)
+
+    l1_ratios = [.25, .75] if penalty == 'elasticnet' else None
+    lrcv = LogisticRegressionCV(cv=5, penalty=penalty, solver=solver,
+                                l1_ratios=l1_ratios, tol=1e-2,
+                                multi_class=multi_class, refit=False)
+    lrcv.fit(X, y)
+    assert lrcv.C_.shape == (1,)
+    assert lrcv.l1_ratio_.shape == (1,)
+    assert lrcv.coef_.shape == (1, X.shape[1])
+    if penalty == 'elasticnet':
+        assert .25 <= lrcv.l1_ratio_[0] <= .75
+
+
 def test_LogisticRegressionCV_elasticnet_attribute_shapes():
     # Make sure the shapes of scores_ and coefs_paths_ attributes are correct
     # when using elasticnet (added one dimension for l1_ratios)
