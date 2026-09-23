@@ -154,6 +154,18 @@ def test_clone_nan():
     assert clf.empty is clf2.empty
 
 
+def test_clone_estimator_types():
+    # Parameters may be estimator classes rather than instances.
+    clf = MyEstimator(empty=MyEstimator)
+    clf2 = clone(clf)
+    assert clf.empty is clf2.empty
+
+    clf = MyEstimator(empty=[MyEstimator, None])
+    clf2 = clone(clf)
+    assert clf.empty[0] is clf2.empty[0]
+    assert clf.empty[1] is clf2.empty[1]
+
+
 def test_clone_sparse_matrices():
     sparse_matrix_classes = [
         getattr(sp, name)
