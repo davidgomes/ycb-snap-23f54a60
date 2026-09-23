@@ -307,16 +307,22 @@ def get_class_members(subject: Any, objpath: List[str], attrgetter: Callable,
         except AttributeError:
             pass
 
-        # append instance attributes (cf. self.attr1) if analyzer knows
+        # append instance attributes (cf. self.attr1) and complete docstring-comments
+        # of known attributes if analyzer knows
         try:
             modname = safe_getattr(cls, '__module__')
             qualname = safe_getattr(cls, '__qualname__')
             cls_analyzer = ModuleAnalyzer.for_module(modname)
             cls_analyzer.analyze()
             for (ns, name), docstring in cls_analyzer.attr_docs.items():
-                if ns == qualname and name not in members:
+                if ns != qualname:
+                    continue
+
+                if name not in members:
                     members[name] = ClassAttribute(cls, name, INSTANCEATTR,
                                                    '\n'.join(docstring))
+                elif members[name].docstring is None:
+                    members[name].docstring = '\n'.join(docstring)
         except (AttributeError, PycodeError):
             pass
 

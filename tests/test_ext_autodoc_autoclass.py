@@ -134,6 +134,33 @@ def test_inherited_instance_variable(app):
     ]
 
 
+@pytest.mark.sphinx('html', testroot='ext-autodoc')
+def test_inherited_class_attribute(app):
+    options = {'members': True,
+               'inherited-members': True}
+    actual = do_autodoc(app, 'class', 'target.inherited_attributes.Derived', options)
+    assert list(actual) == [
+        '',
+        '.. py:class:: Derived()',
+        '   :module: target.inherited_attributes',
+        '',
+        '',
+        '   .. py:attribute:: Derived.attr1',
+        '      :module: target.inherited_attributes',
+        '      :value: None',
+        '',
+        '      docstring of Base.attr1',
+        '',
+        '',
+        '   .. py:attribute:: Derived.attr2',
+        '      :module: target.inherited_attributes',
+        '      :value: None',
+        '',
+        '      docstring of Derived.attr2',
+        '',
+    ]
+
+
 @pytest.mark.skipif(sys.version_info < (3, 7), reason='python 3.7+ is required.')
 @pytest.mark.sphinx('html', testroot='ext-autodoc')
 def test_show_inheritance_for_subclass_of_generic_type(app):

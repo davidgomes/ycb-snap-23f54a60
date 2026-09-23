@@ -101,6 +101,20 @@ def test_autoattribute_instance_variable_in_alias(app):
 
 
 @pytest.mark.sphinx('html', testroot='ext-autodoc')
+def test_autoattribute_inherited_class_attribute(app):
+    actual = do_autodoc(app, 'attribute', 'target.inherited_attributes.Derived.attr1')
+    assert list(actual) == [
+        '',
+        '.. py:attribute:: Derived.attr1',
+        '   :module: target.inherited_attributes',
+        '   :value: None',
+        '',
+        '   docstring of Base.attr1',
+        '',
+    ]
+
+
+@pytest.mark.sphinx('html', testroot='ext-autodoc')
 def test_autoattribute_slots_variable_list(app):
     actual = do_autodoc(app, 'attribute', 'target.slots.Foo.attr')
     assert list(actual) == [
