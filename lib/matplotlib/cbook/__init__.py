@@ -1746,7 +1746,10 @@ def _safe_first_finite(obj, *, skip_nonfinite=True):
         raise RuntimeError("matplotlib does not "
                            "support generators as input")
     else:
-        return next(val for val in obj if safe_isfinite(val))
+        # If no finite value exists (e.g. all-NaN input), fall back to the
+        # first element so callers such as Axes.bar can still proceed.
+        return next((val for val in obj if safe_isfinite(val)),
+                    safe_first_element(obj))
 
 
 def sanitize_sequence(data):

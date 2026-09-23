@@ -8173,6 +8173,16 @@ def test_get_xticklabel():
         assert ax.get_yticklabels()[ind].get_text() == f'{ind}'
 
 
+def test_bar_all_nan():
+    fig, ax = plt.subplots()
+    bars = ax.bar([np.nan], [np.nan])
+    assert len(bars) == 1
+    assert np.isnan(bars[0].get_x())
+    assert np.isnan(bars[0].get_height())
+    # x positions that are entirely non-finite previously raised.
+    ax.bar([np.nan], [0])
+
+
 def test_bar_leading_nan():
 
     barx = np.arange(3, dtype=float)
