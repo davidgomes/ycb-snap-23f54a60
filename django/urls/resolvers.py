@@ -45,6 +45,13 @@ class ResolverMatch:
         self.namespaces = [x for x in namespaces if x] if namespaces else []
         self.namespace = ':'.join(self.namespaces)
 
+        self._func_repr_args = ''
+        if isinstance(func, functools.partial):
+            self._func_repr_args = ', partial_args=%r, partial_kwargs=%r' % (func.args, func.keywords)
+            func = func.func
+            while isinstance(func, functools.partial):
+                func = func.func
+
         if not hasattr(func, '__name__'):
             # A class-based view
             self._func_path = func.__class__.__module__ + '.' + func.__class__.__name__
@@ -59,8 +66,8 @@ class ResolverMatch:
         return (self.func, self.args, self.kwargs)[index]
 
     def __repr__(self):
-        return "ResolverMatch(func=%s, args=%s, kwargs=%s, url_name=%s, app_names=%s, namespaces=%s, route=%s)" % (
-            self._func_path, self.args, self.kwargs, self.url_name,
+        return "ResolverMatch(func=%s%s, args=%s, kwargs=%s, url_name=%s, app_names=%s, namespaces=%s, route=%s)" % (
+            self._func_path, self._func_repr_args, self.args, self.kwargs, self.url_name,
             self.app_names, self.namespaces, self.route,
         )
 
