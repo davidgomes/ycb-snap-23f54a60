@@ -37,7 +37,10 @@ class KeyboardTransform(SphinxPostTransform):
     """
     default_priority = 400
     builders = ('html',)
-    pattern = re.compile(r'(-|\+|\^|\s+)')
+    # A separator is only recognized when it has a keystroke on both sides.
+    # Otherwise "-", "+", and "^" are themselves keystrokes (for example
+    # ":kbd:`-`" or ":kbd:`Shift-+`").
+    pattern = re.compile(r'(?<=.)(-|\+|\^|\s+)(?=.)')
 
     def run(self, **kwargs: Any) -> None:
         matcher = NodeMatcher(nodes.literal, classes=["kbd"])

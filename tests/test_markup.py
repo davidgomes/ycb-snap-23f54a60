@@ -252,6 +252,28 @@ def get_verifier(verify, verify_re):
         '\\sphinxkeyboard{\\sphinxupquote{Control+X}}',
     ),
     (
+        # kbd role: separator character used as the final keystroke
+        'verify',
+        ':kbd:`Alt+^`',
+        ('<p><kbd class="kbd docutils literal notranslate">'
+         '<kbd class="kbd docutils literal notranslate">Alt</kbd>'
+         '+'
+         '<kbd class="kbd docutils literal notranslate">^</kbd>'
+         '</kbd></p>'),
+        '\\sphinxkeyboard{\\sphinxupquote{Alt+\\textasciicircum{}}}',
+    ),
+    (
+        # kbd role: separator character used as the final keystroke
+        'verify',
+        ':kbd:`Shift-+`',
+        ('<p><kbd class="kbd docutils literal notranslate">'
+         '<kbd class="kbd docutils literal notranslate">Shift</kbd>'
+         '-'
+         '<kbd class="kbd docutils literal notranslate">+</kbd>'
+         '</kbd></p>'),
+        '\\sphinxkeyboard{\\sphinxupquote{Shift\\sphinxhyphen{}+}}',
+    ),
+    (
         # kbd role
         'verify',
         ':kbd:`M-x  M-s`',
@@ -265,6 +287,27 @@ def get_verifier(verify, verify_re):
          '<kbd class="kbd docutils literal notranslate">s</kbd>'
          '</kbd></p>'),
         '\\sphinxkeyboard{\\sphinxupquote{M\\sphinxhyphen{}x  M\\sphinxhyphen{}s}}',
+    ),
+    (
+        # kbd role: a separator character on its own is a single keystroke
+        'verify',
+        ':kbd:`-`',
+        '<p><kbd class="kbd docutils literal notranslate">-</kbd></p>',
+        '\\sphinxkeyboard{\\sphinxupquote{\\sphinxhyphen{}}}',
+    ),
+    (
+        # kbd role: a separator character on its own is a single keystroke
+        'verify',
+        ':kbd:`+`',
+        '<p><kbd class="kbd docutils literal notranslate">+</kbd></p>',
+        '\\sphinxkeyboard{\\sphinxupquote{+}}',
+    ),
+    (
+        # kbd role: a separator character on its own is a single keystroke
+        'verify',
+        ':kbd:`^`',
+        '<p><kbd class="kbd docutils literal notranslate">^</kbd></p>',
+        '\\sphinxkeyboard{\\sphinxupquote{\\textasciicircum{}}}',
     ),
     (
         # non-interpolation of dashes in option role
