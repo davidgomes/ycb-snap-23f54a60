@@ -824,6 +824,48 @@ class CustomPrefetchTests(TestCase):
         with self.assertNumQueries(5):
             self.traverse_qs(list(houses), [['occupants', 'houses', 'main_room']])
 
+    def test_nested_prefetch_is_not_overwritten_by_related_object(self):
+        """
+        The prefetched relationship is used rather than populating the reverse
+        relationship from the parent, when prefetching a set of child objects
+        related to a set of parent objects and the child queryset itself
+        specifies a prefetch back to the parent.
+        """
+        queryset = House.objects.only('name').prefetch_related(
+            Prefetch('rooms', queryset=Room.objects.prefetch_related(
+                Prefetch('house', queryset=House.objects.only('address')),
+            )),
+        )
+        with self.assertNumQueries(3):
+            house = queryset.first()
+
+        with self.assertNumQueries(0):
+            self.assertEqual(house.rooms.first().house.address, '123 Main St')
+
+    def test_nested_prefetch_is_not_overwritten_by_related_object_reverse_one_to_one(self):
+        queryset = Room.objects.only('name').prefetch_related(
+            Prefetch('main_room_of', queryset=House.objects.prefetch_related(
+                Prefetch('main_room', queryset=Room.objects.only('house')),
+            )),
+        )
+        with self.assertNumQueries(3):
+            room = queryset.first()
+
+        with self.assertNumQueries(0):
+            self.assertEqual(room.main_room_of.main_room.house_id, self.house1.pk)
+
+    def test_nested_prefetch_is_not_overwritten_by_related_object_forward_one_to_one(self):
+        queryset = House.objects.only('main_room').prefetch_related(
+            Prefetch('main_room', queryset=Room.objects.prefetch_related(
+                Prefetch('main_room_of', queryset=House.objects.only('main_room', 'address')),
+            )),
+        )
+        with self.assertNumQueries(3):
+            house = queryset.first()
+
+        with self.assertNumQueries(0):
+            self.assertEqual(house.main_room.main_room_of.address, '123 Main St')
+
     def test_values_queryset(self):
         msg = 'Prefetch querysets cannot use raw(), values(), and values_list().'
         with self.assertRaisesMessage(ValueError, msg):
