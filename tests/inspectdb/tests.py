@@ -204,6 +204,22 @@ class InspectDBTestCase(TestCase):
             output,
         )
 
+    @skipUnlessDBFeature('can_introspect_foreign_keys')
+    def test_foreign_key_to_field(self):
+        out = StringIO()
+        call_command('inspectdb', 'inspectdb_foreignkeytofield', stdout=out)
+        output = out.getvalue()
+        self.assertIn(
+            "to_field_fk = models.ForeignKey('InspectdbPeoplemoredata', "
+            "models.DO_NOTHING, to_field='people_unique_id')",
+            output,
+        )
+        self.assertIn(
+            "to_field_o2o = models.OneToOneField('InspectdbPeoplemoredata', "
+            "models.DO_NOTHING, to_field='people_unique_id')",
+            output,
+        )
+
     def test_digits_column_name_introspection(self):
         """Introspection of column names consist/start with digits (#16536/#17676)"""
         char_field_type = connection.features.introspected_field_types['CharField']

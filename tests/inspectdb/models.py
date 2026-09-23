@@ -21,6 +21,20 @@ class PeopleMoreData(models.Model):
     license = models.CharField(max_length=255)
 
 
+class ForeignKeyToField(models.Model):
+    to_field_fk = models.ForeignKey(
+        PeopleMoreData,
+        models.CASCADE,
+        to_field='people_unique',
+    )
+    to_field_o2o = models.OneToOneField(
+        PeopleMoreData,
+        models.CASCADE,
+        to_field='people_unique',
+        related_name='+',
+    )
+
+
 class DigitsInColumnName(models.Model):
     all_digits = models.CharField(max_length=11, db_column='123')
     leading_digit = models.CharField(max_length=11, db_column='4extra')
