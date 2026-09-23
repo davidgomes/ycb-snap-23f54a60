@@ -48,7 +48,7 @@ option.
 ``BaseConstraint``
 ==================
 
-.. class:: BaseConstraint(*, name, violation_error_message=None)
+.. class:: BaseConstraint(*, name, violation_error_code=None, violation_error_message=None)
 
     Base class for all constraints. Subclasses must implement
     ``constraint_sql()``, ``create_sql()``, ``remove_sql()`` and
@@ -57,6 +57,10 @@ option.
     .. deprecated:: 5.0
 
         Support for passing positional arguments is deprecated.
+
+    .. versionchanged:: 5.0
+
+        The ``violation_error_code`` argument was added.
 
 All constraints have the following parameters in common:
 
@@ -67,6 +71,16 @@ All constraints have the following parameters in common:
 
 The name of the constraint. You must always specify a unique name for the
 constraint.
+
+``violation_error_code``
+------------------------
+
+.. versionadded:: 5.0
+
+.. attribute:: BaseConstraint.violation_error_code
+
+The error code used when ``ValidationError`` is raised during
+:ref:`model validation <validating-objects>`. Defaults to ``None``.
 
 ``violation_error_message``
 ---------------------------
@@ -94,9 +108,13 @@ This method must be implemented by a subclass.
 ``CheckConstraint``
 ===================
 
-.. class:: CheckConstraint(*, check, name, violation_error_message=None)
+.. class:: CheckConstraint(*, check, name, violation_error_code=None, violation_error_message=None)
 
     Creates a check constraint in the database.
+
+    .. versionchanged:: 5.0
+
+        The ``violation_error_code`` argument was added.
 
 ``check``
 ---------
@@ -121,9 +139,13 @@ ensures the age field is never less than 18.
 ``UniqueConstraint``
 ====================
 
-.. class:: UniqueConstraint(*expressions, fields=(), name=None, condition=None, deferrable=None, include=None, opclasses=(), violation_error_message=None)
+.. class:: UniqueConstraint(*expressions, fields=(), name=None, condition=None, deferrable=None, include=None, opclasses=(), violation_error_code=None, violation_error_message=None)
 
     Creates a unique constraint in the database.
+
+    .. versionchanged:: 5.0
+
+        The ``violation_error_code`` argument was added.
 
 ``expressions``
 ---------------
@@ -241,6 +263,21 @@ For example::
 creates a unique index on ``username`` using ``varchar_pattern_ops``.
 
 ``opclasses`` are ignored for databases besides PostgreSQL.
+
+``violation_error_code``
+------------------------
+
+.. versionadded:: 5.0
+
+.. attribute:: UniqueConstraint.violation_error_code
+
+The error code used when ``ValidationError`` is raised during
+:ref:`model validation <validating-objects>`. Defaults to
+:attr:`.BaseConstraint.violation_error_code`.
+
+This code is *not used* for :class:`UniqueConstraint`\s with
+:attr:`~UniqueConstraint.fields` and without a
+:attr:`~UniqueConstraint.condition`.
 
 ``violation_error_message``
 ---------------------------
