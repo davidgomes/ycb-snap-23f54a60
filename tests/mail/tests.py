@@ -14,11 +14,12 @@ from email.utils import parseaddr
 from io import StringIO
 from smtplib import SMTP, SMTPAuthenticationError, SMTPException
 from ssl import SSLError
+from unittest import mock
 
 from django.core import mail
 from django.core.mail import (
-    EmailMessage, EmailMultiAlternatives, mail_admins, mail_managers,
-    send_mail, send_mass_mail,
+    DNS_NAME, EmailMessage, EmailMultiAlternatives, mail_admins,
+    mail_managers, send_mail, send_mass_mail,
 )
 from django.core.mail.backends import console, dummy, filebased, locmem, smtp
 from django.core.mail.message import BadHeaderError, sanitize_address
@@ -381,6 +382,20 @@ class MailTests(HeadersCheckMixin, SimpleTestCase):
             ('From', 'from@example.com'),
             ('To', 'other@example.com')})
         self.assertEqual(message.get_payload(), 'Firstname S=FCrname is a great guy.')
+
+    @mock.patch('socket.getfqdn', return_value='漢字')
+    def test_non_ascii_dns_non_unicode_email(self, mocked_getfqdn):
+        DNS_NAME.__dict__.pop('_fqdn', None)
+        self.addCleanup(DNS_NAME.__dict__.pop, '_fqdn', None)
+        email = EmailMessage('subject', 'content', 'from@example.com', ['to@example.com'])
+        email.encoding = 'iso-8859-1'
+        self.assertIn('@xn--p8s937b>', email.message()['Message-ID'])
+
+    @mock.patch('django.core.mail.message.DNS_NAME', '漢字')
+    def test_non_ascii_dns_name_string_non_unicode_email(self):
+        email = EmailMessage('subject', '', 'from@example.com', ['to@example.com'])
+        email.encoding = 'iso-8859-1'
+        self.assertIn('xn--p8s937b', email.message()['Message-ID'])
 
         # Make sure MIME attachments also works correctly with other encodings than utf-8
         text_content = 'Firstname Sürname is a great guy.'
