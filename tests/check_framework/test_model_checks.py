@@ -408,6 +408,27 @@ class ModelDefaultAutoFieldTests(SimpleTestCase):
 
         self.assertEqual(checks.run_checks(app_configs=self.apps.get_app_configs()), [])
 
+    def test_warning_not_raised_on_inherited_pk(self):
+        class Parent(models.Model):
+            id = models.AutoField(primary_key=True)
+
+        class Child(Parent):
+            pass
+
+        self.assertEqual(checks.run_checks(app_configs=self.apps.get_app_configs()), [])
+
+    def test_warning_not_raised_on_abstract_inherited_pk(self):
+        class Parent(models.Model):
+            id = models.AutoField(primary_key=True)
+
+            class Meta:
+                abstract = True
+
+        class Child(Parent):
+            pass
+
+        self.assertEqual(checks.run_checks(app_configs=self.apps.get_app_configs()), [])
+
     @isolate_apps('check_framework.apps.CheckPKConfig', kwarg_name='apps')
     def test_app_default_auto_field(self, apps):
         class ModelWithPkViaAppConfig(models.Model):
