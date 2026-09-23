@@ -86,6 +86,12 @@ Minor features
 * The default iteration count for the PBKDF2 password hasher is increased from
   216,000 to 260,000.
 
+* The ``auth.E003`` system check now accepts a total
+  :class:`~django.db.models.UniqueConstraint` on
+  :attr:`~django.contrib.auth.models.CustomUser.USERNAME_FIELD` in place of
+  ``unique=True``. A constraint with a condition, or one that includes other
+  fields, still does not satisfy the check.
+
 * The default variant for the Argon2 password hasher is changed to Argon2id.
   ``memory_cost`` and ``parallelism`` are increased to 102,400 and 8
   respectively to match the ``argon2-cffi`` defaults.

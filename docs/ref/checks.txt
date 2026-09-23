@@ -763,7 +763,8 @@ The following checks are performed on the default
 * **auth.E002**: The field named as the ``USERNAME_FIELD`` for a custom user
   model must not be included in ``REQUIRED_FIELDS``.
 * **auth.E003**: ``<field>`` must be unique because it is named as the
-  ``USERNAME_FIELD``.
+  ``USERNAME_FIELD``. Uniqueness can come from ``unique=True`` or a total
+  :class:`~django.db.models.constraints.UniqueConstraint` on that field alone.
 * **auth.W004**: ``<field>`` is named as the ``USERNAME_FIELD``, but it is not
   unique.
 * **auth.E005**: The permission codenamed ``<codename>`` clashes with a builtin

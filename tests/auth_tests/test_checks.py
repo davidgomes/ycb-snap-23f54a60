@@ -85,6 +85,73 @@ class UserModelChecksTests(SimpleTestCase):
                 ),
             ])
 
+    @override_settings(AUTH_USER_MODEL='auth_tests.CustomUserUniqueConstraint')
+    def test_username_unique_constraint(self):
+        """A total UniqueConstraint on USERNAME_FIELD satisfies auth.E003."""
+        class CustomUserUniqueConstraint(AbstractBaseUser):
+            username = models.CharField(max_length=30)
+            USERNAME_FIELD = 'username'
+
+            class Meta:
+                constraints = [
+                    models.UniqueConstraint(fields=['username'], name='user_username_unq'),
+                ]
+
+        errors = checks.run_checks(app_configs=self.apps.get_app_configs())
+        self.assertEqual(errors, [])
+
+    @override_settings(AUTH_USER_MODEL='auth_tests.CustomUserPartialUniqueConstraint')
+    def test_username_partial_unique_constraint(self):
+        """A conditional UniqueConstraint does not guarantee uniqueness."""
+        class CustomUserPartialUniqueConstraint(AbstractBaseUser):
+            username = models.CharField(max_length=30)
+            USERNAME_FIELD = 'username'
+
+            class Meta:
+                constraints = [
+                    models.UniqueConstraint(
+                        fields=['username'],
+                        name='user_username_partial_unq',
+                        condition=models.Q(username__startswith='a'),
+                    ),
+                ]
+
+        errors = checks.run_checks(app_configs=self.apps.get_app_configs())
+        self.assertEqual(errors, [
+            checks.Error(
+                "'CustomUserPartialUniqueConstraint.username' must be "
+                "unique because it is named as the 'USERNAME_FIELD'.",
+                obj=CustomUserPartialUniqueConstraint,
+                id='auth.E003',
+            ),
+        ])
+
+    @override_settings(AUTH_USER_MODEL='auth_tests.CustomUserCompositeUniqueConstraint')
+    def test_username_composite_unique_constraint(self):
+        """A multi-field UniqueConstraint does not make USERNAME_FIELD unique."""
+        class CustomUserCompositeUniqueConstraint(AbstractBaseUser):
+            username = models.CharField(max_length=30)
+            date_of_birth = models.DateField()
+            USERNAME_FIELD = 'username'
+
+            class Meta:
+                constraints = [
+                    models.UniqueConstraint(
+                        fields=['username', 'date_of_birth'],
+                        name='user_username_dob_unq',
+                    ),
+                ]
+
+        errors = checks.run_checks(app_configs=self.apps.get_app_configs())
+        self.assertEqual(errors, [
+            checks.Error(
+                "'CustomUserCompositeUniqueConstraint.username' must be "
+                "unique because it is named as the 'USERNAME_FIELD'.",
+                obj=CustomUserCompositeUniqueConstraint,
+                id='auth.E003',
+            ),
+        ])
+
     @override_settings(AUTH_USER_MODEL='auth_tests.BadUser')
     def test_is_anonymous_authenticated_methods(self):
         """
