@@ -1,0 +1,4 @@
+Check that the first item in ``sys.path`` is ``""``, ``"."`` or the working directory
+before removing it when running pylint as a module (e.g. via ``runpy``).
+
+Closes #7231
