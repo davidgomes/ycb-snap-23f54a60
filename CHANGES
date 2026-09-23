@@ -72,6 +72,8 @@ Bugs fixed
   Patch by Bénédikt Tran.
 * #10930: Highlight all search terms on the search results page.
   Patch by Dmitry Shachnev.
+* #10678: Emit the :event:`source-read` event for files included with the
+  :dudir:`include` directive.
 
 Testing
 -------

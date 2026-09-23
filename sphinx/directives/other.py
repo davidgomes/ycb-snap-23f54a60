@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import re
 from typing import TYPE_CHECKING, Any, cast
 
@@ -8,6 +9,7 @@ from docutils.parsers.rst import directives
 from docutils.parsers.rst.directives.admonitions import BaseAdmonition
 from docutils.parsers.rst.directives.misc import Class
 from docutils.parsers.rst.directives.misc import Include as BaseInclude
+from docutils.statemachine import StateMachine
 
 from sphinx import addnodes
 from sphinx.domains.changeset import VersionChange  # noqa: F401  # for compatibility
@@ -20,6 +22,7 @@ from sphinx.util.nodes import explicit_title_re
 
 if TYPE_CHECKING:
     from docutils.nodes import Element, Node
+    from docutils.statemachine import StringList
 
     from sphinx.application import Sphinx
     from sphinx.util.typing import OptionSpec
@@ -369,6 +372,26 @@ class Include(BaseInclude, SphinxDirective):
     """
 
     def run(self) -> list[Node]:
+
+        # docutils offers no hook for preprocessing included rST text, so
+        # patch ``insert_input()`` on this state machine instance to emit
+        # "source-read" for the included content.
+        def _insert_input(input_lines: list[str] | StringList, source: str) -> None:
+            # docutils appends two end-of-inclusion marker lines, which must
+            # be kept but not passed to "source-read" handlers.
+            text = '\n'.join(input_lines[:-2])
+
+            docname = self.env.path2doc(os.path.normpath(source))
+            arg = [text]
+            self.env.app.events.emit('source-read', docname, arg)
+            text = arg[0]
+
+            include_lines = [*text.splitlines(), *input_lines[-2:]]
+            return StateMachine.insert_input(self.state_machine, include_lines, source)
+
+        if self.env.app.events.listeners.get('source-read'):
+            self.state_machine.insert_input = _insert_input  # type: ignore[method-assign]
+
         if self.arguments[0].startswith('<') and \
            self.arguments[0].endswith('>'):
             # docutils "standard" includes, do not do path processing
