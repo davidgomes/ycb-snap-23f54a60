@@ -273,7 +273,7 @@ class ModelFormBaseTest(TestCase):
         form = AwardForm()
         self.assertEqual(
             list(form.fields['character'].choices),
-            [(character.pk, 'user')],
+            [(character.pk, str(character))],
         )
         self.assertNotIn('checked', str(form['character']))
 
