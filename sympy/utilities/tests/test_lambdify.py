@@ -752,6 +752,14 @@ def test_issue_2790():
     assert lambdify(x, x + 1, dummify=False)(1) == 2
 
 
+def test_issue_12092():
+    f = implemented_function('f', lambda x: x**2)
+    g = implemented_function('g', lambda x: 2*x)
+    assert f(f(2)).evalf() == Float(16)
+    assert f(g(2)).evalf() == Float(16)
+    assert g(f(2)).evalf() == Float(8)
+
+
 def test_ITE():
     assert lambdify((x, y, z), ITE(x, y, z))(True, 5, 3) == 5
     assert lambdify((x, y, z), ITE(x, y, z))(False, 5, 3) == 3
