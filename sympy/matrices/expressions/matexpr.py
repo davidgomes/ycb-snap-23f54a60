@@ -476,10 +476,8 @@ class Identity(MatrixExpr):
         return self
 
     def _entry(self, i, j):
-        if i == j:
-            return S.One
-        else:
-            return S.Zero
+        from sympy import KroneckerDelta
+        return KroneckerDelta(i, j)
 
     def _eval_determinant(self):
         return S.One

@@ -84,6 +84,13 @@ def test_Identity():
     assert In.inverse() == In
     assert In.conjugate() == In
 
+    i, j = symbols('i j')
+    assert In[0, 0] == In[1, 1] == In[i, i] == 1
+    assert In[0, 1] == In[i, i + 1] == 0
+    assert In[i, j] == KroneckerDelta(i, j)
+    assert Sum(In[i, j], (i, 0, n-1), (j, 0, n-1)).subs(n, 3).doit() == 3
+    assert Sum(Sum(In[i, j], (i, 0, n-1)), (j, 0, n-1)).subs(n, 3).doit() == 3
+
 def test_Identity_doit():
     Inn = Identity(Add(n, n, evaluate=False))
     assert isinstance(Inn.rows, Add)
