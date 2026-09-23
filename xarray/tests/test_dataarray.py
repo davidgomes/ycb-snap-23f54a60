@@ -1096,6 +1096,16 @@ class TestDataArray:
         array = DataArray(np.ones(t.shape), dims=("time",), coords=(t,))
         assert_identical(array.loc[{"time": t[0]}], array[0])
 
+    def test_loc_dim_name_collision_with_sel_params(self):
+        da = xr.DataArray(
+            [[0, 0], [1, 1]],
+            dims=["dim1", "method"],
+            coords={"dim1": ["x", "y"], "method": ["a", "b"]},
+        )
+        np.testing.assert_array_equal(
+            da.loc[dict(dim1=["x", "y"], method=["a"])], [[0], [1]]
+        )
+
     def test_loc_assign(self):
         self.ds["x"] = ("x", np.array(list("abcdefghij")))
         da = self.ds["foo"]
