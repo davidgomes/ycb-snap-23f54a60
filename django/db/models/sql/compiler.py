@@ -722,6 +722,14 @@ class SQLCompiler:
 
             results = []
             for item in opts.ordering:
+                if hasattr(item, 'resolve_expression'):
+                    if not isinstance(item, OrderBy):
+                        item = item.asc()
+                    if descending:
+                        item = item.copy()
+                        item.reverse_ordering()
+                    results.append((item, False))
+                    continue
                 results.extend(self.find_ordering_name(item, opts, alias,
                                                        order, already_seen))
             return results
