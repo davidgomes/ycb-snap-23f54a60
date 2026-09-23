@@ -949,6 +949,9 @@ default: %(va)s
             ax.clear()
             self.delaxes(ax)  # Remove ax from self._axstack.
 
+        for artist in (*self.artists, *self.lines, *self.patches,
+                       *self.texts, *self.images, *self.legends):
+            artist.axes = artist.figure = None
         self.artists = []
         self.lines = []
         self.patches = []

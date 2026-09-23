@@ -8370,6 +8370,47 @@ def test_extent_units():
         im.set_extent([2, 12, date_first, date_last], clip=False)
 
 
+def test_cla_clears_children_axes_and_fig():
+    fig, ax = plt.subplots()
+    lines = ax.plot([], [], [], [])
+    img = ax.imshow([[1]])
+    for art in lines + [img]:
+        assert art.axes is ax
+        assert art.figure is fig
+    ax.clear()
+    for art in lines + [img]:
+        assert art.axes is None
+        assert art.figure is None
+
+
+def test_cla_and_clf_unset_deparented_artist_refs():
+    fig, ax = plt.subplots()
+    line, = ax.plot([1, 2], label="a")
+    legend = ax.legend()
+    assert line.axes is ax
+    assert line.figure is fig
+    assert legend.axes is ax
+    assert legend.figure is fig
+    ax.cla()
+    assert line.axes is None
+    assert line.figure is None
+    assert legend.axes is None
+    assert legend.figure is None
+
+    fig, ax = plt.subplots()
+    line, = ax.plot([1, 2])
+    fig.clf()
+    assert line.axes is None
+    assert line.figure is None
+
+    fig = plt.figure()
+    text = fig.text(0.5, 0.5, "hello")
+    assert text.figure is fig
+    fig.clf()
+    assert text.axes is None
+    assert text.figure is None
+
+
 def test_scatter_color_repr_error():
 
     def get_next_color():
