@@ -939,6 +939,24 @@ def test_inverted_limits():
     plt.close()
 
 
+@pytest.mark.parametrize('scale, limits', [
+    ('linear', (1000, 1)),
+    ('log', (1000, 1)),
+    ('logit', (0.9, 0.1)),
+])
+def test_inverted_limits_nonlinear_scale(scale, limits):
+    fig, ax = plt.subplots()
+    ax.set_xscale(scale)
+    ax.set_yscale(scale)
+    ax.set_xlim(*limits)
+    ax.set_ylim(*limits)
+    assert ax.get_xlim() == limits
+    assert ax.get_ylim() == limits
+    assert ax.xaxis_inverted()
+    assert ax.yaxis_inverted()
+    plt.close(fig)
+
+
 @image_comparison(baseline_images=['nonfinite_limits'])
 def test_nonfinite_limits():
     x = np.arange(0., np.e, 0.01)
