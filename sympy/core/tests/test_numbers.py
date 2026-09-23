@@ -1653,3 +1653,46 @@ def test_mod_inverse():
 
 def test_golden_ratio_rewrite_as_sqrt():
     assert GoldenRatio.rewrite(sqrt) == S.Half + sqrt(5)*S.Half
+
+
+def test_comparisons_with_unknown_type():
+    class Foo(object):
+        """
+        Class that is unaware of Basic, and relies on both classes returning
+        the NotImplemented singleton for equivalence to evaluate to False.
+
+        """
+
+    ni, nf, nr = Integer(3), Float(1.0), Rational(1, 3)
+    foo = Foo()
+
+    for n in ni, nf, nr, oo, -oo, zoo, nan:
+        assert n != foo
+        assert foo != n
+        assert not n == foo
+        assert not foo == n
+
+    from sympy.core.numbers import NumberSymbol
+
+    class Bar(object):
+        """
+        Class that considers itself equal to any instance of Number or
+        NumberSymbol and relies on sympy returning NotImplemented for the
+        reflected comparison.
+
+        """
+        def __eq__(self, other):
+            if isinstance(other, (Number, NumberSymbol)):
+                return True
+            return NotImplemented
+
+        def __ne__(self, other):
+            return not self == other
+
+    bar = Bar()
+
+    for n in ni, nf, nr, pi:
+        assert n == bar
+        assert bar == n
+        assert not n != bar
+        assert not bar != n

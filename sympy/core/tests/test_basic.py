@@ -219,3 +219,20 @@ def test_literal_evalf_is_number_is_zero_is_comparable():
     assert n.is_comparable is False
     assert n.n(2).is_comparable is False
     assert n.n(2).n(2).is_comparable
+
+
+def test_equality_with_unknown_type():
+    class Foo(object):
+        def __eq__(self, other):
+            if isinstance(other, Basic):
+                return True
+            return NotImplemented
+
+        def __ne__(self, other):
+            return not self == other
+
+    foo = Foo()
+    assert b1 == foo
+    assert foo == b1
+    assert not b1 != foo
+    assert not foo != b1
