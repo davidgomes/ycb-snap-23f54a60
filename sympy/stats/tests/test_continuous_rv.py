@@ -15,13 +15,14 @@ from sympy.stats import (P, E, where, density, variance, covariance, skewness,
 from sympy import (Symbol, Abs, exp, S, N, pi, simplify, Interval, erf, erfc,
                    Eq, log, lowergamma, Sum, symbols, sqrt, And, gamma, beta,
                    Piecewise, Integral, sin, cos, besseli, factorial, binomial,
-                   floor, expand_func, Rational, I)
+                   floor, expand_func, Rational, I, asin, uppergamma, diff)
 
 
 from sympy.stats.crv_types import NormalDistribution
 from sympy.stats.rv import ProductPSpace
 
 from sympy.utilities.pytest import raises, XFAIL, slow
+from sympy.utilities.randtest import verify_numerically as tn
 
 from sympy.core.compatibility import range
 
@@ -725,6 +726,51 @@ def test_precomputed_cdf():
         compdiff = cdf(X)(x) - simplify(X.pspace.density.compute_cdf()(x))
         compdiff = simplify(compdiff.rewrite(erfc))
         assert compdiff == 0
+
+def test_long_precomputed_cdf():
+    x = symbols("x", real=True, finite=True)
+    distribs = [
+            (Arcsin("A", -5, 9), -5, 9),
+            (Dagum("D", 4, 10, 3), 0, 10),
+            (Erlang("E", 14, 5), 0, 10),
+            (Frechet("F", 2, 6, -3), -3, 10),
+            (Gamma("G", 2, 7), 0, 10),
+            (GammaInverse("GI", 3, 5), 0, 10),
+            (Kumaraswamy("K", 6, 8), 0, 1),
+            (Laplace("LA", -5, 4), -15, 5),
+            (Logistic("L", -6, 7), -20, 10),
+            (Nakagami("N", 2, 7), 0, 10),
+            (StudentT("S", 4), -10, 10),
+            (UniformSum("US", 5), 0, 5),
+            ]
+    for distr, lo, hi in distribs:
+        for _ in range(5):
+            assert tn(diff(cdf(distr)(x), x), density(distr)(x), x,
+                      a=lo, b=0, c=hi, d=0)
+
+    n = Symbol("n", integer=True, positive=True)
+    US = UniformSum("US", n)
+    pdf01 = density(US)(x).subs(floor(x), 0).doit()   # pdf on (0, 1)
+    cdf01 = cdf(US, evaluate=False)(x).subs(floor(x), 0).doit()   # cdf on (0, 1)
+    assert tn(diff(cdf01, x).subs(n, 5), pdf01.subs(n, 5), x, a=0, b=0, c=1, d=0)
+
+def test_precomputed_cdf_values():
+    assert cdf(Arcsin("x", 0, 3))(1) == 2*asin(sqrt(3)/3)/pi
+    assert cdf(Dagum("x", S(1)/3, S(1)/5, 2))(3) == \
+        (1 + (S(3)/2)**(-S(1)/5))**(-S(1)/3)
+    assert cdf(Erlang("x", 1, 1))(1) == 1 - exp(-1)
+    assert cdf(Frechet("x", S(4)/3, 1, 2))(3) == exp(-1)
+    assert abs(N(cdf(Gamma("x", 0.1, 2))(3)) - 0.988655983362195) < 1e-12
+    assert cdf(GammaInverse("x", S(5)/7, 2))(3) == \
+        uppergamma(S(5)/7, S(2)/3)/gamma(S(5)/7)
+    assert cdf(Kumaraswamy("x", S(1)/123, 5))(S(1)/3) == \
+        1 - (1 - (S(1)/3)**(S(1)/123))**5
+    assert cdf(Laplace("x", 2, 3))(5) == 1 - exp(-1)/2
+    assert abs(cdf(Logistic("x", 1, 0.1))(2) - 1/(1 + exp(-10.0))) < 1e-12
+    assert cdf(Nakagami("x", S(7)/3, 1))(2) == \
+        lowergamma(S(7)/3, S(28)/3)/gamma(S(7)/3)
+    assert abs(N(cdf(StudentT("x", 10))(2)) - 0.963305982614630) < 1e-12
+    assert cdf(UniformSum("x", 5))(2) == S(9)/40
 
 def test_issue_13324():
     X = Uniform('X', 0, 1)
