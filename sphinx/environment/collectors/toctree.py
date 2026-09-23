@@ -204,6 +204,7 @@ class TocTreeCollector(EnvironmentCollector):
 
         rewrite_needed = []
 
+        generated_docnames = frozenset(env.domains['std'].initial_data['labels'].keys())
         assigned: Set[str] = set()
         old_fignumbers = env.toc_fignumbers
         env.toc_fignumbers = {}
@@ -256,7 +257,8 @@ class TocTreeCollector(EnvironmentCollector):
                         _walk_doctree(docname, subnode, secnum)
                 elif isinstance(subnode, addnodes.toctree):
                     for _title, subdocname in subnode['entries']:
-                        if url_re.match(subdocname) or subdocname == 'self':
+                        if (url_re.match(subdocname) or subdocname == 'self' or
+                                subdocname in generated_docnames):
                             # don't mess with those
                             continue
 

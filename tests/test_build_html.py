@@ -1780,3 +1780,15 @@ def test_theme_having_multiple_stylesheets(app):
 
     assert '<link rel="stylesheet" type="text/css" href="_static/mytheme.css" />' in content
     assert '<link rel="stylesheet" type="text/css" href="_static/extra.css" />' in content
+
+
+@pytest.mark.sphinx('html', testroot='toctree-index',
+                    confoverrides={'numfig': True})
+def test_toctree_index_generated(app, warning):
+    app.build()
+    assert 'nonexisting document' not in warning.getvalue()
+    assert 'duplicated entry' not in warning.getvalue()
+    content = (app.outdir / 'index.html').read_text(encoding='utf8')
+    assert 'href="genindex.html">Index</a>' in content
+    assert 'href="py-modindex.html">Module Index</a>' in content
+    assert 'href="search.html">Search Page</a>' in content
