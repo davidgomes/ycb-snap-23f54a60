@@ -1,4 +1,4 @@
-from sympy.core import symbols, Eq, pi, Catalan, Lambda, Dummy
+from sympy.core import symbols, Eq, pi, Catalan, Lambda, Dummy, S
 from sympy.core.compatibility import StringIO
 from sympy import erf, Integral, Symbol
 from sympy import Equality
@@ -54,6 +54,15 @@ def test_Routine_argument_order():
     expr = Integral(x*y*z, (x, 1, 2), (y, 1, 3))
     r = make_routine('test', Eq(a, expr), argument_sequence=[z, x, a, y])
     assert [ arg.name for arg in r.arguments ] == [z, x, a, y]
+
+    # Array arguments omitted from the expression must stay arrays.
+    xmat = MatrixSymbol('x', 2, 1)
+    r = make_routine('autofunc', 1.0, argument_sequence=(xmat,))
+    assert len(r.arguments) == 1
+    assert r.arguments[0].name == xmat
+    assert r.arguments[0].dimensions == [(S.Zero, 1), (S.Zero, 0)]
+    proto = C99CodeGen().get_prototype(r)
+    assert proto == 'double autofunc(double *x)'
 
 
 def test_empty_c_code():

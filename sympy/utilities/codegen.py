@@ -739,7 +739,15 @@ class CodeGen(object):
                 try:
                     new_args.append(name_arg_dict[symbol])
                 except KeyError:
-                    new_args.append(InputArgument(symbol))
+                    # Arguments that do not appear in the expression still
+                    # need array dimensions so the generated signature
+                    # matches the requested argument (e.g. double * vs double).
+                    if isinstance(symbol, (IndexedBase, MatrixSymbol)):
+                        dims = [(S.Zero, dim - 1) for dim in symbol.shape]
+                        metadata = {'dimensions': dims}
+                    else:
+                        metadata = {}
+                    new_args.append(InputArgument(symbol, **metadata))
             arg_list = new_args
 
         return Routine(name, arg_list, return_val, local_vars, global_vars)
