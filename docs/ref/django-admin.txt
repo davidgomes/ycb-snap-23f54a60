@@ -968,7 +968,8 @@ more robust change detection, and a reduction in power usage. Django supports
 When you start the server, and each time you change Python code while the
 server is running, the system check framework will check your entire Django
 project for some common errors (see the :djadmin:`check` command). If any
-errors are found, they will be printed to standard output.
+errors are found, they will be printed to standard output. You can use the
+:option:`--skip-checks` option to skip running system checks.
 
 You can run as many concurrent servers as you want, as long as they're on
 separate ports by executing ``django-admin runserver`` more than once.
@@ -1000,6 +1001,10 @@ have already been loaded into memory.
 
 Disables use of threading in the development server. The server is
 multithreaded by default.
+
+.. django-admin-option:: --skip-checks
+
+Skip system checks on startup.
 
 .. django-admin-option:: --ipv6, -6
 

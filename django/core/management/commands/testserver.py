@@ -50,5 +50,6 @@ class Command(BaseCommand):
             shutdown_message=shutdown_message,
             use_reloader=False,
             use_ipv6=options['use_ipv6'],
-            use_threading=use_threading
+            use_threading=use_threading,
+            skip_checks=False,
         )

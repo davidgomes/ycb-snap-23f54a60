@@ -1386,7 +1386,7 @@ class ManageTestserver(SimpleTestCase):
                 "\nServer stopped.\nNote that the test database, 'test_db', "
                 "has not been deleted. You can explore it on your own."
             ),
-            skip_checks=True,
+            skip_checks=False,
             traceback=False,
             use_ipv6=False,
             use_reloader=False,
