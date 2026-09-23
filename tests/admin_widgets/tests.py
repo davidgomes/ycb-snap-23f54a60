@@ -141,6 +141,19 @@ class AdminFormfieldForDBFieldTests(SimpleTestCase):
         )
         self.assertIsNone(ff.empty_label)
 
+    def test_radio_fields_foreignkey_formfield_overrides_empty_label(self):
+        class MyModelAdmin(admin.ModelAdmin):
+            radio_fields = {"parent": admin.VERTICAL}
+
+            def formfield_for_foreignkey(self, db_field, request, **kwargs):
+                if db_field.name == "parent":
+                    kwargs["empty_label"] = "Custom empty label"
+                return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+        ma = MyModelAdmin(Inventory, admin.site)
+        ff = ma.formfield_for_dbfield(Inventory._meta.get_field("parent"), request=None)
+        self.assertEqual(ff.empty_label, "Custom empty label")
+
     def test_many_to_many(self):
         self.assertFormfield(Band, "members", forms.SelectMultiple)
 
