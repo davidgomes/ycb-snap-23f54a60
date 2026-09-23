@@ -403,6 +403,15 @@ def test_determinant():
     assert M.det(method="berkowitz") == z**2 - x*y
 
 
+def test_issue_13835():
+    a = symbols('a')
+    M = lambda n: Matrix([[i + a*j for i in range(n)]
+                          for j in range(n)])
+    assert M(5).det() == 0
+    assert M(6).det() == 0
+    assert M(7).det() == 0
+
+
 def test_det_LU_decomposition():
 
     for M in [Matrix(), Matrix([[1]])]:
