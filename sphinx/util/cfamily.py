@@ -53,6 +53,20 @@ float_literal_re = re.compile(r'''(?x)
     | (0[xX][0-9a-fA-F]+\.([pP][+-]?[0-9a-fA-F]+)?)
     )
 ''')
+integers_literal_suffix_re = re.compile(r'''(?x)
+    # unsigned and/or (long) long, in any order, but at least one of them
+    (
+        ([uU]    ([lL]  |  (ll)  |  (LL))?)
+        |
+        (([lL]  |  (ll)  |  (LL))    [uU]?)
+    )\b
+    # the ending word boundary is important for distinguishing
+    # between suffixes and UDLs in C++
+''')
+float_literal_suffix_re = re.compile(r'[fFlL]\b')
+udl_identifier_re = re.compile(r'''(?x)
+    [a-zA-Z_][a-zA-Z0-9_]*\b   # note, no word boundary in the beginning
+''')
 char_literal_re = re.compile(r'''(?x)
     ((?:u8)|u|U|L)?
     '(
@@ -69,7 +83,7 @@ char_literal_re = re.compile(r'''(?x)
 
 
 def verify_description_mode(mode: str) -> None:
-    if mode not in ('lastIsName', 'noneIsName', 'markType', 'markName', 'param'):
+    if mode not in ('lastIsName', 'noneIsName', 'markType', 'markName', 'param', 'udl'):
         raise Exception("Description mode '%s' is invalid." % mode)
 
 

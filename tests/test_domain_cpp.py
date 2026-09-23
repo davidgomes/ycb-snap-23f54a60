@@ -176,7 +176,26 @@ def test_expressions():
         exprCheck(p + "'\\U0001f34c'", t + "127820")
         exprCheck(p + "'\\U0001F34C'", t + "127820")
 
-    # TODO: user-defined lit
+    # user-defined literals
+    for i in ints:
+        exprCheck(i + '_udl', 'clL_Zli4_udlEL' + i + 'EE')
+        exprCheck(i + 'uludl', 'clL_Zli5uludlEL' + i + 'EE')
+    for f in ['5e42', '5e+42', '5e-42',
+              '5.', '5.e42', '5.e+42', '5.e-42',
+              '.5', '.5e42', '.5e+42', '.5e-42',
+              '5.0', '5.0e42', '5.0e+42', '5.0e-42']:
+        exprCheck(f + '_udl', 'clL_Zli4_udlEL' + f + 'EE')
+        exprCheck(f + 's', 'clL_Zli1sEL' + f + 'EE')
+    for f in ['ApF', 'Ap+F', 'Ap-F',
+              'A.', 'A.pF', 'A.p+F', 'A.p-F',
+              '.A', '.ApF', '.Ap+F', '.Ap-F',
+              'A.B', 'A.BpF', 'A.Bp+F', 'A.Bp-F']:
+        exprCheck('0x' + f + '_udl', 'clL_Zli4_udlEL0x' + f + 'EE')
+        exprCheck('0x' + f + 's', 'clL_Zli1sEL0x' + f + 'EE')
+    exprCheck('"abc\\"cba"_udl', 'clL_Zli4_udlELA8_KcEE')
+    exprCheck("'a'_udl", 'clL_Zli4_udlEc97E')
+    exprCheck('6.62607015e-34q_J', 'clL_Zli3q_JEL6.62607015e-34EE')
+
     exprCheck('(... + Ns)', '(... + Ns)', id4='flpl2Ns')
     exprCheck('(Ns + ...)', '(Ns + ...)', id4='frpl2Ns')
     exprCheck('(Ns + ... + 0)', '(Ns + ... + 0)', id4='fLpl2NsL0E')

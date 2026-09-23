@@ -36,6 +36,7 @@ Features added
   :confval:`suppress_warnings`
 * C, added scope control directives, :rst:dir:`c:namespace`,
   :rst:dir:`c:namespace-push`, and :rst:dir:`c:namespace-pop`.
+* #7568: C++, added support for user-defined literals.
 * #2044: autodoc: Suppress default value for instance attributes
 * #7473: autodoc: consider a member public if docstring contains
   ``:meta public:`` in info-field-list
