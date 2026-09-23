@@ -5,6 +5,7 @@ The problem was that we weren't handling keyword-only arguments annotations,
 which means we were never processing them.
 """
 
+import abc
 import re
 import typing
 from collections import Counter as CollectionCounter
@@ -83,3 +84,6 @@ def unused_reassigned_import(counter):
     # type: (CollectionCounter) -> int
     print(counter)
     return 42
+
+
+ABC = None  # type: abc.ABC

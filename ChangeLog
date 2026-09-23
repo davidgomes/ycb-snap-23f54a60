@@ -9,6 +9,11 @@ Release date: TBA
 ..
   Put new features and bugfixes here and also in 'doc/whatsnew/2.9.rst'
 
+* Fix false-positive ``unused-import`` for a module used only in an attribute
+  access in a type comment, e.g. ``# type: abc.ABC``.
+
+  Closes #4603
+
 * Add type annotations to pyreverse dot files
 
   Closes #1548
