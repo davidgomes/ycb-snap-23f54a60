@@ -41,6 +41,9 @@ def test_point():
     assert Point.distance(p3, p4) == sqrt(2)
     assert Point.distance(p1, p1) == 0
     assert Point.distance(p3, p2) == sqrt(p2.x**2 + p2.y**2)
+    assert Point(2, 0).distance(Point(1, 0, 2)) == sqrt(5)
+    assert Point(1, 0, 2).distance(Point(2, 0)) == sqrt(5)
+    assert Point(2, 0).distance((1, 0, 2)) == sqrt(5)
 
     assert Point.taxicab_distance(p4, p3) == 2
 
