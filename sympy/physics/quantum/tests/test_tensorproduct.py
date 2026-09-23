@@ -49,6 +49,23 @@ def test_tensor_product_simp():
     assert tensor_product_simp(TP(A, B)*TP(B, C)) == TP(A*B, B*C)
 
 
+def test_tensor_product_power():
+    # Powers of identical tensor products collapse to a Pow, which both
+    # tensor_product_simp and expand(tensorproduct=True) must evaluate.
+    from sympy.physics.paulialgebra import Pauli
+
+    t1 = TP(1, 1)*TP(1, 1)
+    assert tensor_product_simp(t1) == TP(1, 1)
+    assert t1.expand(tensorproduct=True) == TP(1, 1)
+
+    t2 = TP(1, Pauli(3))*TP(1, Pauli(3))
+    assert tensor_product_simp(t2) == TP(1, 1)
+    assert t2.expand(tensorproduct=True) == TP(1, 1)
+
+    assert tensor_product_simp(TP(A, B)**2) == TP(A**2, B**2)
+    assert (TP(A, B)**2).expand(tensorproduct=True) == TP(A**2, B**2)
+
+
 def test_issue_5923():
     # most of the issue regarding sympification of args has been handled
     # and is tested internally by the use of args_cnc through the quantum

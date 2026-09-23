@@ -350,8 +350,9 @@ def tensor_product_simp(e, **hints):
 
     In general this will try to pull expressions inside of ``TensorProducts``.
     It currently only works for relatively simple cases where the products have
-    only scalars, raw ``TensorProducts``, not ``Add``, ``Pow``, ``Commutators``
-    of ``TensorProducts``. It is best to see what it does by showing examples.
+    only scalars, raw ``TensorProducts``, not ``Add``, ``Commutators``
+    of ``TensorProducts``. Positive integer powers of a ``TensorProduct`` are
+    evaluated factor-wise. It is best to see what it does by showing examples.
 
     Examples
     ========
@@ -378,10 +379,21 @@ def tensor_product_simp(e, **hints):
     >>> tensor_product_simp(e**2)
     (A*C)x(B*D)**2
 
+    A power whose base is itself a ``TensorProduct`` is expanded into each
+    factor::
+
+    >>> tensor_product_simp(TensorProduct(A, B)**2)
+    (A**2)x(B**2)
+
     """
     if isinstance(e, Add):
         return Add(*[tensor_product_simp(arg) for arg in e.args])
     elif isinstance(e, Pow):
+        if (isinstance(e.base, TensorProduct) and
+                e.exp.is_Integer and e.exp.is_positive):
+            # (A x B)**n = A**n x B**n for positive integers n
+            return tensor_product_simp(
+                TensorProduct(*[arg**e.exp for arg in e.base.args]))
         return tensor_product_simp(e.base) ** e.exp
     elif isinstance(e, Mul):
         return tensor_product_simp_Mul(e)
