@@ -1,0 +1,1 @@
+``--pdb`` no longer calls ``unittest.TestCase.tearDown`` for tests skipped with a class-level ``unittest.skip``.

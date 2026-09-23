@@ -316,7 +316,11 @@ class TestCaseFunction(Function):
             # Arguably we could always postpone tearDown(), but this changes the moment where the
             # TestCase instance interacts with the results object, so better to only do it
             # when absolutely needed.
-            if self.config.getoption("usepdb") and not _is_skipped(self.obj):
+            # Skip is stored on the test method and/or the TestCase class.
+            # Postponing tearDown for a skipped item would invoke it later even
+            # though unittest itself never calls tearDown for skipped tests.
+            skipped = _is_skipped(self.obj) or _is_skipped(self._testcase)
+            if self.config.getoption("usepdb") and not skipped:
                 self._explicit_tearDown = self._testcase.tearDown
                 setattr(self._testcase, "tearDown", lambda *args: None)
 
