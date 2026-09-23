@@ -377,6 +377,45 @@ def test_twinx_cla():
 
 
 @pytest.mark.parametrize('twin', ('x', 'y'))
+def test_twin_units(twin):
+    axis_name = f'{twin}axis'
+    twin_func = f'twin{twin}'
+
+    a = ['0', '1']
+    b = ['a', 'b']
+
+    fig = Figure()
+    ax1 = fig.subplots()
+    ax1.plot(a, b)
+    assert getattr(ax1, axis_name).units is not None
+    ax2 = getattr(ax1, twin_func)()
+    assert getattr(ax2, axis_name).units is not None
+    assert getattr(ax2, axis_name).units is getattr(ax1, axis_name).units
+
+
+def test_twinx_stackplot_datalim():
+    # Categorical stackplot sets x-axis units.  Plotting on a later twinx
+    # must not replace ax1's y data limits with ±inf (gh-26194).
+    df1_index = ['16 May', '17 May']
+    df1_values = [-22.717708333333402, 26.584999999999937]
+    df2_values = [-0.08501399999999998, -2.9833019999999966]
+
+    fig = Figure()
+    ax1 = fig.subplots()
+    ax1.stackplot(df1_index, df1_values)
+    y_before = ax1.dataLim.intervaly.copy()
+
+    ax2 = ax1.twinx()
+    assert_array_almost_equal(ax1.dataLim.intervaly, y_before)
+    assert ax2.xaxis.units is ax1.xaxis.units
+
+    ax2.plot(df1_index, df2_values)
+    assert_array_almost_equal(ax1.dataLim.intervaly, y_before)
+    assert np.all(np.isfinite(ax1.dataLim.intervaly))
+    assert np.all(np.isfinite(ax2.dataLim.intervaly))
+
+
+@pytest.mark.parametrize('twin', ('x', 'y'))
 @check_figures_equal(extensions=['png'], tol=0.19)
 def test_twin_logscale(fig_test, fig_ref, twin):
     twin_func = f'twin{twin}'  # test twinx or twiny
