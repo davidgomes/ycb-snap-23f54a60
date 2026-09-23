@@ -1158,3 +1158,50 @@ class OptimizerTests(SimpleTestCase):
                 ),
             ]
         )
+
+    def test_add_remove_index(self):
+        self.assertOptimizesTo(
+            [
+                migrations.AddIndex(
+                    "Pony",
+                    models.Index(
+                        fields=["weight", "pink"], name="idx_pony_weight_pink"
+                    ),
+                ),
+                migrations.RemoveIndex("Pony", "idx_pony_weight_pink"),
+            ],
+            [],
+        )
+        self.assertDoesNotOptimize(
+            [
+                migrations.AddIndex(
+                    "Pony",
+                    models.Index(
+                        fields=["weight", "pink"], name="idx_pony_weight_pink"
+                    ),
+                ),
+                migrations.RemoveIndex("Pony", "other_idx_name"),
+            ],
+        )
+        self.assertDoesNotOptimize(
+            [
+                migrations.AddIndex(
+                    "Pony",
+                    models.Index(
+                        fields=["weight", "pink"], name="idx_pony_weight_pink"
+                    ),
+                ),
+                migrations.RemoveIndex("Rider", "idx_pony_weight_pink"),
+            ],
+        )
+        self.assertDoesNotOptimize(
+            [
+                migrations.RemoveIndex("Pony", "idx_pony_weight_pink"),
+                migrations.AddIndex(
+                    "Pony",
+                    models.Index(
+                        fields=["weight", "pink"], name="idx_pony_weight_pink"
+                    ),
+                ),
+            ],
+        )
