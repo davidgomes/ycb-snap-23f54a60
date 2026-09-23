@@ -4,6 +4,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.test import SimpleTestCase, TestCase
+from django.test.utils import isolate_apps
 from django.utils.functional import lazy
 
 from .models import (
@@ -101,6 +102,47 @@ class BasicFieldTests(SimpleTestCase):
         """deconstruct() uses __qualname__ for nested class support."""
         name, path, args, kwargs = Nested.Field().deconstruct()
         self.assertEqual(path, 'model_fields.tests.Nested.Field')
+
+    @isolate_apps('model_fields')
+    def test_abstract_inherited_fields(self):
+        """Field instances from abstract models are not equal."""
+        class AbstractModel(models.Model):
+            field = models.IntegerField()
+
+            class Meta:
+                abstract = True
+
+        class InheritAbstractModel1(AbstractModel):
+            pass
+
+        class InheritAbstractModel2(AbstractModel):
+            pass
+
+        abstract_model_field = AbstractModel._meta.get_field('field')
+        inherit1_model_field = InheritAbstractModel1._meta.get_field('field')
+        inherit2_model_field = InheritAbstractModel2._meta.get_field('field')
+
+        self.assertNotEqual(abstract_model_field, inherit1_model_field)
+        self.assertNotEqual(abstract_model_field, inherit2_model_field)
+        self.assertNotEqual(inherit1_model_field, inherit2_model_field)
+
+        self.assertLess(abstract_model_field, inherit1_model_field)
+        self.assertLess(abstract_model_field, inherit2_model_field)
+        self.assertLess(inherit1_model_field, inherit2_model_field)
+
+        self.assertNotEqual(hash(abstract_model_field), hash(inherit1_model_field))
+        self.assertNotEqual(hash(abstract_model_field), hash(inherit2_model_field))
+        self.assertNotEqual(hash(inherit1_model_field), hash(inherit2_model_field))
+        self.assertEqual(len({inherit1_model_field, inherit2_model_field}), 2)
+
+    def test_field_ordering_no_model(self):
+        """Fields without a model are ordered before fields with a model."""
+        field = Foo._meta.get_field('a')
+        unbound_field = field.clone()
+        unbound_field.creation_counter = field.creation_counter
+        self.assertNotEqual(unbound_field, field)
+        self.assertLess(unbound_field, field)
+        self.assertGreater(field, unbound_field)
 
 
 class ChoicesTests(SimpleTestCase):
