@@ -9,6 +9,7 @@
     :license: BSD, see LICENSE for details.
 """
 
+import functools
 import sys
 from collections import namedtuple
 from unittest import TestCase, mock
@@ -48,6 +49,11 @@ class SampleClass:
         pass
 
     def __special_undoc__(self):
+        pass
+
+    @functools.lru_cache()
+    def __decorated_func__(self):
+        """doc"""
         pass
 
 
@@ -169,6 +175,14 @@ class SkipMemberTest(TestCase):
         self.assertSkip('class', '__special_undoc__',
                         SampleClass.__special_undoc__, True,
                         'napoleon_include_special_with_doc')
+
+    def test_class_decorated_doc(self):
+        app = mock.Mock()
+        app.config = Config()
+        app.config.napoleon_include_special_with_doc = True
+        self.assertIs(False, _skip_member(app, 'class', '__decorated_func__',
+                                          SampleClass.__decorated_func__, True,
+                                          mock.Mock()))
 
     def test_exception_private_doc(self):
         self.assertSkip('exception', '_private_doc',
