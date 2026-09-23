@@ -492,6 +492,15 @@ class VariableSubclassobjects:
                         source_ndarray(w.values))
         assert_identical(v, copy(v))
 
+    @pytest.mark.parametrize('deep', [True, False])
+    @pytest.mark.parametrize('dtype', ['<U3', 'S3'])
+    def test_copy_preserves_string_dtype(self, deep, dtype):
+        v = self.cls('x', np.array(['foo', 'bar'], dtype=dtype))
+        w = v.copy(deep=deep)
+        assert w.dtype == v.dtype
+        assert deepcopy(v).dtype == v.dtype
+        assert copy(v).dtype == v.dtype
+
     def test_copy_index(self):
         midx = pd.MultiIndex.from_product([['a', 'b'], [1, 2], [-1, -2]],
                                           names=('one', 'two', 'three'))
