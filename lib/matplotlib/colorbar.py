@@ -432,10 +432,13 @@ class Colorbar:
             color=mpl.rcParams['axes.facecolor'], linewidth=0.01, zorder=-1)
         ax.add_artist(self._patch)
 
+        # clip_on=False: extension-base dividers lie on the Axes edge. With
+        # clipping they are cut in half (and can vanish entirely at low dpi).
         self.dividers = collections.LineCollection(
             [],
             colors=[mpl.rcParams['axes.edgecolor']],
-            linewidths=[0.5 * mpl.rcParams['axes.linewidth']])
+            linewidths=[0.5 * mpl.rcParams['axes.linewidth']],
+            clip_on=False)
         self.ax.add_collection(self.dividers)
 
         self._locator = None
@@ -651,8 +654,38 @@ class Colorbar:
             if not self.drawedges:
                 if len(self._y) >= self.n_rasterize:
                     self.solids.set_rasterized(True)
-        self.dividers.set_segments(
-            np.dstack([X, Y])[1:-1] if self.drawedges else [])
+        self._update_dividers()
+
+    def _update_dividers(self):
+        """
+        Set the segments of the color boundary lines.
+
+        Internal boundaries are drawn only where they fall strictly inside the
+        view limits.  The ends of the bar coincide with the frame, so they are
+        omitted — except when that end is extended.  The extension frame is
+        the tip of the triangle, and the view limit is the base, which still
+        needs a divider.
+        """
+        if not self.drawedges:
+            self.dividers.set_segments([])
+            return
+        if self.orientation == 'vertical':
+            lims = self.ax.get_ylim()
+        else:
+            lims = self.ax.get_xlim()
+        # Inverted axes report a decreasing view interval.
+        lo, hi = sorted(lims)
+        y = self._y[(lo < self._y) & (self._y < hi)]
+        if self._extend_lower():
+            y = np.insert(y, 0, lims[0])
+        if self._extend_upper():
+            y = np.append(y, lims[1])
+        X, Y = np.meshgrid([0, 1], y)
+        if self.orientation == 'vertical':
+            segments = np.dstack([X, Y])
+        else:
+            segments = np.dstack([Y, X])
+        self.dividers.set_segments(segments)
 
     def _add_solids_patches(self, X, Y, C, mappable):
         hatches = mappable.hatches * len(C)  # Have enough hatches.
@@ -756,7 +789,8 @@ class Colorbar:
                 zorder=np.nextafter(self.ax.patch.zorder, -np.inf))
             self.ax.add_patch(patch)
             self._extend_patches.append(patch)
-        return
+
+        self._update_dividers()
 
     def add_lines(self, *args, **kwargs):
         """
