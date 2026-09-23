@@ -23,6 +23,8 @@ Incompatible changes
 * #9999: LaTeX: separate terms from their definitions by a CR (refs: #9985)
 * #10062: Change the default language to ``'en'`` if any language is not set in
   ``conf.py``
+* #10251: literalinclude: ``:dedent:`` is now applied before ``:prepend:`` and
+  ``:append:``, so the prepended and appended text is no longer dedented
 
 Deprecated
 ----------
