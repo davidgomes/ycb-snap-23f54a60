@@ -240,6 +240,8 @@ def test_decipher_kid_rsa():
 
 def test_encode_morse():
     assert encode_morse('ABC') == '.-|-...|-.-.'
+    assert encode_morse('1') == '.----'
+    assert decode_morse('.----') == '1'
     assert encode_morse('SMS ') == '...|--|...||'
     assert encode_morse('SMS\n') == '...|--|...||'
     assert encode_morse('') == ''
