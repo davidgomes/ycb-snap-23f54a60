@@ -1337,8 +1337,9 @@ class Query(BaseExpression):
         for child in q_object.children:
             if isinstance(child, Node):
                 child_clause, needed_inner = self._add_q(
-                    child, used_aliases, branch_negated,
-                    current_negated, allow_joins, split_subq)
+                    child, used_aliases, branch_negated, current_negated,
+                    allow_joins, split_subq, simple_col,
+                )
                 joinpromoter.add_votes(needed_inner)
             else:
                 child_clause, needed_inner = self.build_filter(

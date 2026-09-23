@@ -7,7 +7,7 @@ from django.db.models.fields.related_lookups import RelatedIsNull
 from django.db.models.functions import Lower
 from django.db.models.lookups import Exact, GreaterThan, IsNull, LessThan
 from django.db.models.sql.query import Query
-from django.db.models.sql.where import OR
+from django.db.models.sql.where import AND, OR
 from django.test import SimpleTestCase
 from django.test.utils import register_lookup
 
@@ -35,6 +35,31 @@ class TestQuery(SimpleTestCase):
 
         lookup = where.children[1]
         self.assertIsInstance(lookup, LessThan)
+        self.assertEqual(lookup.rhs, 0)
+        self.assertEqual(lookup.lhs.target, Author._meta.get_field('num'))
+
+    def test_complex_query_combined_or_and(self):
+        """Nested AND under OR must keep unqualified columns (ticket #31300)."""
+        query = Query(Author)
+        where = query.build_where(Q(num__gt=2, name='test') | Q(num__lt=0))
+        self.assertEqual(where.connector, OR)
+
+        and_clause = where.children[0]
+        self.assertEqual(and_clause.connector, AND)
+        lookup = and_clause.children[0]
+        self.assertIsInstance(lookup, Exact)
+        self.assertIsInstance(lookup.lhs, SimpleCol)
+        self.assertEqual(lookup.rhs, 'test')
+        self.assertEqual(lookup.lhs.target, Author._meta.get_field('name'))
+        lookup = and_clause.children[1]
+        self.assertIsInstance(lookup, GreaterThan)
+        self.assertIsInstance(lookup.lhs, SimpleCol)
+        self.assertEqual(lookup.rhs, 2)
+        self.assertEqual(lookup.lhs.target, Author._meta.get_field('num'))
+
+        lookup = where.children[1]
+        self.assertIsInstance(lookup, LessThan)
+        self.assertIsInstance(lookup.lhs, SimpleCol)
         self.assertEqual(lookup.rhs, 0)
         self.assertEqual(lookup.lhs.target, Author._meta.get_field('num'))
 
