@@ -16,6 +16,7 @@ import pytest
 from babel.messages import pofile, mofile
 from docutils import nodes
 
+from sphinx import locale
 from sphinx.testing.util import (
     path, etree_parse, strip_escseq,
     assert_re_search, assert_not_re_search, assert_startswith, assert_node
@@ -1285,6 +1286,18 @@ def test_image_glob_intl_using_figure_language_filename(app):
     assert_node(doctree[0][3][0], nodes.image, uri='subdir/svgimg.*',
                 candidates={'application/pdf': 'subdir/svgimg.pdf',
                             'image/svg+xml': 'subdir/svgimg.svg'})
+
+
+@pytest.mark.sphinx('html', testroot='locale-override')
+def test_customize_system_message(app):
+    try:
+        app.build()
+
+        content = (app.outdir / 'index.html').read_text()
+        assert 'Foobar 1' in content
+        assert 'Whatever 1' in content
+    finally:
+        locale.translators.clear()
 
 
 def getwarning(warnings):
