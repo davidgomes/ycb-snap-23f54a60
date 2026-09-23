@@ -57,6 +57,8 @@ New Features
   now accept a ``dim_order`` parameter allowing to specify the resulting dataframe's
   dimensions order (:issue:`4331`, :pull:`4333`).
   By `Thomas Zilio <https://github.com/thomas-z>`_.
+- Support multiple dimensions (or ``...``) in ``sum`` and ``prod`` when
+  ``min_count`` is given (:issue:`4351`, :issue:`4352`, :pull:`4356`).
 
 
 Bug fixes
