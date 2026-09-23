@@ -106,6 +106,7 @@ def is_system_TypeVar(typ: Any) -> bool:
 
 def restify(cls: Optional[Type]) -> str:
     """Convert python class to a reST reference."""
+    from sphinx.ext.autodoc.mock import ismock, ismockmodule  # lazy loading
     from sphinx.util import inspect  # lazy loading
 
     try:
@@ -115,6 +116,10 @@ def restify(cls: Optional[Type]) -> str:
             return '...'
         elif isinstance(cls, str):
             return cls
+        elif ismockmodule(cls):
+            return ':py:class:`%s`' % cls.__name__
+        elif ismock(cls):
+            return ':py:class:`%s`' % cls.__display_name__
         elif cls in INVALID_BUILTIN_CLASSES:
             return ':py:class:`%s`' % INVALID_BUILTIN_CLASSES[cls]
         elif inspect.isNewType(cls):
