@@ -25,7 +25,7 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-docinfo_re = re.compile(':\\w+:.*?')
+docinfo_re = re.compile(':\\w+:(?:\\s|$)')
 symbols_re = re.compile(r'([!-\-/:-@\[-`{-~])')  # symbols without dot(0x2e)
 SECTIONING_CHARS = ['=', '-', '~']
 
