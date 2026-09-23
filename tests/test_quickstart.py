@@ -250,3 +250,13 @@ def test_extensions(tempdir):
     ns = {}
     exec(conffile.read_text(), ns)
     assert ns['extensions'] == ['foo', 'bar', 'baz']
+
+
+def test_exits_when_existing_confpy(tempdir):
+    (tempdir / 'conf.py').write_text('')
+    qs.term_input = mock_input({
+        'Please enter a new root path (or just Enter to exit)': ''
+    })
+    d = {'path': tempdir}
+    with pytest.raises(SystemExit):
+        qs.ask_user(d)

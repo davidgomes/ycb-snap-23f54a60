@@ -76,6 +76,7 @@ Bugs fixed
   whitespace (ex. ``Dict[str, str]``)
 * #8945: when transforming typed fields, call the specified role instead of
   making an single xref. For C and C++, use the ``expr`` role for typed fields.
+* #9319: quickstart: Make sphinx-quickstart exit when conf.py already exists
 
 Testing
 --------
