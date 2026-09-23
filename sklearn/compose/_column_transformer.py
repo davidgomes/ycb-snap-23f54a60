@@ -303,6 +303,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         for trans in transformers:
             _safe_set_output(trans, transform=transform)
 
+        if self.remainder not in {"passthrough", "drop"}:
+            _safe_set_output(self.remainder, transform=transform)
+
         return self
 
     def get_params(self, deep=True):
