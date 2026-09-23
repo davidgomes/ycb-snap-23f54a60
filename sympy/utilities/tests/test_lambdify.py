@@ -1570,3 +1570,12 @@ def test_lambdify_cse():
 def test_deprecated_set():
     with warns_deprecated_sympy():
         lambdify({x, y}, x + y)
+
+
+def test_issue_23256():
+    f = lambdify([], (1,))
+    assert f() == (1,)
+    assert type(f()) is tuple
+    assert lambdify(x, (x,))(2) == (2,)
+    assert lambdify(x, [(x,)])(2) == [(2,)]
+    assert lambdify([], ())() == ()
