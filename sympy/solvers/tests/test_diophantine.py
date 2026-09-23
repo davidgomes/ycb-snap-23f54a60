@@ -922,6 +922,13 @@ def test_issue_9538():
     raises(TypeError, lambda: diophantine(eq, syms=set([y,x])))
 
 
+def test_issue_18186():
+    eq = x**4 + y**4 - 2**4 - 3**4
+    soln = set(signed_permutations((2, 3)))
+    assert diophantine(eq, syms=(x, y), permute=True) == soln
+    assert diophantine(eq, syms=(y, x), permute=True) == soln
+
+
 def test_ternary_quadratic():
     # solution with 3 parameters
     s = diophantine(2*x**2 + y**2 - 2*z**2)
