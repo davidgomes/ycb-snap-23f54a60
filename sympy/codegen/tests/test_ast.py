@@ -2,7 +2,7 @@ import math
 from sympy.core.containers import Tuple
 from sympy.core.numbers import nan, oo, Float, Integer
 from sympy.core.relational import Lt
-from sympy.core.symbol import symbols, Symbol
+from sympy.core.symbol import symbols, Symbol, Str
 from sympy.functions.elementary.trigonometric import sin
 from sympy.matrices.dense import Matrix
 from sympy.matrices.expressions.matexpr import MatrixSymbol
@@ -267,6 +267,8 @@ def test_String():
     assert st == String('foobar')
     assert st.text == 'foobar'
     assert st.func(**st.kwargs()) == st
+    assert st.func(*st.args) == st
+    assert st.args == (Str('foobar'),)
 
 
     class Signifier(String):

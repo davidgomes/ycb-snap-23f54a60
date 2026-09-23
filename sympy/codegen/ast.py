@@ -132,6 +132,7 @@ from collections import defaultdict
 
 from sympy.core.relational import (Ge, Gt, Le, Lt)
 from sympy.core import Symbol, Tuple, Dummy
+from sympy.core.symbol import Str
 from sympy.core.basic import Basic
 from sympy.core.expr import Expr
 from sympy.core.numbers import Float, Integer, oo
@@ -895,14 +896,23 @@ class String(Token):
 
     """
     __slots__ = ('text',)
-    not_in_args = ['text']
     is_Atom = True
 
-    @classmethod
-    def _construct_text(cls, text):
-        if not isinstance(text, str):
+    def __new__(cls, text):
+        # ``text`` stays a Python ``str`` (``.text``). ``args`` holds a
+        # ``Str`` so ``expr.func(*expr.args) == expr`` like other Basics.
+        if isinstance(text, cls):
+            return text
+        if isinstance(text, Str):
+            arg = text
+            text = text.name
+        elif isinstance(text, str):
+            arg = Str(text)
+        else:
             raise TypeError("Argument text is not a string type.")
-        return text
+        obj = CodegenAST.__new__(cls, arg)
+        obj.text = text
+        return obj
 
     def _sympystr(self, printer, *args, **kwargs):
         return self.text
