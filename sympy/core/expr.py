@@ -193,6 +193,10 @@ class Expr(Basic, EvalfMixin):
     @_sympifyit('other', NotImplemented)
     @call_highest_priority('__rmul__')
     def __mul__(self, other):
+        # A Point is not an Expr. Building a Mul here would skip
+        # Point.__rmul__, so ``2*Point(1, 1)`` would not scale the point.
+        if getattr(other, 'is_Point', False):
+            return NotImplemented
         return Mul(self, other)
 
     @_sympifyit('other', NotImplemented)
