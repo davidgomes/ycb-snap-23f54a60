@@ -2156,7 +2156,12 @@ class SpanSelector(_SelectorWidget):
             self.artists.append(self._rect)
 
     def _setup_edge_handle(self, props):
-        self._edge_handles = ToolLineHandles(self.ax, self.extents,
+        # The span rectangle is created at (0, 0), so ``extents`` starts at
+        # (0, 0). Building the handles with ``axvline``/``axhline`` at 0 would
+        # autoscale the view to include 0. The handles are invisible until a
+        # span is drawn, so start them off-limits (NaN) and move them when
+        # ``extents`` is set.
+        self._edge_handles = ToolLineHandles(self.ax, [np.nan, np.nan],
                                              direction=self.direction,
                                              line_props=props,
                                              useblit=self.useblit)

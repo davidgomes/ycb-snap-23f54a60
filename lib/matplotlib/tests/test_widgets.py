@@ -259,6 +259,24 @@ def test_span_selector_drag(drag_from_anywhere):
     assert tool.extents == (175, 185)
 
 
+def test_span_selector_interactive_does_not_expand_limits():
+    # Creating an interactive SpanSelector must not pull the view to include 0
+    # (the rectangle is initially at x=0, which used to autoscale the axes).
+    fig, ax = plt.subplots()
+    ax.plot([10, 20], [10, 20])
+    xlim = ax.get_xlim()
+    ylim = ax.get_ylim()
+    widgets.SpanSelector(ax, lambda vmin, vmax: None, 'horizontal',
+                         interactive=True)
+    assert ax.get_xlim() == xlim
+    assert ax.get_ylim() == ylim
+    widgets.SpanSelector(ax, lambda vmin, vmax: None, 'vertical',
+                         interactive=True)
+    assert ax.get_xlim() == xlim
+    assert ax.get_ylim() == ylim
+    plt.close(fig)
+
+
 def test_span_selector_direction():
     ax = get_ax()
 
