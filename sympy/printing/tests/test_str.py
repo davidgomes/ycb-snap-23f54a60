@@ -491,6 +491,8 @@ def test_Rational():
 
     assert sstr(Rational(2, 3), sympy_integers=True) == "S(2)/3"
     assert sstr(Symbol("x")**Rational(2, 3), sympy_integers=True) == "x**(S(2)/3)"
+    assert sstr(Eq(Symbol("x"), Rational(1, 2)), sympy_integers=True) == "Eq(x, S(1)/2)"
+    assert sstr(Limit(Symbol("x"), Symbol("x"), Rational(1, 2)), sympy_integers=True) == "Limit(x, x, S(1)/2)"
 
 
 def test_Float():
