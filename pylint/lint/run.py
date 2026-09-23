@@ -52,12 +52,15 @@ def _query_cpu() -> int | None:
         with open("/sys/fs/cgroup/cpu/cpu.cfs_period_us", encoding="utf-8") as file:
             cpu_period = int(file.read().rstrip())
         # Divide quota by period and you should get num of allotted CPU to the container, rounded down if fractional.
-        avail_cpu = int(cpu_quota / cpu_period)
+        # A fractional allotment must still yield at least one process.
+        avail_cpu = int(cpu_quota / cpu_period) or 1
     elif Path("/sys/fs/cgroup/cpu/cpu.shares").is_file():
         with open("/sys/fs/cgroup/cpu/cpu.shares", encoding="utf-8") as file:
             cpu_shares = int(file.read().rstrip())
         # For AWS, gives correct value * 1024.
-        avail_cpu = int(cpu_shares / 1024)
+        # Kubernetes may report a share below 1024 (for example 2), which would
+        # otherwise truncate to 0 and crash multiprocessing.Pool.
+        avail_cpu = int(cpu_shares / 1024) or 1
     return avail_cpu
 
 
