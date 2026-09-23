@@ -171,6 +171,20 @@ def test_inheritance_diagram_svg_html(app, status, warning):
     assert re.search(pattern, content, re.M)
 
 
+@pytest.mark.sphinx('html', testroot='ext-inheritance_diagram-nested')
+@pytest.mark.usefixtures('if_graphviz_found')
+def test_inheritance_diagram_svg_html_nested(app, status, warning):
+    app.builder.build_all()
+
+    svgs = list((app.outdir / '_images').glob('inheritance-*.svg'))
+    assert len(svgs) == 1
+    svg = svgs[0].read_text(encoding='utf8')
+
+    # links are relative to the SVG file in _images/, not to the embedding page
+    assert ':href="../subdir/index.html#classes.Bar"' in svg
+    assert ':href="../subdir/other.html#classes.Foo"' in svg
+
+
 @pytest.mark.sphinx('latex', testroot='ext-inheritance_diagram')
 @pytest.mark.usefixtures('if_graphviz_found')
 def test_inheritance_diagram_latex(app, status, warning):
