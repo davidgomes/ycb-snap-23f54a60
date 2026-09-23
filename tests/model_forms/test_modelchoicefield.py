@@ -184,6 +184,46 @@ class ModelChoiceFieldTests(TestCase):
         with self.assertNumQueries(1):
             template.render(Context({'field': field}))
 
+    def test_radioselect_blank_choice(self):
+        for blank, expected_choices in (
+            (False, []),
+            (True, [('', '---------')]),
+        ):
+            with self.subTest(blank=blank):
+                f = forms.ModelChoiceField(
+                    Category.objects.all(),
+                    widget=forms.RadioSelect,
+                    blank=blank,
+                )
+                self.assertEqual(list(f.choices), expected_choices + [
+                    (self.c1.pk, 'Entertainment'),
+                    (self.c2.pk, 'A test'),
+                    (self.c3.pk, 'Third'),
+                ])
+
+    def test_modelform_radioselect_foreignkey_blank_choice(self):
+        class ArticleForm(forms.ModelForm):
+            class Meta:
+                model = Article
+                fields = ['writer']
+                widgets = {'writer': forms.RadioSelect}
+
+        class BookForm(forms.ModelForm):
+            class Meta:
+                model = Book
+                fields = ['author']
+                widgets = {'author': forms.RadioSelect}
+
+        writer = Writer.objects.create(name='Test writer')
+        self.assertEqual(
+            list(ArticleForm().fields['writer'].choices),
+            [(writer.pk, 'Test writer')],
+        )
+        self.assertEqual(
+            list(BookForm().fields['author'].choices),
+            [('', '---------'), (writer.pk, 'Test writer')],
+        )
+
     def test_disabled_modelchoicefield(self):
         class ModelChoiceForm(forms.ModelForm):
             author = forms.ModelChoiceField(Author.objects.all(), disabled=True)
