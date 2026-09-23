@@ -110,6 +110,8 @@ Bugs fixed
   pdf output
 * #10363: LaTeX: make ``'howto'`` title page rule use ``\linewidth`` for
   compatibility with usage of a ``twocolumn`` class option
+* #10251: LaTeX: highlighted inline code has extra whitespace at start and end
+  in pdf output
 * #10318: ``:prepend:`` option of :rst:dir:`literalinclude` directive does not
   work with ``:dedent:`` option
 
