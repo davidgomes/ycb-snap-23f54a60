@@ -8,7 +8,7 @@ from io import BytesIO, StringIO, TextIOWrapper
 from pathlib import Path
 from unittest import mock
 
-from django.core.files import File
+from django.core.files import File, locks
 from django.core.files.base import ContentFile
 from django.core.files.move import file_move_safe
 from django.core.files.temp import NamedTemporaryFile
@@ -43,6 +43,15 @@ class FileTests(unittest.TestCase):
             self.assertFalse(f.closed)
         self.assertTrue(f.closed)
         self.assertTrue(orig_file.closed)
+
+    def test_file_lock_return_values(self):
+        with tempfile.NamedTemporaryFile() as f1, open(f1.name) as f2:
+            self.assertIs(locks.lock(f1, locks.LOCK_EX), True)
+            self.assertIs(locks.lock(f2, locks.LOCK_EX | locks.LOCK_NB), False)
+            self.assertIs(locks.lock(f2, locks.LOCK_SH | locks.LOCK_NB), False)
+            self.assertIs(locks.unlock(f1), True)
+            self.assertIs(locks.lock(f2, locks.LOCK_SH | locks.LOCK_NB), True)
+            self.assertIs(locks.unlock(f2), True)
 
     def test_open_resets_opened_file_to_start_and_returns_context_manager(self):
         file = File(BytesIO(b'content'))
