@@ -1090,6 +1090,20 @@ class TestDataArray:
         assert_identical(da[:3, :4], da.loc[["a", "b", "c"], np.arange(4)])
         assert_identical(da[:, :4], da.loc[:, self.ds["y"] < 4])
 
+    def test_loc_dim_name_method(self):
+        # regression test for GH#3250: a dimension named "method" must not be
+        # unpacked into DataArray.sel's method keyword.
+        empty = np.zeros((2, 2))
+        da = DataArray(
+            empty,
+            dims=["dim1", "method"],
+            coords={"dim1": ["x", "y"], "method": ["a", "b"]},
+        )
+        # Use positional indexers so "method" is a dimension, not a kwarg.
+        expected = da.sel({"dim1": "x", "method": "a"})
+        assert_identical(da.loc[{"dim1": "x", "method": "a"}], expected)
+        assert_identical(da.loc[dict(dim1="x", method="a")], expected)
+
     def test_loc_datetime64_value(self):
         # regression test for https://github.com/pydata/xarray/issues/4283
         t = np.array(["2017-09-05T12", "2017-09-05T15"], dtype="datetime64[ns]")
