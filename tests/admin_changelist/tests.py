@@ -555,7 +555,7 @@ class ChangeListTests(TestCase):
             ('Finlayson', 1),
             ('Finlayson Hype', 0),
             ('Jonathan Finlayson Duo', 1),
-            ('Mary Jonathan Duo', 1),
+            ('Mary Jonathan Duo', 0),
             ('Oscar Finlayson Duo', 0),
         ):
             with self.subTest(search_string=search_string):
@@ -563,6 +563,21 @@ class ChangeListTests(TestCase):
                 request.user = self.superuser
                 group_changelist = group_model_admin.get_changelist_instance(request)
                 self.assertEqual(group_changelist.queryset.count(), result_count)
+
+    def test_many_search_terms(self):
+        parent = Parent.objects.create(name='Mary')
+        Child.objects.create(parent=parent, name='Danielle')
+        Child.objects.create(parent=parent, name='Daniel')
+
+        m = ParentAdmin(Parent, custom_site)
+        request = self.factory.get('/parent/', data={SEARCH_VAR: 'daniel ' * 80})
+        request.user = self.superuser
+
+        cl = m.get_changelist_instance(request)
+        with CaptureQueriesContext(connection) as context:
+            object_count = cl.queryset.count()
+        self.assertEqual(object_count, 1)
+        self.assertEqual(context.captured_queries[0]['sql'].count('JOIN'), 1)
 
     def test_pk_in_search_fields(self):
         band = Group.objects.create(name='The Hype')
