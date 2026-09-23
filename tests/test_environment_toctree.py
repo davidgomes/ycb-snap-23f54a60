@@ -346,3 +346,42 @@ def test_get_toctree_for_includehidden(app):
 
     assert_node(toctree[2],
                 [bullet_list, list_item, compact_paragraph, reference, "baz"])
+
+
+@pytest.mark.sphinx('xml', testroot='toctree-index')
+def test_toctree_index(app):
+    app.build()
+    toctree = app.env.tocs['index']
+    assert_node(toctree,
+                [bullet_list, ([list_item, (compact_paragraph,  # [0][0]
+                                            [bullet_list, (addnodes.toctree,  # [0][1][0]
+                                                           addnodes.toctree)])])])  # [0][1][1]
+    assert_node(toctree[0][1][1], addnodes.toctree,
+                caption="Indices", glob=False, hidden=False,
+                titlesonly=False, maxdepth=-1, numbered=0,
+                entries=[(None, 'genindex'), (None, 'modindex'), (None, 'search')],
+                includefiles=[])
+
+
+@pytest.mark.sphinx('html', testroot='toctree-index')
+def test_toctree_index_resolves_special_pages(app, warning):
+    app.build()
+    assert 'nonexisting document' not in warning.getvalue()
+
+    indices = app.env.tocs['index'][0][1][1]
+    resolved = TocTree(app.env).resolve('index', app.builder, indices)
+    assert_node(resolved,
+                [compact_paragraph, ([title, "Indices"],
+                                     [bullet_list, (list_item, list_item, list_item)])])
+    assert_node(resolved[1][0][0][0], reference, refuri='genindex.html')
+    assert resolved[1][0][0][0].astext() == 'Index'
+    assert_node(resolved[1][1][0][0], reference, refuri='py-modindex.html')
+    assert resolved[1][1][0][0].astext() == 'Module Index'
+    assert_node(resolved[1][2][0][0], reference, refuri='search.html')
+    assert resolved[1][2][0][0].astext() == 'Search Page'
+
+
+@pytest.mark.sphinx('html', testroot='toctree-index', confoverrides={'numfig': True})
+def test_toctree_index_with_numfig(app, warning):
+    app.build()
+    assert 'nonexisting document' not in warning.getvalue()
