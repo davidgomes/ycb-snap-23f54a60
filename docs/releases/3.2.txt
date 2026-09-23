@@ -95,6 +95,12 @@ Minor features
   constrained environments. If this is the case, the existing hasher can be
   subclassed to override the defaults.
 
+* The ``auth.E003`` system check and ``auth.W004`` system warning no longer
+  report a ``USERNAME_FIELD`` that is made unique by a
+  :class:`~django.db.models.UniqueConstraint` without a
+  :attr:`~django.db.models.UniqueConstraint.condition` in
+  :attr:`Meta.constraints <django.db.models.Options.constraints>`.
+
 :mod:`django.contrib.contenttypes`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
