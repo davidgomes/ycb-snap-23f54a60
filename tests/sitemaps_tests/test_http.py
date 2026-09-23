@@ -450,6 +450,18 @@ class HTTPSitemapTests(SitemapTestsBase):
         )
         self.assertXMLEqual(response.content.decode(), expected_content)
 
+    def test_callable_lastmod_no_items(self):
+        """A callable lastmod on an empty sitemap returns None instead of erroring."""
+
+        class EmptyCallableLastmodSitemap(Sitemap):
+            def items(self):
+                return []
+
+            def lastmod(self, item):
+                return date(2020, 1, 1)
+
+        self.assertIsNone(EmptyCallableLastmodSitemap().get_latest_lastmod())
+
     def test_callable_sitemod_partial(self):
         """
         Not all items have `lastmod`. Therefore the `Last-Modified` header
