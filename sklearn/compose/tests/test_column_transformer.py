@@ -20,6 +20,7 @@ from sklearn.compose import (
     make_column_selector,
 )
 from sklearn.exceptions import NotFittedError
+from sklearn.feature_selection import VarianceThreshold
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.preprocessing import StandardScaler, Normalizer, OneHotEncoder
 
@@ -2185,3 +2186,27 @@ def test_raise_error_if_index_not_aligned():
     )
     with pytest.raises(ValueError, match=msg):
         ct.fit_transform(X)
+
+
+def test_remainder_set_output():
+    """Check that the output is set for the remainder.
+
+    Non-regression test for #26306.
+    """
+
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame({"a": [True, False, True], "b": [1, 2, 3]})
+
+    ct = make_column_transformer(
+        (VarianceThreshold(), make_column_selector(dtype_include=bool)),
+        remainder=VarianceThreshold(),
+        verbose_feature_names_out=False,
+    )
+    ct.set_output(transform="pandas")
+
+    out = ct.fit_transform(df)
+    pd.testing.assert_frame_equal(out, df)
+
+    ct.set_output(transform="default")
+    out = ct.fit_transform(df)
+    assert isinstance(out, np.ndarray)
