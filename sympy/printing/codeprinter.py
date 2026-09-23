@@ -9,7 +9,7 @@ from sympy.core.function import Lambda
 from sympy.core.mul import _keep_coeff
 from sympy.core.symbol import Symbol
 from sympy.printing.str import StrPrinter
-from sympy.printing.precedence import precedence
+from sympy.printing.precedence import precedence, PRECEDENCE
 
 
 class requires:
@@ -465,8 +465,6 @@ class CodePrinter(StrPrinter):
         a = []  # items in the numerator
         b = []  # items that are in the denominator (if any)
 
-        pow_paren = []  # Will collect all pow with more than one base element and exp = -1
-
         if self.order not in ('old', 'none'):
             args = expr.as_ordered_factors()
         else:
@@ -479,21 +477,29 @@ class CodePrinter(StrPrinter):
                 if item.exp != -1:
                     b.append(Pow(item.base, -item.exp, evaluate=False))
                 else:
-                    if len(item.args[0].args) != 1 and isinstance(item.base, Mul):   # To avoid situations like #14160
-                        pow_paren.append(item)
                     b.append(Pow(item.base, -item.exp))
             else:
                 a.append(item)
 
         a = a or [S.One]
 
-        a_str = [self.parenthesize(x, prec) for x in a]
-        b_str = [self.parenthesize(x, prec) for x in b]
+        def factor_prec(x):
+            # A negative coefficient lowers the precedence of the whole Mul to
+            # that of Add, but once the sign is stripped the remaining factors
+            # still bind as a product (e.g. -2*(x % y), not -2*x % y). Rational
+            # coefficients keep the historical -1/2*x form.
+            if sign == "-" and not x.is_Rational:
+                return PRECEDENCE["Mul"]
+            return prec
 
-        # To parenthesize Pow with exp = -1 and having more than one Symbol
-        for item in pow_paren:
-            if item.base in b:
-                b_str[b.index(item.base)] = "(%s)" % b_str[b.index(item.base)]
+        if len(a) == 1 and sign == "-":
+            # Unary minus has no SymPy class and hence no precedence value.
+            # Python's unary minus binds between multiplication and
+            # exponentiation, so use a weight in between those two.
+            a_str = [self.parenthesize(a[0], 0.5*(PRECEDENCE["Pow"]+PRECEDENCE["Mul"]))]
+        else:
+            a_str = [self.parenthesize(x, factor_prec(x)) for x in a]
+        b_str = [self.parenthesize(x, factor_prec(x)) for x in b]
 
         if not b:
             return sign + '*'.join(a_str)
