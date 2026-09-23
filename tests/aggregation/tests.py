@@ -1461,6 +1461,12 @@ class AggregateTestCase(TestCase):
             ],
         )
 
+    def test_unused_aliased_aggregate_pruned_from_count(self):
+        with CaptureQueriesContext(connection) as ctx:
+            count = Book.objects.annotate(authors_count=Count("authors")).count()
+        self.assertEqual(count, Book.objects.count())
+        self.assertNotIn("authors_count", ctx.captured_queries[0]["sql"])
+
     def test_aggregation_subquery_annotation_values(self):
         """
         Subquery annotations and external aliases are excluded from the GROUP

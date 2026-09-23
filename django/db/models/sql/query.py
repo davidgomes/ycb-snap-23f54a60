@@ -435,7 +435,9 @@ class Query(BaseExpression):
         annotation.set_source_expressions(new_exprs)
         return annotation, col_cnt
 
-    def get_aggregation(self, using, added_aggregate_names):
+    def get_aggregation(
+        self, using, added_aggregate_names, strip_unused_annotations=False
+    ):
         """
         Return the dictionary with the values of the existing aggregations.
         """
@@ -472,6 +474,15 @@ class Query(BaseExpression):
             inner_query.select_for_update = False
             inner_query.select_related = False
             inner_query.set_annotation_mask(self.annotation_select)
+            if (
+                strip_unused_annotations
+                and not self.distinct
+                and not self.combinator
+                and not isinstance(self.group_by, tuple)
+            ):
+                # Annotations only used for selection don't affect the number
+                # of rows and can be stripped from the inner query.
+                inner_query.set_annotation_mask(added_aggregate_names)
             # Queries with distinct_fields need ordering and when a limit is
             # applied we must take the slice from the ordered query. Otherwise
             # no need for ordering.
@@ -551,7 +562,9 @@ class Query(BaseExpression):
         """
         obj = self.clone()
         obj.add_annotation(Count("*"), alias="__count", is_summary=True)
-        return obj.get_aggregation(using, ["__count"])["__count"]
+        return obj.get_aggregation(using, ["__count"], strip_unused_annotations=True)[
+            "__count"
+        ]
 
     def has_filters(self):
         return self.where
