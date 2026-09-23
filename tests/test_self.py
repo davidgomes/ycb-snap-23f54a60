@@ -1426,6 +1426,10 @@ class TestCallbackOptions:
             assert run.verbose
 
         with pytest.raises(SystemExit):
+            run = Run(["-v"])
+            assert run.verbose
+
+        with pytest.raises(SystemExit):
             run = Run(["--verbose=True"])
             assert run.verbose
 

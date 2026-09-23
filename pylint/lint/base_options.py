@@ -544,6 +544,7 @@ def _make_run_options(self: Run) -> Options:
                 "help": "In verbose mode, extra non-checker-related info "
                 "will be displayed.",
                 "hide_from_config_file": True,
+                "metavar": "",
             },
         ),
         (
