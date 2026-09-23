@@ -1305,3 +1305,10 @@ class PandasIndexAdapter(ExplicitlyIndexedNDArrayMixin):
     def __repr__(self):
         return ('%s(array=%r, dtype=%r)'
                 % (type(self).__name__, self.array, self.dtype))
+
+    def copy(self, deep=True):
+        # Not the same as just writing `self.array.copy(deep=deep)`, as
+        # shallow copies of the underlying numpy.ndarrays become deep ones
+        # upon pickling
+        array = self.array.copy(deep=True) if deep else self.array
+        return PandasIndexAdapter(array, self._dtype)

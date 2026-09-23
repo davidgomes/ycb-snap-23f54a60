@@ -57,6 +57,9 @@ Bug fixes
 - Fixed bug in ``combine_by_coords()`` causing a `ValueError` if the input had
   an unused dimension with coordinates which were not monotonic (:issue`3150`).
   By `Tom Nicholas <http://github.com/TomNicholas>`_.
+- Fixed regression where ``Dataset.copy(deep=True)``, ``DataArray.copy()``,
+  ``copy.deepcopy()`` and ``IndexVariable.copy(deep=True)`` cast indices with
+  unicode dtype (``<U*``) to ``object`` (:issue:`3094`).
 
 .. _whats-new.0.12.3:
 
