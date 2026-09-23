@@ -970,6 +970,13 @@ class TestFDCapture:
     def test_capfd_sys_stdout_mode(self, capfd):
         assert "b" not in sys.stdout.mode
 
+    def test_capfd_preserves_carriage_return(self, capfd):
+        print("hello", end="\r")
+        sys.stderr.write("line1\r\nline2\r")
+        out, err = capfd.readouterr()
+        assert out == "hello\r"
+        assert err == "line1\r\nline2\r"
+
 
 @contextlib.contextmanager
 def saved_fd(fd):
