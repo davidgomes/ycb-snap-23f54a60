@@ -52,6 +52,14 @@ Changelog
   :class:`linear_model.MultiTaskLasso` which were breaking when
   ``warm_start = True``. :issue:`12360` by :user:`Aakanksha Joshi <joaak>`.
 
+:mod:`sklearn.mixture`
+......................
+
+- |Fix| Fixed a bug in :class:`mixture.BaseMixture` and therefore on estimators
+  based on it, i.e. :class:`mixture.GaussianMixture` and
+  :class:`mixture.BayesianGaussianMixture`, where ``fit_predict`` and
+  ``fit.predict`` were not equivalent when ``n_init > 1``. :issue:`13142`.
+
 :mod:`sklearn.preprocessing`
 ............................
 
