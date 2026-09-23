@@ -346,6 +346,10 @@ Migrations
 * Migrations now support serialization of pure and concrete path objects from
   :mod:`pathlib`, and :class:`os.PathLike` instances.
 
+* Migrations can now be loaded from regular packages that don't have a
+  ``__file__`` attribute (e.g. in frozen environments), as long as they aren't
+  namespace packages.
+
 Models
 ~~~~~~
 
