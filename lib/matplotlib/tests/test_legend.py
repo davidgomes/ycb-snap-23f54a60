@@ -535,6 +535,18 @@ def test_legend_proper_window_extent():
     assert pytest.approx(x01*2, 0.1) == x02
 
 
+def test_subfigure_legend():
+    # A legend can be attached to a SubFigure, which is a FigureBase but not
+    # a Figure.
+    subfig = plt.figure().subfigures()
+    ax = subfig.subplots()
+    ax.plot([0, 1, 2], [0, 1, 2], label="test")
+    leg = subfig.legend()
+    assert leg.parent is subfig
+    assert subfig.legends == [leg]
+    assert [t.get_text() for t in leg.get_texts()] == ["test"]
+
+
 def test_window_extent_cached_renderer():
     fig, ax = plt.subplots(dpi=100)
     ax.plot(range(10), label='Aardvark')
