@@ -788,6 +788,28 @@ class Grouper:
     def __init__(self, init=()):
         self._mapping = {weakref.ref(x): [weakref.ref(x)] for x in init}
 
+    def __getstate__(self):
+        self.clean()
+        # Convert weak refs to strong ones, keeping each group a shared list.
+        groups = {id(group): [ref() for ref in group]
+                  for group in self._mapping.values()}
+        return {
+            **vars(self),
+            "_mapping": [(key(), groups[id(group)])
+                         for key, group in self._mapping.items()],
+        }
+
+    def __setstate__(self, state):
+        vars(self).update(state)
+        # Convert strong refs back to weak ones, preserving group identity.
+        groups = {}
+        mapping = {}
+        for key, group in self._mapping:
+            if id(group) not in groups:
+                groups[id(group)] = [weakref.ref(x) for x in group]
+            mapping[weakref.ref(key)] = groups[id(group)]
+        self._mapping = mapping
+
     def __contains__(self, item):
         return weakref.ref(item) in self._mapping
 
