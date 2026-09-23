@@ -538,6 +538,20 @@ def test_subclass_clear_cla():
         assert called
 
 
+@pytest.mark.parametrize('clear_meth', ['clear', 'cla'])
+def test_cla_clears_children_axes_and_fig(clear_meth):
+    fig, ax = plt.subplots()
+    lines = ax.plot([], [], [], [])
+    img = ax.imshow([[1]])
+    for art in lines + [img]:
+        assert art.axes is ax
+        assert art.figure is fig
+    getattr(ax, clear_meth)()
+    for art in lines + [img]:
+        assert art.axes is None
+        assert art.figure is None
+
+
 def test_cla_not_redefined_internally():
     for klass in Axes.__subclasses__():
         # Check that cla does not get redefined in our Axes subclasses, except
