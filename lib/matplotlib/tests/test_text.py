@@ -653,6 +653,17 @@ def test_text_repr():
     repr(plt.text(['A'], 0.5, 'Boo'))
 
 
+def test_annotate_xy_array_not_aliased():
+    # Mutating the array passed as xy must not move the annotation.
+    fig, ax = plt.subplots()
+    xy = np.array([-4.0, 1.0])
+    ann = ax.annotate('', xy=xy, xytext=(-1, 1),
+                      arrowprops=dict(arrowstyle='<->'))
+    xy[1] = 3
+    assert ann.xy[0] == -4
+    assert ann.xy[1] == 1
+
+
 def test_annotation_update():
     fig, ax = plt.subplots(1, 1)
     an = ax.annotate('annotation', xy=(0.5, 0.5))

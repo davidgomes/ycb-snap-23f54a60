@@ -1456,7 +1456,9 @@ class _AnnotationBase:
                  xycoords='data',
                  annotation_clip=None):
 
-        self.xy = xy
+        # Numpy arrays are mutable. Store a copy so later in-place changes to
+        # the caller's array do not move the annotation.
+        self.xy = xy.copy() if isinstance(xy, np.ndarray) else xy
         self.xycoords = xycoords
         self.set_annotation_clip(annotation_clip)
 
