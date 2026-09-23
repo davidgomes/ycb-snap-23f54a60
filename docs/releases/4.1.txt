@@ -308,6 +308,11 @@ Miscellaneous
   ``request.META['CSRF_COOKIE']`` for storing the unmasked CSRF secret rather
   than a masked version. This is an undocumented, private API.
 
+* The admin changelist search now applies all search terms in a single
+  ``filter()`` call, avoiding an additional ``JOIN`` per term for multi-valued
+  relationships in :attr:`~django.contrib.admin.ModelAdmin.search_fields`. As
+  a consequence, all terms must now match the same related object.
+
 .. _deprecated-features-4.1:
 
 Features deprecated in 4.1
