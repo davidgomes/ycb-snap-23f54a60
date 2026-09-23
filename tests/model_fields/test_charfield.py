@@ -1,5 +1,7 @@
 from django.core.exceptions import ValidationError
+from django.core.validators import MaxLengthValidator
 from django.db import models
+from django.db.models import Value
 from django.test import SimpleTestCase, TestCase
 
 from .models import Post
@@ -91,3 +93,26 @@ class ValidationTests(SimpleTestCase):
         msg = 'This field cannot be null.'
         with self.assertRaisesMessage(ValidationError, msg):
             f.clean(None, None)
+
+    def test_charfield_without_max_length_skips_max_length_validator(self):
+        field = models.CharField()
+        self.assertEqual(
+            [v for v in field.validators if isinstance(v, MaxLengthValidator)],
+            [],
+        )
+        self.assertEqual(field.clean('1', None), '1')
+        resolved = Value('test')._resolve_output_field()
+        self.assertEqual(resolved.clean('1', None), '1')
+        self.assertEqual(
+            [v for v in resolved.validators if isinstance(v, MaxLengthValidator)],
+            [],
+        )
+
+    def test_charfield_max_length_validator_still_enforced(self):
+        field = models.CharField(max_length=1)
+        self.assertEqual(len(field.validators), 1)
+        self.assertIsInstance(field.validators[0], MaxLengthValidator)
+        self.assertEqual(field.clean('a', None), 'a')
+        msg = 'Ensure this value has at most 1 character (it has 2).'
+        with self.assertRaisesMessage(ValidationError, msg):
+            field.clean('ab', None)
