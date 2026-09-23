@@ -376,6 +376,13 @@ class IntegerLessThan(IntegerFieldFloatRounding, LessThan):
 class In(FieldGetDbPrepValueIterableMixin, BuiltinLookup):
     lookup_name = 'in'
 
+    def get_prep_lookup(self):
+        from django.db.models.sql.query import Query  # avoid circular import
+        if isinstance(self.rhs, Query) and not self.rhs.has_select_fields:
+            self.rhs.clear_select_clause()
+            self.rhs.add_fields(['pk'])
+        return super().get_prep_lookup()
+
     def process_rhs(self, compiler, connection):
         db_rhs = getattr(self.rhs, '_db', None)
         if db_rhs is not None and db_rhs != connection.alias:
@@ -401,9 +408,6 @@ class In(FieldGetDbPrepValueIterableMixin, BuiltinLookup):
             placeholder = '(' + ', '.join(sqls) + ')'
             return (placeholder, sqls_params)
         else:
-            if not getattr(self.rhs, 'has_select_fields', True):
-                self.rhs.clear_select_clause()
-                self.rhs.add_fields(['pk'])
             return super().process_rhs(compiler, connection)
 
     def get_rhs_op(self, connection, rhs):

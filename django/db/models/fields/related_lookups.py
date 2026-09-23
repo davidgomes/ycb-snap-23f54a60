@@ -57,6 +57,21 @@ class RelatedIn(In):
                 # only one as we don't get to the direct value branch otherwise.
                 target_field = self.lhs.output_field.get_path_info()[-1].target_fields[-1]
                 self.rhs = [target_field.get_prep_value(v) for v in self.rhs]
+        elif (
+            not isinstance(self.lhs, MultiColSource) and
+            not getattr(self.rhs, 'has_select_fields', True) and
+            not getattr(self.lhs.field.target_field, 'primary_key', False)
+        ):
+            self.rhs.clear_select_clause()
+            if (getattr(self.lhs.output_field, 'primary_key', False) and
+                    self.lhs.output_field.model == self.rhs.model):
+                # A case like Restaurant.objects.filter(place__in=restaurant_qs),
+                # where place is a OneToOneField and the primary key of
+                # Restaurant.
+                target_field = self.lhs.field.name
+            else:
+                target_field = self.lhs.field.target_field.name
+            self.rhs.add_fields([target_field], True)
         return super().get_prep_lookup()
 
     def as_sql(self, compiler, connection):
@@ -85,20 +100,7 @@ class RelatedIn(In):
                         [source.name for source in self.lhs.sources], self.rhs),
                     AND)
             return root_constraint.as_sql(compiler, connection)
-        else:
-            if (not getattr(self.rhs, 'has_select_fields', True) and
-                    not getattr(self.lhs.field.target_field, 'primary_key', False)):
-                self.rhs.clear_select_clause()
-                if (getattr(self.lhs.output_field, 'primary_key', False) and
-                        self.lhs.output_field.model == self.rhs.model):
-                    # A case like Restaurant.objects.filter(place__in=restaurant_qs),
-                    # where place is a OneToOneField and the primary key of
-                    # Restaurant.
-                    target_field = self.lhs.field.name
-                else:
-                    target_field = self.lhs.field.target_field.name
-                self.rhs.add_fields([target_field], True)
-            return super().as_sql(compiler, connection)
+        return super().as_sql(compiler, connection)
 
 
 class RelatedLookupMixin:

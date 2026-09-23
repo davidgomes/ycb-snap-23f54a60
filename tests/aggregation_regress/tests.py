@@ -1010,6 +1010,13 @@ class AggregationTests(TestCase):
         ).values_list("pk", flat=True).order_by('name')
         self.assertEqual(list(qs), list(Book.objects.values_list("pk", flat=True)))
 
+    def test_having_subquery_select(self):
+        authors = Author.objects.filter(pk=self.a1.pk)
+        books = Book.objects.annotate(Count('authors')).filter(
+            Q(authors__in=authors) | Q(authors__count__gt=2)
+        )
+        self.assertEqual(set(books), {self.b1, self.b4})
+
     def test_having_group_by(self):
         # When a field occurs on the LHS of a HAVING clause that it
         # appears correctly in the GROUP BY clause
