@@ -786,7 +786,7 @@ def Erlang(name, k, l):
     .. [2] http://mathworld.wolfram.com/ErlangDistribution.html
     """
 
-    return rv(name, GammaDistribution, (k, 1/l))
+    return rv(name, GammaDistribution, (k, S.One/l))
 
 #-------------------------------------------------------------------------------
 # Exponential distribution -----------------------------------------------------
