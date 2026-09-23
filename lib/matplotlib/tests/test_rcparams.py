@@ -496,6 +496,33 @@ def test_keymaps():
         assert isinstance(mpl.rcParams[k], list)
 
 
+def test_no_backend_reset_rccontext():
+    assert mpl.rcParams['backend'] != 'module://aardvark'
+    with mpl.rc_context():
+        mpl.rcParams['backend'] = 'module://aardvark'
+    assert mpl.rcParams['backend'] == 'module://aardvark'
+
+
+def test_get_backend_keeps_figures_created_in_rc_context(tmpdir):
+    # Resolving the auto backend inside rc_context used to be undone on exit,
+    # so the next get_backend() call re-entered switch_backend() and closed
+    # every figure registered with Gcf.
+    env = {**os.environ, "MPLCONFIGDIR": str(tmpdir)}
+    env.pop("MPLBACKEND", None)
+    subprocess.run(
+        [sys.executable, "-c",
+         "import matplotlib.pyplot as plt\n"
+         "from matplotlib import get_backend, rc_context\n"
+         "with rc_context():\n"
+         "    fig = plt.figure()\n"
+         "before = list(plt._pylab_helpers.Gcf.figs)\n"
+         "get_backend()\n"
+         "after = list(plt._pylab_helpers.Gcf.figs)\n"
+         "assert before == after and before, (before, after)\n"
+         "plt.close(fig)\n"],
+        env=env, check=True)
+
+
 def test_rcparams_reset_after_fail():
     # There was previously a bug that meant that if rc_context failed and
     # raised an exception due to issues in the supplied rc parameters, the
