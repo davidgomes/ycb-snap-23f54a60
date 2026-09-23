@@ -1,4 +1,5 @@
 from sympy.core.basic import Basic
+from sympy.core.parameters import evaluate
 from sympy.core.numbers import (I, Rational, pi)
 from sympy.core.singleton import S
 from sympy.core.symbol import Symbol
@@ -339,6 +340,14 @@ def test_issue_11617():
 
     with warns(UserWarning):
         assert p1.distance(p2) == sqrt(5)
+
+
+def test_issue_22684():
+    # Used to give an error
+    with evaluate(False):
+        Point(1, 2)
+        assert sympify('Point2D(Integer(1),Integer(2))') == Point2D(1, 2)
+        raises(ValueError, lambda: Point(1, I))
 
 
 def test_transform():
