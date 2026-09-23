@@ -211,6 +211,10 @@ class WriterTests(SimpleTestCase):
         X = "X", "X value"
         Y = "Y", "Y value"
 
+        @classmethod
+        def method(cls):
+            return cls.X
+
     def safe_exec(self, string, value=None):
         d = {}
         try:
@@ -454,6 +458,15 @@ class WriterTests(SimpleTestCase):
             "(datetime.date(1969, 7, 20), 'First date'), "
             "(datetime.date(1969, 11, 19), 'Second date')], "
             "default=datetime.date(1969, 11, 19))",
+        )
+
+    def test_serialize_nested_class_method(self):
+        self.assertSerializedResultEqual(
+            self.NestedChoices.method,
+            (
+                "migrations.test_writer.WriterTests.NestedChoices.method",
+                {"import migrations.test_writer"},
+            ),
         )
 
     def test_serialize_nested_class(self):
