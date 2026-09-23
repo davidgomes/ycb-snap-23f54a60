@@ -552,6 +552,12 @@ def test_pipeline_index():
     assert_raises(KeyError, lambda: pipe['foobar'])
 
 
+def test_pipeline_len():
+    pipe = Pipeline([('transf', Transf()), ('clf', FitParamT())])
+    assert len(pipe) == 2
+    assert pipe[:len(pipe)].steps == pipe.steps
+
+
 def test_set_pipeline_steps():
     transf1 = Transf()
     transf2 = Transf()
