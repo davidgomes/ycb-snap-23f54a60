@@ -2,6 +2,7 @@
 from __future__ import absolute_import
 
 from sympy.codegen import Assignment
+from sympy.tensor import IndexedBase
 from sympy.codegen.ast import none
 from sympy.core import Expr, Mod, symbols, Eq, Le, Gt, zoo, oo, Rational
 from sympy.core.numbers import pi
@@ -34,6 +35,9 @@ def test_PythonCodePrinter():
                         (3, Gt(x, 0)), evaluate=False)) == '((2) if (x <= 0) else'\
                                                         ' (3) if (x > 0) else None)'
     assert prntr.doprint(sign(x)) == '(0.0 if x == 0 else math.copysign(1, x))'
+    p = IndexedBase("p")
+    assert prntr.doprint(p[0]) == 'p[0]'
+    assert pycode(p[0, 1]) == 'p[0, 1]'
 
 
 def test_MpmathPrinter():
