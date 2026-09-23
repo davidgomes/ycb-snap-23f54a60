@@ -1,0 +1,2 @@
+Skip locations reported by ``-rs`` now point at the skipped test even when ``--runxfail`` is given.
+``--runxfail`` only affects xfail handling.
