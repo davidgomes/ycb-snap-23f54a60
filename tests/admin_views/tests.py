@@ -8464,6 +8464,24 @@ class AdminSiteFinalCatchAllPatternTests(TestCase):
         )
 
     @override_settings(APPEND_SLASH=True)
+    def test_missing_slash_append_slash_true_query_string(self):
+        superuser = User.objects.create_user(
+            username="staff",
+            password="secret",
+            email="staff@example.com",
+            is_staff=True,
+        )
+        self.client.force_login(superuser)
+        known_url = reverse("admin:admin_views_article_changelist")
+        response = self.client.get("%s?id=1" % known_url[:-1])
+        self.assertRedirects(
+            response,
+            f"{known_url}?id=1",
+            status_code=301,
+            fetch_redirect_response=False,
+        )
+
+    @override_settings(APPEND_SLASH=True)
     def test_missing_slash_append_slash_true_script_name(self):
         superuser = User.objects.create_user(
             username="staff",
@@ -8477,6 +8495,24 @@ class AdminSiteFinalCatchAllPatternTests(TestCase):
         self.assertRedirects(
             response,
             "/prefix" + known_url,
+            status_code=301,
+            fetch_redirect_response=False,
+        )
+
+    @override_settings(APPEND_SLASH=True)
+    def test_missing_slash_append_slash_true_script_name_query_string(self):
+        superuser = User.objects.create_user(
+            username="staff",
+            password="secret",
+            email="staff@example.com",
+            is_staff=True,
+        )
+        self.client.force_login(superuser)
+        known_url = reverse("admin:admin_views_article_changelist")
+        response = self.client.get("%s?id=1" % known_url[:-1], SCRIPT_NAME="/prefix/")
+        self.assertRedirects(
+            response,
+            f"/prefix{known_url}?id=1",
             status_code=301,
             fetch_redirect_response=False,
         )
@@ -8513,6 +8549,23 @@ class AdminSiteFinalCatchAllPatternTests(TestCase):
         self.assertRedirects(
             response,
             "/test_admin/admin/login/?next=/test_admin/admin/admin_views/article",
+        )
+
+    @override_settings(APPEND_SLASH=True)
+    def test_missing_slash_append_slash_true_non_staff_user_query_string(self):
+        user = User.objects.create_user(
+            username="user",
+            password="secret",
+            email="user@example.com",
+            is_staff=False,
+        )
+        self.client.force_login(user)
+        known_url = reverse("admin:admin_views_article_changelist")
+        response = self.client.get("%s?id=1" % known_url[:-1])
+        self.assertRedirects(
+            response,
+            "/test_admin/admin/login/?next=/test_admin/admin/admin_views/article"
+            "%3Fid%3D1",
         )
 
     @override_settings(APPEND_SLASH=False)
@@ -8627,6 +8680,24 @@ class AdminSiteFinalCatchAllPatternTests(TestCase):
         response = self.client.get(known_url[:-1])
         self.assertRedirects(
             response, known_url, status_code=301, target_status_code=403
+        )
+
+    @override_settings(APPEND_SLASH=True)
+    def test_missing_slash_append_slash_true_query_without_final_catch_all_view(self):
+        superuser = User.objects.create_user(
+            username="staff",
+            password="secret",
+            email="staff@example.com",
+            is_staff=True,
+        )
+        self.client.force_login(superuser)
+        known_url = reverse("admin10:admin_views_article_changelist")
+        response = self.client.get("%s?id=1" % known_url[:-1])
+        self.assertRedirects(
+            response,
+            f"{known_url}?id=1",
+            status_code=301,
+            fetch_redirect_response=False,
         )
 
     @override_settings(APPEND_SLASH=False)
