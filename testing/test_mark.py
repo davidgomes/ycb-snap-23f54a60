@@ -1109,3 +1109,54 @@ def test_marker_expr_eval_failure_handling(pytester: Pytester, expr) -> None:
     result = pytester.runpytest(foo, "-m", expr)
     result.stderr.fnmatch_lines([expected])
     assert result.ret == ExitCode.USAGE_ERROR
+
+
+def test_mark_mro() -> None:
+    xfail = pytest.mark.xfail
+
+    @xfail("a")
+    class A:
+        pass
+
+    @xfail("b")
+    class B:
+        pass
+
+    @xfail("c")
+    class C(A, B):
+        pass
+
+    from _pytest.mark.structures import get_unpacked_marks
+
+    all_marks = get_unpacked_marks(C)
+
+    assert all_marks == [xfail("c").mark, xfail("a").mark, xfail("b").mark]
+
+    assert get_unpacked_marks(C, consider_mro=False) == [xfail("c").mark]
+
+
+def test_mark_mro_collected_on_tests(pytester: Pytester) -> None:
+    """Marks from every base class are applied, not only the first in the MRO."""
+    p = pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.mark.foo
+        class Foo:
+            pass
+
+        @pytest.mark.bar
+        class Bar:
+            pass
+
+        class TestDings(Foo, Bar):
+            def test_dings(self):
+                pass
+        """
+    )
+    items, _rec = pytester.inline_genitems(p)
+    (item,) = items
+    assert [m.name for m in item.iter_markers() if m.name in ("foo", "bar")] == [
+        "foo",
+        "bar",
+    ]
