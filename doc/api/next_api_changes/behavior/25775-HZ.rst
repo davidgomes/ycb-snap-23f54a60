@@ -1,0 +1,12 @@
+``text.antialiased`` is now applied when ``Text`` is created
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``Text`` and ``Annotation`` (including ``Axes.text``, ``pyplot.text``, and
+``Axes.annotate``) now take an *antialiased* parameter. When it is omitted,
+the value of :rc:`text.antialiased` is copied onto the artist at creation
+time. Changing the rcParam later no longer affects artists that already
+exist, including tick labels created with the figure.
+
+Antialiasing can be changed afterwards with `.Text.set_antialiased`.
+Math expressions still follow :rc:`text.antialiased` at draw time; *antialiased*
+does not affect them.

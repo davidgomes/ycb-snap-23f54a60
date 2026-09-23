@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 import matplotlib.transforms as mtransforms
 from matplotlib.testing.decorators import check_figures_equal, image_comparison
 from matplotlib.testing._markers import needs_usetex
-from matplotlib.text import Text
+from matplotlib.text import Annotation, Text
 
 
 @image_comparison(['font_styles'])
@@ -902,3 +902,100 @@ def test_annotate_offset_fontsize():
     points_coords, fontsize_coords = [ann.get_window_extent() for ann in anns]
     fig.canvas.draw()
     assert str(points_coords) == str(fontsize_coords)
+
+
+def test_set_antialiased():
+    txt = Text(.5, .5, "foo\nbar")
+    assert txt._antialiased == mpl.rcParams['text.antialiased']
+
+    txt.set_antialiased(True)
+    assert txt._antialiased is True
+    assert txt.get_antialiased() is True
+
+    txt.set_antialiased(False)
+    assert txt._antialiased is False
+    assert txt.get_antialiased() is False
+
+    txt.set(antialiased=True)
+    assert txt.get_antialiased() is True
+
+
+def test_get_antialiased():
+    txt2 = Text(.5, .5, "foo\nbar", antialiased=True)
+    assert txt2._antialiased is True
+    assert txt2.get_antialiased() == txt2._antialiased
+
+    txt3 = Text(.5, .5, "foo\nbar", antialiased=False)
+    assert txt3._antialiased is False
+    assert txt3.get_antialiased() == txt3._antialiased
+
+    txt4 = Text(.5, .5, "foo\nbar")
+    assert txt4.get_antialiased() == mpl.rcParams['text.antialiased']
+
+
+def test_annotation_antialiased():
+    annot = Annotation("foo\nbar", (.5, .5), antialiased=True)
+    assert annot._antialiased is True
+    assert annot.get_antialiased() == annot._antialiased
+
+    annot2 = Annotation("foo\nbar", (.5, .5), antialiased=False)
+    assert annot2._antialiased is False
+    assert annot2.get_antialiased() == annot2._antialiased
+
+    annot3 = Annotation("foo\nbar", (.5, .5), antialiased=False)
+    annot3.set_antialiased(True)
+    assert annot3.get_antialiased() is True
+    assert annot3._antialiased is True
+
+    annot4 = Annotation("foo\nbar", (.5, .5))
+    assert annot4._antialiased == mpl.rcParams['text.antialiased']
+
+
+def test_update_from_copies_antialiased():
+    src = Text(.5, .5, "foo", antialiased=False)
+    dst = Text(.5, .5, "bar", antialiased=True)
+    dst.update_from(src)
+    assert dst.get_antialiased() is False
+
+
+def _rgba_for_text(*, antialiased, rc_antialiased):
+    """Draw one plain string and return its RGBA buffer."""
+    with mpl.rc_context({'text.antialiased': rc_antialiased}):
+        fig = plt.figure(figsize=(2, 1), dpi=100)
+        kwargs = {}
+        if antialiased is not None:
+            kwargs['antialiased'] = antialiased
+        fig.text(0.5, 0.5, "Antialias", fontsize=24, ha="center", va="center",
+                 **kwargs)
+        fig.canvas.draw()
+        rgba = np.array(fig.canvas.buffer_rgba())
+    plt.close(fig)
+    return rgba
+
+
+def test_text_antialiased_used_at_draw():
+    # Explicit per-artist state must win over rcParams at draw time.
+    explicit_off = _rgba_for_text(antialiased=False, rc_antialiased=True)
+    rc_off = _rgba_for_text(antialiased=None, rc_antialiased=False)
+    explicit_on = _rgba_for_text(antialiased=True, rc_antialiased=False)
+    rc_on = _rgba_for_text(antialiased=None, rc_antialiased=True)
+
+    assert np.array_equal(explicit_off, rc_off)
+    assert np.array_equal(explicit_on, rc_on)
+    assert not np.array_equal(explicit_off, explicit_on)
+
+
+@check_figures_equal()
+def test_text_antialiased_off_default_vs_manual(fig_test, fig_ref):
+    fig_test.text(0.5, 0.5, '6 inches x 2 inches', antialiased=False)
+
+    mpl.rcParams['text.antialiased'] = False
+    fig_ref.text(0.5, 0.5, '6 inches x 2 inches')
+
+
+@check_figures_equal()
+def test_text_antialiased_on_default_vs_manual(fig_test, fig_ref):
+    fig_test.text(0.5, 0.5, '6 inches x 2 inches', antialiased=True)
+
+    mpl.rcParams['text.antialiased'] = True
+    fig_ref.text(0.5, 0.5, '6 inches x 2 inches')
