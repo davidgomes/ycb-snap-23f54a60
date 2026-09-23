@@ -508,6 +508,24 @@ def test_base_chain_random_order():
             assert_array_almost_equal(est1.coef_, est2.coef_)
 
 
+@pytest.mark.parametrize(
+    'estimator',
+    [RandomForestClassifier(n_estimators=2),
+     MultiOutputClassifier(RandomForestClassifier(n_estimators=2)),
+     ClassifierChain(RandomForestClassifier(n_estimators=2))]
+)
+def test_multi_output_classes_(estimator):
+    # classes_ is a list of per-output class labels. MultiOutputClassifier
+    # must expose it so cross_val_predict(method='predict_proba') can align
+    # probability columns across folds.
+    estimator.fit(X, y)
+    assert isinstance(estimator.classes_, list)
+    assert len(estimator.classes_) == n_outputs
+    for estimator_classes, expected_classes in zip(classes,
+                                                   estimator.classes_):
+        assert_array_equal(estimator_classes, expected_classes)
+
+
 def test_base_chain_crossval_fit_and_predict():
     # Fit chain with cross_val_predict and verify predict
     # performance

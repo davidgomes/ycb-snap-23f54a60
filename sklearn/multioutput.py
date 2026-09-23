@@ -318,12 +318,41 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
 
     Attributes
     ----------
+    classes_ : list of ndarray of shape (n_classes,)
+        Class labels for each output. ``classes_[i]`` corresponds to the
+        classes of the i-th estimator in ``estimators_``.
+
     estimators_ : list of ``n_output`` estimators
         Estimators used for predictions.
     """
 
     def __init__(self, estimator, n_jobs=None):
         super().__init__(estimator, n_jobs)
+
+    def fit(self, X, y, sample_weight=None):
+        """Fit the model to data matrix X and targets y.
+
+        Parameters
+        ----------
+        X : (sparse) array-like, shape (n_samples, n_features)
+            Data.
+
+        y : (sparse) array-like, shape (n_samples, n_outputs)
+            Multi-output targets. An indicator matrix turns on multilabel
+            estimation.
+
+        sample_weight : array-like of shape (n_samples,) or None
+            Sample weights. If None, then samples are equally weighted.
+            Only supported if the underlying classifier supports sample
+            weights.
+
+        Returns
+        -------
+        self : object
+        """
+        super().fit(X, y, sample_weight)
+        self.classes_ = [estimator.classes_ for estimator in self.estimators_]
+        return self
 
     def predict_proba(self, X):
         """Probability estimates.

@@ -70,6 +70,8 @@ from io import StringIO
 from sklearn.base import BaseEstimator
 from sklearn.base import clone
 from sklearn.multiclass import OneVsRestClassifier
+from sklearn.multioutput import MultiOutputClassifier
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.utils import shuffle
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_multilabel_classification
@@ -1433,6 +1435,22 @@ def test_gridsearchcv_cross_val_predict_with_method():
                        cv=2)
     for method in ['decision_function', 'predict_proba', 'predict_log_proba']:
         check_cross_val_predict_multiclass(est, X, y, method)
+
+
+def test_cross_val_predict_predict_proba_multioutput_classifier():
+    # MultiOutputClassifier.predict_proba returns one array per output and
+    # previously had no classes_ attribute, so cross_val_predict failed.
+    X, Y = make_multilabel_classification(random_state=0)
+    mo_clf = MultiOutputClassifier(LinearDiscriminantAnalysis())
+    pred = cross_val_predict(mo_clf, X, Y, cv=5)
+    pred_proba = cross_val_predict(mo_clf, X, Y, cv=5, method='predict_proba')
+
+    assert pred.shape == Y.shape
+    assert len(pred_proba) == Y.shape[1]
+    for i, proba in enumerate(pred_proba):
+        n_classes = len(np.unique(Y[:, i]))
+        assert proba.shape == (X.shape[0], n_classes)
+        assert_allclose(proba.sum(axis=1), np.ones(X.shape[0]))
 
 
 def test_cross_val_predict_with_method_multilabel_ovr():
