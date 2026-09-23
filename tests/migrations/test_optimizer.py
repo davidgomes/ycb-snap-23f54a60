@@ -212,6 +212,20 @@ class OptimizerTests(SimpleTestCase):
             migrations.AlterIndexTogether("Foo", [["a", "c"]]),
         )
 
+    def test_alter_foo_together_interleaved(self):
+        self.assertOptimizesTo(
+            [
+                migrations.AlterUniqueTogether("Foo", set()),
+                migrations.AlterIndexTogether("Foo", set()),
+                migrations.AlterUniqueTogether("Foo", {("col",)}),
+                migrations.AlterIndexTogether("Foo", {("col",)}),
+            ],
+            [
+                migrations.AlterUniqueTogether("Foo", {("col",)}),
+                migrations.AlterIndexTogether("Foo", {("col",)}),
+            ],
+        )
+
     def test_alter_alter_owrt_model(self):
         self._test_alter_alter_model(
             migrations.AlterOrderWithRespectTo("Foo", "a"),

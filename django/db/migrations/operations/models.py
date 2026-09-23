@@ -480,6 +480,14 @@ class AlterTogetherOptionOperation(ModelOptionOperation):
     def option_value(self):
         return getattr(self, self.option_name)
 
+    def reduce(self, operation, app_label):
+        return (
+            super().reduce(operation, app_label) or (
+                isinstance(operation, AlterTogetherOptionOperation) and
+                type(operation) is not type(self)
+            )
+        )
+
     def deconstruct(self):
         kwargs = {
             'name': self.name,
