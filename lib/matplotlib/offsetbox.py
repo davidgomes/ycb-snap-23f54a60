@@ -1505,14 +1505,19 @@ class DraggableBase:
         if not ref_artist.pickable():
             ref_artist.set_picker(True)
         self.got_artist = False
-        self.canvas = self.ref_artist.figure.canvas
         self._use_blit = use_blit and self.canvas.supports_blit
+        # The registry lives on the figure (and is pickled with it); keep it so
+        # that callbacks can still be disconnected once ref_artist is removed
+        # from the figure and self.canvas becomes unreachable.
+        self._callbacks = self.canvas.callbacks
         self.cids = [
-            self.canvas.callbacks._connect_picklable(
-                'pick_event', self.on_pick),
-            self.canvas.callbacks._connect_picklable(
+            self._callbacks._connect_picklable('pick_event', self.on_pick),
+            self._callbacks._connect_picklable(
                 'button_release_event', self.on_release),
         ]
+
+    # A property, not an attribute, to maintain picklability.
+    canvas = property(lambda self: self.ref_artist.figure.canvas)
 
     def on_motion(self, evt):
         if self._check_still_parented() and self.got_artist:
@@ -1563,13 +1568,13 @@ class DraggableBase:
     def disconnect(self):
         """Disconnect the callbacks."""
         for cid in self.cids:
-            self.canvas.mpl_disconnect(cid)
+            self._callbacks.disconnect(cid)
         try:
             c1 = self._c1
         except AttributeError:
             pass
         else:
-            self.canvas.mpl_disconnect(c1)
+            self._callbacks.disconnect(c1)
 
     def save_offset(self):
         pass
