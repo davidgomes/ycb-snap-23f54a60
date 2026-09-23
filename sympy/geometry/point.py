@@ -105,6 +105,11 @@ class Point(GeometryEntity):
 
     is_Point = True
 
+    # Higher than Expr so ``scalar * Point`` is handled here instead of
+    # becoming a symbolic ``Mul``. Kept below matrix priorities so
+    # ``Matrix * Point`` still uses matrix multiplication.
+    _op_priority = 10.0005
+
     def __new__(cls, *args, **kwargs):
         evaluate = kwargs.get('evaluate', global_evaluate[0])
         on_morph = kwargs.get('on_morph', 'ignore')
@@ -277,6 +282,10 @@ class Point(GeometryEntity):
         factor = sympify(factor)
         coords = [simplify(x*factor) for x in self.args]
         return Point(coords, evaluate=False)
+
+    def __rmul__(self, factor):
+        """Multiply a factor by point's coordinates."""
+        return self.__mul__(factor)
 
     def __neg__(self):
         """Negate the point."""

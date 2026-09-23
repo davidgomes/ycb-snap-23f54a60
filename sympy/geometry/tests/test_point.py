@@ -91,6 +91,9 @@ def test_point():
     assert (-p3).__rsub__(p4) == p3.midpoint(p4).scale(2, 2)
 
     assert p4 * 5 == Point(5, 5)
+    assert 5 * p4 == Point(5, 5)
+    assert S(2.0) * p4 == p4 * S(2.0)
+    assert p3 + S(2.0) * p4 == p3 + p4 * S(2.0)
     assert p4 / 5 == Point(0.2, 0.2)
 
     raises(ValueError, lambda: Point(0, 0) + 10)
