@@ -4472,6 +4472,18 @@ class TestDataset:
             ds.isel(time=10)
             ds.isel(time=slice(10), dim1=[0]).isel(dim1=0, dim2=-1)
 
+    def test_lazy_load_chunks(self) -> None:
+        store = InaccessibleVariableDataStore()
+        create_test_data().dump_to_store(store)
+
+        for decode_cf in [True, False]:
+            ds = open_dataset(store, decode_cf=decode_cf)
+            # these should not raise UnexpectedDataAccess:
+            assert ds.chunks == {}
+            assert ds["var1"].chunks is None
+            assert ds["var1"].chunksizes == {}
+            assert ds.variables["var1"].chunksizes == {}
+
     def test_dropna(self) -> None:
         x = np.random.randn(4, 4)
         x[::2, 0] = np.nan
