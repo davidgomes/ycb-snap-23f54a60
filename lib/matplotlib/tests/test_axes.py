@@ -2866,6 +2866,15 @@ def test_stackplot():
     ax.set_xlim((0, 10))
     ax.set_ylim((0, 70))
 
+def test_stackplot_colors_do_not_change_cycler():
+    fig, ax = plt.subplots()
+    colls = ax.stackplot([1, 2, 3], [[1, 1, 1], [1, 2, 3], [4, 3, 2]],
+                         colors=['C2', 'C3', 'C4'])
+    for coll, c in zip(colls, ['C2', 'C3', 'C4']):
+        assert mcolors.same_color(coll.get_facecolor(), c)
+    line, = ax.plot([1, 2])
+    assert mcolors.same_color(line.get_color(), 'C0')
+
 
 @image_comparison(['stackplot_test_baseline'], remove_text=True)
 def test_stackplot_baseline():
