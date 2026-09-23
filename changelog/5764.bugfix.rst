@@ -1,0 +1,1 @@
+The ``--pastebin`` option now submits console output with the ``text`` lexer so bpaste.net accepts arbitrary pytest output.
