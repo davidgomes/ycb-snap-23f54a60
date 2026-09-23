@@ -48,6 +48,8 @@ Bugs fixed
 * #8597: autodoc: a docsting having metadata only should be treated as
   undocumented
 * #9185: autodoc: typehints for overloaded functions and methods are inaccurate
+* #8138: autodoc: the docstring of a class alias is not shown; "alias of ..." is
+  always shown instead
 
 Testing
 --------
