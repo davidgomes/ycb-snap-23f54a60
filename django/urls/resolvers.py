@@ -321,8 +321,11 @@ class LocalePrefixPattern:
             return '%s/' % language_code
 
     def match(self, path):
+        # Active language codes are normalized to lowercase, while prefixes may
+        # use BCP 47 casing such as en-Latn-US. Language tags are
+        # case-insensitive, so compare the prefix that way.
         language_prefix = self.language_prefix
-        if path.startswith(language_prefix):
+        if path.lower().startswith(language_prefix.lower()):
             return path[len(language_prefix):], (), {}
         return None
 

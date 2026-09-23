@@ -1798,6 +1798,22 @@ class LocaleMiddlewareTests(TestCase):
         response = self.client.get('/en/streaming/')
         self.assertContains(response, "Yes/No")
 
+    @override_settings(
+        LANGUAGE_CODE='en-us',
+        LANGUAGES=[
+            ('en-us', 'English'),
+            ('en-latn-us', 'Latin English'),
+            ('en-Latn-US', 'BCP 47 case format'),
+        ],
+    )
+    def test_script_and_region_prefix(self):
+        # Language tags with both a script and a region, including BCP 47
+        # casing, are valid i18n_patterns prefixes.
+        for path in ('/en-latn-us/simple/', '/en-Latn-US/simple/'):
+            with self.subTest(path=path):
+                response = self.client.get(path)
+                self.assertEqual(response.status_code, 200)
+
 
 @override_settings(
     USE_I18N=True,
