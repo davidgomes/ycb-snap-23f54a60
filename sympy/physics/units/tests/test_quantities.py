@@ -528,6 +528,15 @@ def test_issue_22819():
     assert Da.scale_factor == 1.66053906660000e-24
 
 
+def test_issue_24066():
+    from sympy.core.numbers import E
+    from sympy.physics.units import farad
+    expr = second / (ohm * farad)
+    dim = SI._collect_factor_and_dimension(expr)[1]
+    assert SI.get_dimension_system().is_dimensionless(dim)
+    assert SI._collect_factor_and_dimension(100 + exp(expr)) == (100 + E, Dimension(1))
+
+
 def test_issue_20288():
     from sympy.core.numbers import E
     from sympy.physics.units import energy
