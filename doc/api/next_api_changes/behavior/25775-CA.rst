@@ -9,3 +9,7 @@ Hence, changing :rc:`text.antialiased` (e.g. with `.rc_context`) after a
 `.Text` has been created, e.g. only around a call to `.Figure.savefig`, no
 longer affects it; use `.Text.set_antialiased` instead, or set
 :rc:`text.antialiased` before creating the figure.
+
+The antialiasing state of a `.Text` is now also respected by text drawn with
+path effects and, on the Cairo backends, by mathtext; both previously ignored
+:rc:`text.antialiased`.
