@@ -1,0 +1,1 @@
+Fixed regression where dynamically adding an ``xfail`` marker during test execution (for example with ``request.node.add_marker(pytest.mark.xfail(...))``) no longer marked a failing test as xfailed.
