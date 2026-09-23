@@ -57,6 +57,7 @@ class ChoicesTests(SimpleTestCase):
         self.assertIsInstance(Suit.DIAMOND, Suit)
         self.assertIsInstance(Suit.DIAMOND.label, Promise)
         self.assertIsInstance(Suit.DIAMOND.value, int)
+        self.assertEqual(str(Suit.DIAMOND), '1')
 
     def test_integerchoices_auto_label(self):
         self.assertEqual(Vehicle.CAR.label, 'Carriage')
@@ -98,6 +99,7 @@ class ChoicesTests(SimpleTestCase):
         self.assertIsInstance(YearInSchool.FRESHMAN, YearInSchool)
         self.assertIsInstance(YearInSchool.FRESHMAN.label, Promise)
         self.assertIsInstance(YearInSchool.FRESHMAN.value, str)
+        self.assertEqual(str(YearInSchool.FRESHMAN), 'FR')
 
     def test_textchoices_auto_label(self):
         self.assertEqual(Gender.MALE.label, 'Male')
