@@ -1215,6 +1215,16 @@ def test_collect_pkg_init_only(testdir):
     result.stdout.fnmatch_lines(["sub/__init__.py::test_init PASSED*", "*1 passed in*"])
 
 
+def test_does_not_import_non_test_package_init(testdir):
+    """Package __init__.py files not matching python_files are not imported (#6194)."""
+    testdir.mkpydir("foobar").join("__init__.py").write("assert False")
+    testdir.makepyfile(test_foo="def test_foo(): pass")
+
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(["*1 passed in*"])
+    assert result.ret == 0
+
+
 @pytest.mark.skipif(
     not hasattr(py.path.local, "mksymlinkto"),
     reason="symlink not available on this platform",
