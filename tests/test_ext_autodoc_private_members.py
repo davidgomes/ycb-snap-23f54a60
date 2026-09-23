@@ -60,3 +60,70 @@ def test_private_field_and_private_members(app):
         '   :meta private:',
         '',
     ]
+
+
+@pytest.mark.sphinx('html', testroot='ext-autodoc')
+def test_private_members(app):
+    app.config.autoclass_content = 'class'
+    options = {"members": None,
+               "private-members": "private_function"}
+    actual = do_autodoc(app, 'module', 'target.private', options)
+    assert list(actual) == [
+        '',
+        '.. py:module:: target.private',
+        '',
+        '',
+        '.. py:function:: _public_function(name)',
+        '   :module: target.private',
+        '',
+        '   public_function is a docstring().',
+        '',
+        '   :meta public:',
+        '',
+        '',
+        '.. py:function:: private_function(name)',
+        '   :module: target.private',
+        '',
+        '   private_function is a docstring().',
+        '',
+        '   :meta private:',
+        '',
+    ]
+
+    options = {"members": None,
+               "private-members": "_public_function"}
+    actual = do_autodoc(app, 'module', 'target.private', options)
+    assert list(actual) == [
+        '',
+        '.. py:module:: target.private',
+        '',
+        '',
+        '.. py:function:: _public_function(name)',
+        '   :module: target.private',
+        '',
+        '   public_function is a docstring().',
+        '',
+        '   :meta public:',
+        '',
+    ]
+
+
+@pytest.mark.sphinx('html', testroot='ext-autodoc')
+def test_private_members_for_attributes(app):
+    options = {"members": None,
+               "undoc-members": None,
+               "private-members": "__name"}
+    actual = do_autodoc(app, 'class', 'target.name_mangling.Foo', options)
+    assert list(filter(lambda l: '::' in l, actual)) == [
+        '.. py:class:: Foo()',
+        '   .. py:attribute:: Foo.__name',
+    ]
+
+    options = {"members": None,
+               "undoc-members": None,
+               "private-members": "__age"}
+    actual = do_autodoc(app, 'class', 'target.name_mangling.Foo', options)
+    assert list(filter(lambda l: '::' in l, actual)) == [
+        '.. py:class:: Foo()',
+        '   .. py:attribute:: Foo.__age',
+    ]
