@@ -199,3 +199,19 @@ def test_huber_better_r2_score():
 
     # The huber model should also fit poorly on the outliers.
     assert_greater(ridge_outlier_score, huber_outlier_score)
+
+
+def test_huber_bool():
+    # Test that boolean predictors are cast to float and do not crash.
+    X, y = make_regression(n_samples=200, n_features=2, noise=4.0,
+                           random_state=0)
+    X_bool = X > 0
+    X_bool_as_float = np.asarray(X_bool, dtype=float)
+
+    huber_bool = HuberRegressor().fit(X_bool, y)
+    huber_float = HuberRegressor().fit(X_bool_as_float, y)
+
+    assert_array_almost_equal(huber_bool.coef_, huber_float.coef_)
+    assert_almost_equal(huber_bool.intercept_, huber_float.intercept_)
+    assert_almost_equal(huber_bool.scale_, huber_float.scale_)
+    assert_array_equal(huber_bool.outliers_, huber_float.outliers_)
