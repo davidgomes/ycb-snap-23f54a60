@@ -17,6 +17,11 @@ Release date: TBA
 * Fixed a false positive for ``used-before-assignment`` when a try block returns
   but an except handler defines a name via type annotation.
 
+* Don't crash if ``--jobs=0`` is used in a Kubernetes Pod (or other cgroup-limited
+  environment) that is allotted only a fraction of a single CPU core.
+
+  Closes #6902
+
 
 What's New in Pylint 2.14.1?
 ----------------------------
