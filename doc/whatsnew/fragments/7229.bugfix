@@ -1,0 +1,4 @@
+Allow the use of regex quantifiers such as ``{1,3}`` in regexp-list options
+like ``bad-names-rgxs``, whose commas were previously treated as separators.
+
+Closes #7229
