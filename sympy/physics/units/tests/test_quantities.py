@@ -22,7 +22,7 @@ from sympy.physics.units.definitions import (amu, au, centimeter, coulomb,
 
 from sympy.physics.units.definitions.dimension_definitions import (
     Dimension, charge, length, time, temperature, pressure,
-    energy, mass
+    energy, mass, velocity, acceleration
 )
 from sympy.physics.units.prefixes import PREFIXES, kilo
 from sympy.physics.units.quantities import PhysicalConstant, Quantity
@@ -342,6 +342,19 @@ def test_factor_and_dimension():
     assert (1001, length) == SI._collect_factor_and_dimension(meter + km)
     assert (2, length/time) == SI._collect_factor_and_dimension(
         meter/second + 36*km/(10*hour))
+
+    # Equivalent but non-identical dimensions (velocity vs acceleration*time)
+    v1 = Quantity('v1')
+    SI.set_quantity_dimension(v1, velocity)
+    SI.set_quantity_scale_factor(v1, 2*meter/second)
+    a1 = Quantity('a1')
+    SI.set_quantity_dimension(a1, acceleration)
+    SI.set_quantity_scale_factor(a1, -S(98)/10*meter/second**2)
+    t1 = Quantity('t1')
+    SI.set_quantity_dimension(t1, time)
+    SI.set_quantity_scale_factor(t1, 5*second)
+    assert SI._collect_factor_and_dimension(a1*t1 + v1) == (
+        -S(47), acceleration*time)
 
     x, y = symbols('x y')
     assert (x + y/100, length) == SI._collect_factor_and_dimension(
