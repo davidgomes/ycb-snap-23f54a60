@@ -116,6 +116,10 @@ class M2MFrom(models.Model):
     m2m = models.ManyToManyField(M2MTo)
 
 
+class Person(models.Model):
+    friends = models.ManyToManyField('self')
+
+
 class Parent(models.Model):
     pass
 

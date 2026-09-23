@@ -7,8 +7,8 @@ from django.test import TestCase, skipIfDBFeature, skipUnlessDBFeature
 
 from .models import (
     MR, A, Avatar, Base, Child, HiddenUser, HiddenUserProfile, M, M2MFrom,
-    M2MTo, MRNull, Origin, Parent, R, RChild, RChildChild, Referrer, S, T,
-    User, create_a, get_default_r,
+    M2MTo, MRNull, Origin, Parent, Person, R, RChild, RChildChild, Referrer, S,
+    SecondReferrer, T, User, create_a, get_default_r,
 )
 
 
@@ -582,3 +582,24 @@ class FastDeleteTests(TestCase):
                 User.objects.filter(avatar__desc='missing').delete(),
                 (0, {'delete.User': 0})
             )
+
+    def test_fast_delete_combined_relationships(self):
+        # The cascading fast-delete of SecondReferrer should be combined
+        # in a single DELETE WHERE referrer_id OR other_referrer_id.
+        origin = Origin.objects.create()
+        referrer = Referrer.objects.create(origin=origin, unique_field=42)
+        SecondReferrer.objects.create(referrer=referrer, other_referrer=referrer)
+        with self.assertNumQueries(2):
+            referrer.delete()
+        self.assertFalse(SecondReferrer.objects.exists())
+
+    def test_fast_delete_combined_self_m2m(self):
+        # Both sides of the symmetrical m2m intermediary table should be
+        # fast-deleted in a single query.
+        person = Person.objects.create()
+        friend = Person.objects.create()
+        person.friends.add(friend)
+        with self.assertNumQueries(2):
+            person.delete()
+        self.assertFalse(Person.friends.through.objects.exists())
+        self.assertEqual(Person.objects.get(), friend)
