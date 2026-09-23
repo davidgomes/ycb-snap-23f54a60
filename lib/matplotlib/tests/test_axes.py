@@ -2866,6 +2866,7 @@ def test_stackplot():
     ax.set_xlim((0, 10))
     ax.set_ylim((0, 70))
 
+
 def test_stackplot_colors_do_not_change_cycler():
     fig, ax = plt.subplots()
     colls = ax.stackplot([1, 2, 3], [[1, 1, 1], [1, 2, 3], [4, 3, 2]],
