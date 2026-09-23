@@ -131,3 +131,9 @@ def test_subclass_of_mocked_object(app):
     options = {'members': None}
     actual = do_autodoc(app, 'module', 'target.need_mocks', options)
     assert '.. py:class:: Inherited(*args: Any, **kwargs: Any)' in actual
+
+    # A subclass of a mocked class must list the full mocked base name.
+    # refs: https://github.com/sphinx-doc/sphinx/issues/9657
+    options = {'show-inheritance': None}
+    actual = do_autodoc(app, 'class', 'target.need_mocks.Inherited', options)
+    assert '   Bases: :py:class:`missing_module.Class`' in actual
