@@ -1779,6 +1779,16 @@ class TestVariable(VariableSubclassobjects):
         v[dict(x=[True, False], y=[False, True, False])] = 1
         assert v[0, 1] == 1
 
+    def test_setitem_object_with_values_attr(self):
+        class HasValues:
+            values = 5
+
+        obj = HasValues()
+        v = Variable(["x"], np.array([None, None], dtype=object))
+        v[0] = obj
+        assert v.values[0] is obj
+        assert v.values[1] is None
+
     def test_setitem_fancy(self):
         # assignment which should work as np.ndarray does
         def assert_assigned_2d(array, key_x, key_y, values):
@@ -2307,6 +2317,15 @@ class TestAsCompatibleData:
         array = CustomIndexable(np.arange(3))
         orig = Variable(dims=("x"), data=array, attrs={"foo": "bar"})
         assert isinstance(orig._data, CustomIndexable)
+
+        # Type with data stored in values attribute
+        class CustomWithValuesAttr:
+            def __init__(self, array):
+                self.values = array
+
+        array = CustomWithValuesAttr(np.arange(3))
+        orig = Variable(dims=(), data=array)
+        assert isinstance(orig._data.item(), CustomWithValuesAttr)
 
 
 def test_raise_no_warning_for_nan_in_binary_ops():

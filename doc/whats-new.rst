@@ -127,6 +127,9 @@ Bug fixes
   1.4.0 with xarray (:issue:`4870`, :pull:`4871`). By `Spencer Clark <https://github.com/spencerkclark>`_.
 - Fix decoding of vlen strings using h5py versions greater than 3.0.0 with h5netcdf backend (:issue:`4570`, :pull:`4893`).
   By `Kai Mühlbauer <https://github.com/kmuehlbauer>`_.
+- Only unwrap the ``values`` attribute of pandas and xarray objects when creating or
+  assigning to a :py:class:`Variable`, so that arbitrary objects with a ``values``
+  attribute can be stored in object arrays (:issue:`2905`).
 
 Documentation
 ~~~~~~~~~~~~~
