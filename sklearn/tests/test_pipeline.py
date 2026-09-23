@@ -533,6 +533,10 @@ def test_pipeline_slice():
     pipe = Pipeline([('transf1', Transf()),
                      ('transf2', Transf()),
                      ('clf', FitParamT())])
+    assert len(pipe) == 3
+    pipe_slice = pipe[:len(pipe)]
+    assert isinstance(pipe_slice, Pipeline)
+    assert pipe_slice.steps == pipe.steps
     pipe2 = pipe[:-1]
     assert isinstance(pipe2, Pipeline)
     assert pipe2.steps == pipe.steps[:-1]
