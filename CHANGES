@@ -50,6 +50,8 @@ Bugs fixed
 ----------
 
 * #7811: sphinx.util.inspect causes circular import problem
+* #7870: autodoc: A TypeError is raised when a mocked class is subscripted with
+  a TypeVar (e.g. generic-typed classes)
 
 Testing
 --------
