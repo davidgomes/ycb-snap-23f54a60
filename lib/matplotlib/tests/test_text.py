@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 import matplotlib.transforms as mtransforms
 from matplotlib.testing.decorators import check_figures_equal, image_comparison
 from matplotlib.testing._markers import needs_usetex
-from matplotlib.text import Text
+from matplotlib.text import Annotation, Text
 
 
 @image_comparison(['font_styles'])
@@ -195,6 +195,69 @@ def test_antialiasing():
     # test cleanup will do it for us.  In fact, if we do it here, it
     # will turn antialiasing back off before the images are actually
     # rendered.
+
+
+@pytest.mark.parametrize("rc_antialiased", [True, False])
+def test_set_get_antialiased(rc_antialiased):
+    mpl.rcParams["text.antialiased"] = rc_antialiased
+    txt = Text(.5, .5, "foo\nbar")
+    assert txt.get_antialiased() == rc_antialiased
+    # The rcParam is only looked up at creation time.
+    mpl.rcParams["text.antialiased"] = not rc_antialiased
+    assert txt.get_antialiased() == rc_antialiased
+
+    txt.set_antialiased(True)
+    assert txt.get_antialiased() is True
+    txt.set_antialiased(False)
+    assert txt.get_antialiased() is False
+    txt.set_antialiased(None)
+    assert txt.get_antialiased() == (not rc_antialiased)
+
+    assert Text(.5, .5, "foo", antialiased=True).get_antialiased() is True
+    assert Text(.5, .5, "foo", antialiased=False).get_antialiased() is False
+
+    other = Text(.5, .5, "foo")
+    other.update_from(Text(.5, .5, "bar", antialiased=rc_antialiased))
+    assert other.get_antialiased() == rc_antialiased
+
+
+def test_annotation_antialiased():
+    annot = Annotation("foo\nbar", (.5, .5), antialiased=True)
+    assert annot.get_antialiased() is True
+    annot = Annotation("foo\nbar", (.5, .5), antialiased=False)
+    assert annot.get_antialiased() is False
+    annot.set_antialiased(True)
+    assert annot.get_antialiased() is True
+    annot = Annotation("foo\nbar", (.5, .5))
+    assert annot.get_antialiased() == mpl.rcParams["text.antialiased"]
+
+    fig, ax = plt.subplots()
+    annot = ax.annotate("local max", xy=(2, 1), xytext=(3, 1.5),
+                        antialiased=False)
+    assert annot.get_antialiased() is False
+
+
+@pytest.mark.parametrize("backend", ["agg", "cairo"])
+@pytest.mark.parametrize("s", ["antialiased", r"$\sqrt{x}$"])
+def test_antialiased_per_artist(backend, s):
+    if backend == "cairo":
+        pytest.importorskip("cairo")
+
+    def render(antialiased):
+        fig = plt.figure(figsize=(2, 1))
+        fig.text(0.5, 0.5, s, fontsize=20, ha="center", va="center",
+                 antialiased=antialiased)
+        buf = io.BytesIO()
+        # The per-artist setting must take precedence over the rcParam.
+        with mpl.rc_context({"text.antialiased": not antialiased}):
+            fig.savefig(buf, format="png", backend=backend)
+        buf.seek(0)
+        return np.unique(np.round(plt.imread(buf)[..., :3] * 255))
+
+    # Black text on a white background: without antialiasing, only pure
+    # black and white pixels are present.
+    assert set(render(antialiased=False)) == {0, 255}
+    assert len(render(antialiased=True)) > 2
 
 
 def test_afm_kerning():
