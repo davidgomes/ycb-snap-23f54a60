@@ -130,11 +130,32 @@ def call_command(command_name, *args, **options):
                 yield opt
 
     parser_actions = list(get_actions(parser))
+
+    def required_mutex_actions(root_parser):
+        # Actions that are required only as members of a required mutually
+        # exclusive group (the action itself is not marked required).
+        result = set()
+        parsers = [root_parser]
+        while parsers:
+            current = parsers.pop()
+            for group in current._mutually_exclusive_groups:
+                if group.required:
+                    result.update(group._group_actions)
+            for action in current._actions:
+                if isinstance(action, _SubParsersAction):
+                    parsers.extend(action.choices.values())
+        return result
+
+    mutex_required = required_mutex_actions(parser)
     # Any required arguments which are passed in via **options must be passed
-    # to parse_args().
+    # to parse_args(). Options that belong to a required mutually exclusive
+    # group are not individually required, so include those as well.
     parse_args += [
         '{}={}'.format(min(opt.option_strings), arg_options[opt.dest])
-        for opt in parser_actions if opt.required and opt.dest in options
+        for opt in parser_actions
+        if opt.option_strings and opt.dest in options and (
+            opt.required or opt in mutex_required
+        )
     ]
     defaults = parser.parse_args(args=parse_args)
     defaults = dict(defaults._get_kwargs(), **arg_options)
