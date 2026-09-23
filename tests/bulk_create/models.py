@@ -68,8 +68,43 @@ class SmallAutoFieldModel(models.Model):
     id = models.SmallAutoField(primary_key=True)
 
 
+class MyWrapper:
+    def __init__(self, value):
+        self.value = value
+
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return self.value == other.value
+        return self.value == other
+
+    def __hash__(self):
+        return hash(self.value)
+
+    def __int__(self):
+        return int(self.value)
+
+    def __repr__(self):
+        return '<MyWrapper: %s>' % self.value
+
+
+class MyAutoField(models.BigAutoField):
+    def from_db_value(self, value, expression, connection):
+        if value is None:
+            return None
+        return MyWrapper(value)
+
+    def get_prep_value(self, value):
+        if value is None:
+            return None
+        return int(value)
+
+
 class BigAutoFieldModel(models.Model):
     id = models.BigAutoField(primary_key=True)
+
+
+class WrappedAutoFieldModel(models.Model):
+    id = MyAutoField(primary_key=True)
 
 
 class NullableFields(models.Model):

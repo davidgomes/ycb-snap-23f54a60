@@ -9,7 +9,8 @@ from django.test import (
 )
 
 from .models import (
-    BigAutoFieldModel, Country, NoFields, NullableFields, Pizzeria,
+    BigAutoFieldModel, Country, MyWrapper, NoFields, NullableFields, Pizzeria,
+    WrappedAutoFieldModel,
     ProxyCountry, ProxyMultiCountry, ProxyMultiProxyCountry, ProxyProxyCountry,
     Restaurant, SmallAutoFieldModel, State, TwoFields,
 )
@@ -338,6 +339,20 @@ class BulkCreateTests(TestCase):
         NullableFields.objects.bulk_create([child])
         child = NullableFields.objects.get(integer_field=88)
         self.assertEqual(child.auto_field, parent)
+
+    def test_returning_fields_use_db_converters(self):
+        obj = WrappedAutoFieldModel.objects.create()
+        self.assertIsInstance(obj.id, MyWrapper)
+        fetched = WrappedAutoFieldModel.objects.get()
+        self.assertEqual(obj.id, fetched.id)
+
+    @skipUnlessDBFeature('can_return_rows_from_bulk_insert')
+    def test_bulk_create_returning_fields_use_db_converters(self):
+        objs = [WrappedAutoFieldModel()]
+        WrappedAutoFieldModel.objects.bulk_create(objs)
+        self.assertIsInstance(objs[0].id, MyWrapper)
+        fetched = WrappedAutoFieldModel.objects.get()
+        self.assertEqual(objs[0].id, fetched.id)
 
     def test_unsaved_parent(self):
         parent = NoFields()
