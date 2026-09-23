@@ -3621,6 +3621,18 @@ class TestPydap:
         with self.create_datasets(chunks={"j": 2}) as (actual, expected):
             assert_equal(actual, expected)
 
+    def test_signed_bytes_from_unsigned(self):
+        from pydap.model import BaseType, DatasetType
+
+        signed = np.array([-128, -1, 0, 1, 2, 127], dtype="i1")
+        pydap_ds = DatasetType("test")
+        pydap_ds["x"] = BaseType(
+            "x", signed.view("u1"), dimensions=("x",), _Unsigned="false"
+        )
+        with open_dataset(PydapDataStore(pydap_ds)) as actual:
+            assert actual["x"].dtype == np.int8
+            np.testing.assert_array_equal(actual["x"].values, signed)
+
 
 @network
 @requires_scipy_or_netCDF4
