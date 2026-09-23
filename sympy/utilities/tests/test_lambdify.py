@@ -5,7 +5,7 @@ import inspect
 import mpmath
 from sympy.testing.pytest import raises
 from sympy import (
-    symbols, lambdify, sqrt, sin, cos, tan, pi, acos, acosh, Rational,
+    symbols, lambdify, sqrt, sin, cos, tan, pi, acos, acosh, Rational, Mod,
     Float, Lambda, Piecewise, exp, E, Integral, oo, I, Abs, Function,
     true, false, And, Or, Not, ITE, Min, Max, floor, diff, IndexedBase, Sum,
     DotProduct, Eq, Dummy, sinc, erf, erfc, factorial, gamma, loggamma,
@@ -103,6 +103,16 @@ def test_own_namespace_2():
 def test_own_module():
     f = lambdify(x, sin(x), math)
     assert f(0) == 0.0
+
+
+def test_mod_with_empty_modules():
+    # ``%`` must not absorb a coefficient: ``-Mod(x, y)`` is ``-(x % y)``.
+    expr = -Mod(x, y)
+    g = lambdify([x, y], expr, modules=[])
+    assert g(3, 7) == -3
+    assert inspect.getsource(g).strip().endswith("return -(x % y)")
+    h = lambdify([x, y], 2*Mod(x, y), modules=[])
+    assert h(3, 7) == 6
 
 
 def test_bad_args():

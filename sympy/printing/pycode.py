@@ -233,8 +233,13 @@ class AbstractPythonCodePrinter(CodePrinter):
         return self._print_NaN(expr)
 
     def _print_Mod(self, expr):
+        # ``%`` has the same precedence as ``*`` and binds tighter than unary
+        # minus, so an unparenthesized product such as ``-x % y`` is
+        # ``(-x) % y`` rather than ``-(x % y)``. Wrapping the operator keeps
+        # a coefficient outside ``Mod`` (``expr * Mod(a, b)``).
         PREC = precedence(expr)
-        return ('{} % {}'.format(*map(lambda x: self.parenthesize(x, PREC), expr.args)))
+        return '({} % {})'.format(*map(lambda x: self.parenthesize(x, PREC),
+                                        expr.args))
 
     def _print_Piecewise(self, expr):
         result = []
