@@ -203,6 +203,10 @@ class InspectDBTestCase(TestCase):
             'people_unique = models.OneToOneField(InspectdbPeople, models.DO_NOTHING)',
             output,
         )
+        self.assertIn(
+            "other = models.ForeignKey(InspectdbColumnunique, models.DO_NOTHING, to_field='other_id')",
+            output,
+        )
 
     def test_digits_column_name_introspection(self):
         """Introspection of column names consist/start with digits (#16536/#17676)"""

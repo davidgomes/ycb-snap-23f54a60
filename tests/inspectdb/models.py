@@ -96,6 +96,14 @@ class TextFieldDbCollation(models.Model):
         required_db_features = {'supports_collation_on_textfield'}
 
 
+class ColumnUnique(models.Model):
+    other_id = models.IntegerField(unique=True)
+
+
+class ForeignKeyToField(models.Model):
+    other = models.ForeignKey(ColumnUnique, models.CASCADE, to_field='other_id')
+
+
 class UniqueTogether(models.Model):
     field1 = models.IntegerField()
     field2 = models.CharField(max_length=10)
