@@ -618,6 +618,18 @@ class TestCombineAuto:
                                       " along dimension x"):
             combine_by_coords([ds1, ds0])
 
+    def test_combine_by_coords_identical_nonmonotonic_coord(self):
+        # Coordinate dimensions that do not vary between datasets should be
+        # ignored, even when they are not monotonic.
+        y = ['a', 'c', 'b']
+        ds1 = Dataset({'data': (['x', 'y'], np.random.rand(3, 3))},
+                      coords={'x': [1, 2, 3], 'y': y})
+        ds2 = Dataset({'data': (['x', 'y'], np.random.rand(4, 3))},
+                      coords={'x': [4, 5, 6, 7], 'y': y})
+        actual = combine_by_coords((ds1, ds2))
+        expected = concat([ds1, ds2], dim='x')
+        assert_identical(expected, actual)
+
 
 @pytest.mark.filterwarnings("ignore:In xarray version 0.13 `auto_combine` "
                             "will be deprecated")
