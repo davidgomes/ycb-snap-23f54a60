@@ -207,6 +207,36 @@ class MethodDecoratorTests(SimpleTestCase):
 
         self.assertEqual("test:hello", Test().say("hello"))
 
+    def test_preserve_wrapper_assignments(self):
+        """
+        The callable passed to the decorator has the wrapper assignments of
+        the method (functools.partial does not provide them itself).
+        """
+        recorded = {}
+
+        def logger(func):
+            @wraps(func)
+            def inner(*args, **kwargs):
+                recorded['name'] = func.__name__
+                recorded['module'] = func.__module__
+                recorded['qualname'] = func.__qualname__
+                recorded['doc'] = func.__doc__
+                return func(*args, **kwargs)
+            return inner
+
+        class Test:
+            @method_decorator(logger)
+            def hello_world(self):
+                """Greet."""
+                return "hello"
+
+        self.assertEqual(Test().hello_world(), "hello")
+        self.assertEqual(recorded['name'], 'hello_world')
+        self.assertEqual(recorded['module'], Test.__module__)
+        self.assertEqual(recorded['qualname'], Test.hello_world.__qualname__)
+        self.assertEqual(recorded['doc'], 'Greet.')
+        self.assertEqual(Test.hello_world.__name__, 'hello_world')
+
     def test_preserve_attributes(self):
         # Sanity check myattr_dec and myattr2_dec
         @myattr_dec
