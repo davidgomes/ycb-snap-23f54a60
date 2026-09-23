@@ -125,8 +125,13 @@ class Mod(Function):
 
             was = non_mod_l[:]
             non_mod_l = [cls(x, q) for x in non_mod_l]
-            changed = was != non_mod_l
-            if changed or mod_l and all(inner.args[1] == q for inner in mod_l):
+            changed = q.is_Integer and p.is_integer and any(
+                n != w and not (isinstance(n, cls) and n.args[0] == w)
+                for w, n in zip(was, non_mod_l))
+            if changed:
+                return cls(Mul(*[n.args[0] if isinstance(n, cls) else n
+                    for n in non_mod_l], *mod_l), q)
+            if mod_l and all(inner.args[1] == q for inner in mod_l):
                 # finding distributive term
                 mod = []
                 non_mod = []
