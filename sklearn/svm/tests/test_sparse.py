@@ -345,6 +345,23 @@ def test_sparse_svc_clone_with_callable_kernel():
     # b.decision_function(X_sp)  # XXX : should be supported
 
 
+def test_sparse_fit_empty_support_vectors():
+    # SVR on this sparse design finds no support vectors. Building
+    # dual_coef_ must not divide by zero.
+    x_train = np.array([[0, 1, 0, 0],
+                        [0, 0, 0, 1],
+                        [0, 0, 1, 0],
+                        [0, 0, 0, 1]])
+    y_train = np.array([0.04, 0.04, 0.10, 0.16])
+    model = svm.SVR(C=316.227766017, cache_size=200, coef0=0.0, degree=3,
+                    epsilon=0.1, gamma=1.0, kernel='linear', max_iter=15000,
+                    shrinking=True, tol=0.001, verbose=False)
+    model.fit(sparse.csr_matrix(x_train), y_train)
+    assert model.support_vectors_.shape[0] == 0
+    assert sparse.issparse(model.dual_coef_)
+    assert model.dual_coef_.shape == (1, 0)
+
+
 def test_timeout():
     sp = svm.SVC(C=1, kernel=lambda x, y: x * y.T,
                  probability=True, random_state=0, max_iter=1)
