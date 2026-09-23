@@ -297,6 +297,16 @@ class PaginationTests(SimpleTestCase):
         with self.assertRaises(EmptyPage):
             paginator.get_page(1)
 
+    def test_paginator_iteration(self):
+        paginator = Paginator([1, 2, 3], 2)
+        pages = list(paginator)
+        self.assertEqual([page.number for page in pages], [1, 2])
+        self.assertEqual([list(page) for page in pages], [[1, 2], [3]])
+
+    def test_paginator_iteration_empty_object_list(self):
+        self.assertEqual([page.number for page in Paginator([], 2)], [1])
+        self.assertEqual(list(Paginator([], 2, allow_empty_first_page=False)), [])
+
 
 class ModelPaginationTests(TestCase):
     """
