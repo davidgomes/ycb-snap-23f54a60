@@ -57,6 +57,7 @@ from sklearn.metrics.scorer import check_scoring
 from sklearn.linear_model import Ridge, LogisticRegression, SGDClassifier
 from sklearn.linear_model import PassiveAggressiveClassifier, RidgeClassifier
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.multioutput import MultiOutputClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.cluster import KMeans
@@ -1448,6 +1449,19 @@ def test_cross_val_predict_with_method_multilabel_ovr():
                                                  random_state=0))
     for method in ['predict_proba', 'decision_function']:
         check_cross_val_predict_binary(est, X, y, method=method)
+
+
+def test_cross_val_predict_with_method_multilabel_multioutput_classifier():
+    # MultiOutputClassifier returns a list of per-output predict_proba
+    # arrays, like RandomForestClassifier on multilabel targets.
+    X, y = make_multilabel_classification(n_samples=100, n_labels=3,
+                                          n_classes=4, n_features=5,
+                                          random_state=42)
+    y[:, 0] += y[:, 1]  # Put three classes in the first column
+    est = MultiOutputClassifier(LogisticRegression(solver="liblinear",
+                                                   random_state=0))
+    for method in ['predict_proba']:
+        check_cross_val_predict_multilabel(est, X, y, method=method)
 
 
 class RFWithDecisionFunction(RandomForestClassifier):

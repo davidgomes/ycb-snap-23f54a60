@@ -260,6 +260,11 @@ def test_multi_output_classification():
 
     predict_proba = multi_target_forest.predict_proba(X)
 
+    assert len(multi_target_forest.classes_) == n_outputs
+    for est, classes in zip(multi_target_forest.estimators_,
+                            multi_target_forest.classes_):
+        assert_array_equal(est.classes_, classes)
+
     assert len(predict_proba) == n_outputs
     for class_probabilities in predict_proba:
         assert (n_samples, n_classes) == class_probabilities.shape
