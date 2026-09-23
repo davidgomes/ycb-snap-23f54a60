@@ -172,6 +172,18 @@ class MiddlewareNotUsedTests(SimpleTestCase):
             "MiddlewareNotUsed('middleware_exceptions.tests.MyMiddlewareWithExceptionMessage'): spam eggs"
         )
 
+    @override_settings(MIDDLEWARE=[
+        'middleware_exceptions.middleware.async_payment_middleware',
+        'middleware_exceptions.tests.MyMiddleware',
+    ])
+    async def test_async_middleware_not_poisoned_by_middleware_not_used(self):
+        """
+        MiddlewareNotUsed must not leave an adapted handler in place. A later
+        async middleware would otherwise await a synchronous HttpResponse.
+        """
+        response = await self.async_client.get('/middleware_exceptions/view/')
+        self.assertEqual(response.status_code, 402)
+
     @override_settings(
         DEBUG=False,
         MIDDLEWARE=['middleware_exceptions.tests.MyMiddleware'],
