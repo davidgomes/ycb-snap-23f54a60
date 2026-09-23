@@ -1,6 +1,7 @@
 from math import ceil
 
 from django.db import IntegrityError, connection, models
+from django.db.models.deletion import Collector
 from django.db.models.sql.constants import GET_ITERATOR_CHUNK_SIZE
 from django.test import TestCase, skipIfDBFeature, skipUnlessDBFeature
 
@@ -463,6 +464,14 @@ class FastDeleteTests(TestCase):
         f.m2m.add(t)
         # 1 to delete t, 1 to fast-delete t's m_set
         self.assertNumQueries(2, f.delete)
+
+    def test_fast_delete_instance_set_pk_none(self):
+        u = User.objects.create()
+        # User can be fast-deleted.
+        collector = Collector(using='default')
+        self.assertTrue(collector.can_fast_delete(u))
+        u.delete()
+        self.assertIsNone(u.pk)
 
     def test_fast_delete_qs(self):
         u1 = User.objects.create()
