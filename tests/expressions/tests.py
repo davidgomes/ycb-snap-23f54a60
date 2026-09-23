@@ -1584,6 +1584,13 @@ class FTimeDeltaTests(TestCase):
         self.assertTrue(queryset.exists())
 
     @skipUnlessDBFeature('supports_temporal_subtraction')
+    def test_datetime_subtraction_with_duration_addition(self):
+        queryset = Experiment.objects.annotate(
+            delta=F('end') - F('start') + Value(datetime.timedelta(), output_field=DurationField()),
+        )
+        for e in queryset:
+            self.assertEqual(e.delta, e.end - e.start)
+
     def test_datetime_subtraction(self):
         under_estimate = [
             e.name for e in Experiment.objects.filter(estimated_time__gt=F('end') - F('start'))
