@@ -616,6 +616,14 @@ def test_multiple_dims(dtype, dask, func):
     expected = getattr(getattr(da, func)("x"), func)("y")
     assert_allclose(actual, expected)
 
+    min_count = 3
+    actual = getattr(da, func)(("x", "y"), skipna=True, min_count=min_count)
+    expected = getattr(da, func)(("x", "y"), skipna=True)
+    valid = da.count(("x", "y"))
+    expected = expected.where(valid >= min_count)
+    assert_allclose(actual, expected)
+    assert_dask_array(actual, dask)
+
 
 def test_docs():
     # with min_count
