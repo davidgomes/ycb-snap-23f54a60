@@ -500,6 +500,10 @@ def _TR56(rv, f, g, h, max, pow):
         # change is not going to allow a simplification as far as I can tell.
         if not (rv.is_Pow and rv.base.func == f):
             return rv
+        # Comparisons like ``exp < 0`` raise TypeError for non-real
+        # exponents (e.g. cos(x)**I). Leave those powers unchanged.
+        if not rv.exp.is_real:
+            return rv
 
         if (rv.exp < 0) == True:
             return rv
