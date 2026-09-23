@@ -70,6 +70,8 @@ from io import StringIO
 from sklearn.base import BaseEstimator
 from sklearn.base import clone
 from sklearn.multiclass import OneVsRestClassifier
+from sklearn.multioutput import MultiOutputClassifier
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.utils import shuffle
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_multilabel_classification
@@ -1460,6 +1462,23 @@ class RFWithDecisionFunction(RandomForestClassifier):
         assert isinstance(probs, list), msg
         probs = [p[:, -1] if p.shape[1] == 2 else p for p in probs]
         return probs
+
+
+def test_cross_val_predict_predict_proba_multioutput_classifier():
+    # MultiOutputClassifier stores classes on each output estimator.
+    # cross_val_predict(method='predict_proba') must still align columns.
+    X, Y = make_multilabel_classification(random_state=0)
+    mo_lda = MultiOutputClassifier(LinearDiscriminantAnalysis())
+
+    pred = cross_val_predict(mo_lda, X, Y, cv=5)
+    assert pred.shape == Y.shape
+
+    pred_proba = cross_val_predict(
+        mo_lda, X, Y, cv=5, method='predict_proba')
+    assert isinstance(pred_proba, list)
+    assert len(pred_proba) == Y.shape[1]
+    for proba in pred_proba:
+        assert proba.shape == (X.shape[0], 2)
 
 
 def test_cross_val_predict_with_method_multilabel_rf():
