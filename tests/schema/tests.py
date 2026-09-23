@@ -2570,6 +2570,60 @@ class SchemaTests(TransactionTestCase):
         with connection.schema_editor() as editor:
             editor.alter_unique_together(Book, [["author", "title"]], [])
 
+    @isolate_apps("schema")
+    @skipUnlessDBFeature("allows_multiple_constraints_on_same_fields")
+    def test_remove_unique_together_on_pk_field(self):
+        class TagUniqueTogetherPK(Model):
+            id = AutoField(primary_key=True)
+            title = CharField(max_length=255)
+
+            class Meta:
+                app_label = "schema"
+                unique_together = [["id"]]
+
+        self._test_remove_unique_together_on_unique_column(TagUniqueTogetherPK, "id")
+
+    @isolate_apps("schema")
+    @skipUnlessDBFeature("allows_multiple_constraints_on_same_fields")
+    def test_remove_unique_together_on_unique_field(self):
+        class TagUniqueTogetherSlug(Model):
+            title = CharField(max_length=255)
+            slug = SlugField(unique=True)
+
+            class Meta:
+                app_label = "schema"
+                unique_together = [["slug"]]
+
+        self._test_remove_unique_together_on_unique_column(
+            TagUniqueTogetherSlug, "slug"
+        )
+
+    def _test_remove_unique_together_on_unique_column(self, model, field_name):
+        with connection.schema_editor() as editor:
+            editor.create_model(model)
+        self.isolated_local_models = [model]
+        column = model._meta.get_field(field_name).column
+        with connection.schema_editor() as editor:
+            unique_together_name = str(
+                editor._unique_constraint_name(
+                    model._meta.db_table, [column], quote=False
+                )
+            )
+        constraints = self.get_constraints(model._meta.db_table)
+        self.assertIn(unique_together_name, constraints)
+        with connection.schema_editor() as editor:
+            editor.alter_unique_together(model, model._meta.unique_together, [])
+        constraints = self.get_constraints(model._meta.db_table)
+        self.assertNotIn(unique_together_name, constraints)
+        # The field's own primary key or unique constraint is kept.
+        self.assertTrue(
+            any(
+                details["columns"] == [column]
+                and (details["primary_key"] or details["unique"])
+                for details in constraints.values()
+            )
+        )
+
     @skipUnlessDBFeature("allows_multiple_constraints_on_same_fields")
     def test_remove_unique_together_does_not_remove_meta_constraints(self):
         with connection.schema_editor() as editor:
