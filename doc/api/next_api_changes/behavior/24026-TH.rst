@@ -1,0 +1,8 @@
+``stackplot`` no longer changes the Axes property cycle
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Previously, passing *colors* to `~.Axes.stackplot` would replace the Axes
+property cycle with those colors, affecting all artists created afterwards.
+The *colors* are now only used for the stacked areas and the Axes property
+cycle is left unchanged. This also allows *colors* to contain cycle
+references such as ``'C0'``.
