@@ -72,8 +72,15 @@ def get_current_timezone_name():
 
 
 def _get_timezone_name(timezone):
-    """Return the name of ``timezone``."""
-    return str(timezone)
+    """
+    Return the offset for fixed offset timezones, or the name of ``timezone``
+    if not set.
+
+    Fixed offsets such as ``Etc/GMT-10`` report an offset (``+10``) from
+    ``tzname()``. Passing that offset through keeps database backends from
+    reversing the sign inside a zone name (``Etc/GMT-10`` -> ``Etc/GMT+10``).
+    """
+    return timezone.tzname(None) or str(timezone)
 
 # Timezone selection functions.
 

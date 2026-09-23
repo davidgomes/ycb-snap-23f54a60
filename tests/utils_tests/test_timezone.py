@@ -123,6 +123,20 @@ class TimezoneTests(SimpleTestCase):
         with timezone.override(datetime.timezone(datetime.timedelta(), 'tzname')):
             self.assertEqual(timezone.get_current_timezone_name(), 'tzname')
 
+    def test_get_timezone_name_fixed_offset(self):
+        # Etc/GMT zones use POSIX signs (Etc/GMT-10 is 10 hours east of UTC).
+        # The name passed to Trunc()/Extract() must be the offset so backends
+        # that reverse offset signs do not rewrite the zone name itself.
+        tests = [
+            (pytz.timezone('Etc/GMT-10'), '+10'),
+            (datetime.timezone(datetime.timedelta(hours=10)), 'UTC+10:00'),
+        ]
+        if HAS_ZONEINFO:
+            tests.append((zoneinfo.ZoneInfo('Etc/GMT-10'), '+10'))
+        for tz, expected in tests:
+            with self.subTest(tz=tz):
+                self.assertEqual(timezone._get_timezone_name(tz), expected)
+
     def test_activate_invalid_timezone(self):
         with self.assertRaisesMessage(ValueError, 'Invalid timezone: None'):
             timezone.activate(None)
