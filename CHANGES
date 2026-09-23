@@ -37,6 +37,8 @@ Features added
 Bugs fixed
 ----------
 
+* #7462: py domain: crashed if empty tuple in type annotation
+
 Testing
 --------
 
