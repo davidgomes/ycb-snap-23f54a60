@@ -124,16 +124,22 @@ def bool_option(arg: Any) -> bool:
 
 
 def merge_special_members_option(options: Dict) -> None:
-    """Merge :special-members: option to :members: option."""
-    if 'special-members' in options and options['special-members'] is not ALL:
-        if options.get('members') is ALL:
-            pass
-        elif options.get('members'):
-            for member in options['special-members']:
-                if member not in options['members']:
-                    options['members'].append(member)
-        else:
-            options['members'] = options['special-members']
+    """Merge :special-members: and :private-members: into :members:.
+
+    A bare flag (all members) is left for the member filter. A comma-separated
+    list is appended so those names are selected even when :members: is limited.
+    """
+    if options.get('members') is ALL:
+        return
+
+    for key in ('special-members', 'private-members'):
+        if key in options and options[key] is not ALL:
+            if options.get('members'):
+                for member in options[key]:
+                    if member not in options['members']:
+                        options['members'].append(member)
+            else:
+                options['members'] = list(options[key])
 
 
 # Some useful event listener factories for autodoc-process-docstring.
@@ -563,7 +569,7 @@ class Documenter:
         Members are skipped if
 
         - they are private (except if given explicitly or the private-members
-          option is set)
+          option includes them)
         - they are special methods (except if given explicitly or the
           special-members option is set)
         - they are undocumented (except if the undoc-members option is set)
@@ -649,14 +655,14 @@ class Documenter:
             elif (namespace, membername) in attr_docs:
                 if want_all and isprivate:
                     # ignore members whose name starts with _ by default
-                    keep = self.options.private_members
+                    keep = self._keep_private_member(membername)
                 else:
                     # keep documented attributes
                     keep = True
                 isattr = True
             elif want_all and isprivate:
                 # ignore members whose name starts with _ by default
-                keep = self.options.private_members and \
+                keep = self._keep_private_member(membername) and \
                     (has_doc or self.options.undoc_members)
             else:
                 if self.options.members is ALL and is_filtered_inherited_member(membername):
@@ -685,6 +691,15 @@ class Documenter:
                 ret.append((membername, member, isattr))
 
         return ret
+
+    def _keep_private_member(self, membername: str) -> bool:
+        """Return whether *membername* is selected by :private-members:."""
+        private_members = self.options.private_members
+        if not private_members:
+            return False
+        if private_members is ALL:
+            return True
+        return membername in private_members
 
     def document_members(self, all_members: bool = False) -> None:
         """Generate reST for member documentation.
@@ -859,7 +874,7 @@ class ModuleDocumenter(Documenter):
         'show-inheritance': bool_option, 'synopsis': identity,
         'platform': identity, 'deprecated': bool_option,
         'member-order': member_order_option, 'exclude-members': members_set_option,
-        'private-members': bool_option, 'special-members': members_option,
+        'private-members': members_option, 'special-members': members_option,
         'imported-members': bool_option, 'ignore-module-all': bool_option
     }  # type: Dict[str, Callable]
 
@@ -1279,7 +1294,7 @@ class ClassDocumenter(DocstringSignatureMixin, ModuleLevelDocumenter):  # type: 
         'noindex': bool_option, 'inherited-members': inherited_members_option,
         'show-inheritance': bool_option, 'member-order': member_order_option,
         'exclude-members': members_set_option,
-        'private-members': bool_option, 'special-members': members_option,
+        'private-members': members_option, 'special-members': members_option,
     }  # type: Dict[str, Callable]
 
     _signature_class = None  # type: Any

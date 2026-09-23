@@ -17,6 +17,7 @@ Deprecated
 Features added
 --------------
 
+* #8009: autodoc: ``:private-members:`` can take a list of member names
 * #2076: autodoc: Allow overriding of exclude-members in skip-member function
 * #2024: autosummary: Add :confval:`autosummary_filename_map` to avoid conflict
   of filenames between two object with different case

@@ -60,3 +60,44 @@ def test_private_field_and_private_members(app):
         '   :meta private:',
         '',
     ]
+
+
+@pytest.mark.sphinx('html', testroot='ext-autodoc')
+def test_private_members_with_specific_names(app):
+    options = {"members": None,
+               "private-members": "_private_one"}
+    actual = do_autodoc(app, 'module', 'target.private_members', options)
+    assert list(actual) == [
+        '',
+        '.. py:module:: target.private_members',
+        '',
+        '',
+        '.. py:function:: _private_one()',
+        '   :module: target.private_members',
+        '',
+        '   _private_one is a docstring().',
+        '',
+        '',
+        '.. py:function:: public_function()',
+        '   :module: target.private_members',
+        '',
+        '   public_function is a docstring().',
+        '',
+    ]
+
+
+@pytest.mark.sphinx('html', testroot='ext-autodoc')
+def test_private_members_without_members_option(app):
+    options = {"private-members": "_private_two"}
+    actual = do_autodoc(app, 'module', 'target.private_members', options)
+    assert list(actual) == [
+        '',
+        '.. py:module:: target.private_members',
+        '',
+        '',
+        '.. py:function:: _private_two()',
+        '   :module: target.private_members',
+        '',
+        '   _private_two is a docstring().',
+        '',
+    ]
