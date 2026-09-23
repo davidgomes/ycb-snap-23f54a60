@@ -393,6 +393,14 @@ Miscellaneous
   on the ``Accept`` HTTP header instead of the ``X-Requested-With`` HTTP header
   presence.
 
+* The default value of the :setting:`SECURE_REFERRER_POLICY` setting is
+  changed from ``None`` to ``'same-origin'``. With this configured,
+  :class:`~django.middleware.security.SecurityMiddleware` sets the
+  :ref:`referrer-policy` header to ``same-origin`` on all responses that do not
+  already have it. This prevents the ``Referer`` header being sent to other
+  origins. If you need the previous behavior, explicitly set
+  :setting:`SECURE_REFERRER_POLICY` to ``None``.
+
 * The compatibility imports of ``django.core.exceptions.EmptyResultSet`` in
   ``django.db.models.query``, ``django.db.models.sql``, and
   ``django.db.models.sql.datastructures`` are removed.
