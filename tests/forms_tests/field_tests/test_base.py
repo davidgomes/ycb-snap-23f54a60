@@ -1,4 +1,6 @@
-from django.forms import ChoiceField, Field, Form, Select
+import copy
+
+from django.forms import CharField, ChoiceField, Field, Form, Select
 from django.test import SimpleTestCase
 
 
@@ -34,6 +36,29 @@ class BasicFieldsTests(SimpleTestCase):
         f.fields['field2'].choices = [('2', '2')]
         self.assertEqual(f.fields['field1'].widget.choices, [('1', '1')])
         self.assertEqual(f.fields['field2'].widget.choices, [('2', '2')])
+
+    def test_field_deepcopy_copies_error_messages(self):
+        field = CharField(error_messages={'required': 'Required.'})
+        field_copy = copy.deepcopy(field)
+        self.assertIsNot(field_copy.error_messages, field.error_messages)
+        field_copy.error_messages['required'] = 'Other required.'
+        self.assertEqual(field.error_messages['required'], 'Required.')
+
+    def test_form_instances_do_not_share_field_error_messages(self):
+        class ProfileForm(Form):
+            name = CharField()
+
+        form1 = ProfileForm()
+        form2 = ProfileForm()
+        self.assertIsNot(
+            form1.fields['name'].error_messages,
+            form2.fields['name'].error_messages,
+        )
+        form1.fields['name'].error_messages['required'] = 'Name is required.'
+        self.assertEqual(
+            form2.fields['name'].error_messages['required'],
+            'This field is required.',
+        )
 
 
 class DisabledFieldTests(SimpleTestCase):
