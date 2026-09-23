@@ -1727,7 +1727,50 @@ def dot(*arrays, dims=None, **kwargs):
     return result.transpose(*all_dims, missing_dims="ignore")
 
 
-def where(cond, x, y):
+def _where_keep_attrs(cond, x):
+    """Build a ``merge_attrs`` callable that copies attributes from ``x``.
+
+    ``merge_attrs`` receives only the xarray objects participating at the
+    current level (data, variables, or coordinates), in argument order.
+    ``cond`` occupies the first slot when it is an xarray object, so ``x``
+    is the following one. Scalars have no attributes; coordinate attributes
+    for that case are restored by the caller.
+    """
+    if not hasattr(x, "attrs"):
+
+        def keep_attrs(attrs, context):
+            return {}
+
+        return keep_attrs
+
+    index = 1 if hasattr(cond, "attrs") else 0
+
+    def keep_attrs(attrs, context):
+        if not attrs:
+            return {}
+        if len(attrs) > index:
+            return attrs[index]
+        # ``x`` did not contribute an object at this level (for example a
+        # coordinate only present on ``cond``). Keep the first one.
+        return attrs[0]
+
+    return keep_attrs
+
+
+def _restore_coord_attrs(result, sources):
+    """Copy coordinate attrs onto ``result`` from the first source that has them."""
+    coords = getattr(result, "coords", None)
+    if coords is None:
+        return
+    for name in coords:
+        for source in sources:
+            source_coords = getattr(source, "coords", None)
+            if source_coords is not None and name in source_coords:
+                result[name].attrs = source_coords[name].attrs
+                break
+
+
+def where(cond, x, y, keep_attrs=None):
     """Return elements from `x` or `y` depending on `cond`.
 
     Performs xarray-like broadcasting across input arguments.
@@ -1743,6 +1786,14 @@ def where(cond, x, y):
         values to choose from where `cond` is True
     y : scalar, array, Variable, DataArray or Dataset
         values to choose from where `cond` is False
+    keep_attrs : bool or str or callable, optional
+        How to treat attrs. If True, keep the attrs of ``x`` (and, when
+        ``x`` is an xarray object, the attrs of its coordinates and
+        variables). If False, drop attrs. If None (default), use the global
+        ``keep_attrs`` option, which drops attrs unless that option is set.
+        A string (``"drop"``, ``"identical"``, ``"no_conflicts"``,
+        ``"drop_conflicts"``, ``"override"``) or callable is forwarded to
+        :py:func:`apply_ufunc`.
 
     Returns
     -------
@@ -1808,8 +1859,17 @@ def where(cond, x, y):
     Dataset.where, DataArray.where :
         equivalent methods
     """
+    if keep_attrs is None:
+        keep_attrs = _get_keep_attrs(default=False)
+
+    # keep the attributes of x, the second parameter, by default to
+    # be consistent with the `where` method of `DataArray` and `Dataset`
+    restore_coord_attrs = keep_attrs is True and not hasattr(x, "attrs")
+    if keep_attrs is True:
+        keep_attrs = _where_keep_attrs(cond, x)
+
     # alignment for three arguments is complicated, so don't support it yet
-    return apply_ufunc(
+    result = apply_ufunc(
         duck_array_ops.where,
         cond,
         x,
@@ -1817,7 +1877,13 @@ def where(cond, x, y):
         join="exact",
         dataset_join="exact",
         dask="allowed",
+        keep_attrs=keep_attrs,
     )
+    if restore_coord_attrs:
+        # Dropping attrs from a scalar ``x`` also clears aligned coordinates.
+        # Put those back from the condition or ``y``.
+        _restore_coord_attrs(result, (cond, y))
+    return result
 
 
 def polyval(coord, coeffs, degree_dim="degree"):

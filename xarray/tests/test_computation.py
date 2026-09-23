@@ -1922,6 +1922,64 @@ def test_where() -> None:
     assert_identical(expected, actual)
 
 
+def test_where_attrs() -> None:
+    cond = xr.DataArray([True, False], dims="x", attrs={"attr": "cond"})
+    x = xr.DataArray([1, 1], dims="x", attrs={"attr": "x"})
+    y = xr.DataArray([0, 0], dims="x", attrs={"attr": "y"})
+    actual = xr.where(cond, x, y, keep_attrs=True)
+    expected = xr.DataArray([1, 0], dims="x", attrs={"attr": "x"})
+    assert_identical(expected, actual)
+
+    # default drops attrs, matching apply_ufunc
+    assert xr.where(cond, x, y).attrs == {}
+
+    with xr.set_options(keep_attrs=True):
+        assert xr.where(cond, x, y).attrs == {"attr": "x"}
+
+    # scalars have no attrs and must not raise or copy another input's attrs
+    actual = xr.where(cond, 1, 0, keep_attrs=True)
+    assert actual.attrs == {}
+    actual = xr.where(cond, 1, y, keep_attrs=True)
+    assert actual.attrs == {}
+
+    # non-xarray condition: still keep attrs from x, not from y
+    actual = xr.where(np.array([True, False]), x, y, keep_attrs=True)
+    assert actual.attrs == {"attr": "x"}
+
+    # coordinate attrs stay on the coordinate taken from x
+    x_coord = xr.DataArray(
+        [1, 1],
+        dims="x",
+        coords={"x": ("x", [0, 1], {"units": "s"})},
+        attrs={"attr": "x"},
+    )
+    cond_coord = xr.DataArray(
+        [True, False],
+        dims="x",
+        coords={"x": ("x", [0, 1], {"units": "seconds"})},
+        attrs={"attr": "cond"},
+    )
+    actual = xr.where(cond_coord, x_coord, 0, keep_attrs=True)
+    assert actual.attrs == {"attr": "x"}
+    assert actual.x.attrs == {"units": "s"}
+
+    # scalar x does not wipe coordinate attrs
+    actual = xr.where(cond_coord, 1, 0, keep_attrs=True)
+    assert actual.attrs == {}
+    assert actual.x.attrs == {"units": "seconds"}
+
+    xds = xr.Dataset({"a": ("t", [1, 2], {"var": "x"})}, attrs={"global": "x"})
+    cds = xr.Dataset({"a": ("t", [True, False], {"var": "c"})}, attrs={"global": "c"})
+    yds = xr.Dataset({"a": ("t", [0, 0], {"var": "y"})}, attrs={"global": "y"})
+    actual = xr.where(cds, xds, yds, keep_attrs=True)
+    assert actual.attrs == {"global": "x"}
+    assert actual.a.attrs == {"var": "x"}
+
+    # strings are forwarded to apply_ufunc ("override" keeps the first input)
+    actual = xr.where(cond, x, y, keep_attrs="override")
+    assert actual.attrs == {"attr": "cond"}
+
+
 @pytest.mark.parametrize("use_dask", [True, False])
 @pytest.mark.parametrize("use_datetime", [True, False])
 def test_polyval(use_dask, use_datetime) -> None:
