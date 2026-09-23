@@ -1,0 +1,1 @@
+Fix BytesWarning when using --setup-show with bytes parameters.
