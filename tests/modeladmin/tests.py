@@ -774,6 +774,27 @@ class ModelAdminPermissionTests(SimpleTestCase):
         request.user = self.MockDeleteUser()
         self.assertFalse(ma.has_add_permission(request))
 
+    def test_get_inlines(self):
+        class ConcertInline(TabularInline):
+            model = Concert
+
+        class BandAdmin(ModelAdmin):
+            inlines = [ConcertInline]
+
+            def get_inlines(self, request, obj):
+                return [ConcertInline] if obj else []
+
+        ma = BandAdmin(Band, AdminSite())
+        request = MockRequest()
+        request.user = MockSuperUser()
+        self.assertEqual(ma.get_inlines(request, None), [])
+        band = Band(name='The Doors', bio='', sign_date=date(1965, 1, 1))
+        self.assertEqual(ma.get_inlines(request, band), [ConcertInline])
+        self.assertEqual(ma.get_inline_instances(request), [])
+        inline_instances = ma.get_inline_instances(request, band)
+        self.assertEqual(len(inline_instances), 1)
+        self.assertIsInstance(inline_instances[0], ConcertInline)
+
     def test_inline_has_add_permission_uses_obj(self):
         class ConcertInline(TabularInline):
             model = Concert
