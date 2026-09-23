@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import re
+from os.path import abspath, relpath
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
 from docutils import nodes
@@ -8,6 +10,7 @@ from docutils.parsers.rst import directives
 from docutils.parsers.rst.directives.admonitions import BaseAdmonition
 from docutils.parsers.rst.directives.misc import Class
 from docutils.parsers.rst.directives.misc import Include as BaseInclude
+from docutils.statemachine import StateMachine
 
 from sphinx import addnodes
 from sphinx.domains.changeset import VersionChange  # noqa: F401  # for compatibility
@@ -369,6 +372,28 @@ class Include(BaseInclude, SphinxDirective):
     """
 
     def run(self) -> list[Node]:
+
+        # docutils offers no hook for included rST text, so patch this
+        # state machine's ``insert_input()`` to emit "include-read".
+        def _insert_input(include_lines: list[str], source: str) -> None:
+            # docutils appends two end-of-inclusion marker lines;
+            # keep them out of the event and re-attach them afterwards.
+            text = '\n'.join(include_lines[:-2])
+
+            path = Path(relpath(abspath(source), start=self.env.srcdir))
+            docname = self.env.docname
+
+            arg = [text]
+            self.env.app.events.emit('include-read', path, docname, arg)
+            text = arg[0]
+
+            include_lines = text.splitlines() + include_lines[-2:]
+
+            return StateMachine.insert_input(self.state_machine, include_lines, source)
+
+        if self.env.app.events.listeners.get('include-read'):
+            self.state_machine.insert_input = _insert_input  # type: ignore[assignment, method-assign]
+
         if self.arguments[0].startswith('<') and \
            self.arguments[0].endswith('>'):
             # docutils "standard" includes, do not do path processing

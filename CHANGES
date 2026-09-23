@@ -38,6 +38,9 @@ Features added
 * #6319: viewcode: Add :confval:`viewcode_line_numbers` to control
   whether line numbers are added to rendered source code.
   Patch by Ben Krikler.
+* #10678: Emit :event:`include-read` events for files included with
+  the :dudir:`include` directive, allowing extensions to transform their
+  content as with :event:`source-read`.
 * #9662: Add the ``:no-typesetting:`` option to suppress textual output
   and only create a linkable anchor.
   Patch by Latosha Maltba.
