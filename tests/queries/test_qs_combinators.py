@@ -285,3 +285,16 @@ class QuerySetSetOperationTests(TestCase):
                         msg % (operation, combinator),
                     ):
                         getattr(getattr(qs, combinator)(qs), operation)()
+
+
+class ExistsExcludeTests(TestCase):
+    def test_exists_exclude(self):
+        from django.db.models import Q
+        from .models import Item
+        for inner in (
+            Item.objects.filter(tags__category_id=OuterRef('pk')),
+            Item.objects.exclude(tags__category_id=OuterRef('pk')),
+            Item.objects.filter(~Q(tags__category_id=OuterRef('pk'))),
+        ):
+            qs = Number.objects.annotate(foo=Exists(inner)).filter(foo=True)
+            self.assertEqual(list(qs), [])
