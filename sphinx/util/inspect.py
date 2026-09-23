@@ -393,6 +393,22 @@ def isproperty(obj: Any) -> bool:
     return isinstance(obj, property)
 
 
+def unwrap_classmethod_property(obj: Any) -> Any:
+    """Return the property wrapped by ``classmethod``, or None.
+
+    Since Python 3.9, ``classmethod`` may wrap a ``property``. Accessing the
+    attribute on the class invokes the descriptor and returns the property
+    value, so the property object (and its docstring) has to be taken from
+    the class ``__dict__``.
+    """
+    if isinstance(obj, classmethod):
+        func = safe_getattr(obj, '__func__', None)
+        if isproperty(func):
+            return func
+
+    return None
+
+
 def isgenericalias(obj: Any) -> bool:
     """Check if the object is GenericAlias."""
     if (hasattr(typing, '_GenericAlias') and  # only for py37+

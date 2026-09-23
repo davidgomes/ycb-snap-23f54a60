@@ -18,7 +18,7 @@ from sphinx.ext.autodoc.mock import ismock, undecorate
 from sphinx.pycode import ModuleAnalyzer, PycodeError
 from sphinx.util import logging
 from sphinx.util.inspect import (getannotations, getmro, getslots, isclass, isenumclass,
-                                 safe_getattr)
+                                 safe_getattr, unwrap_classmethod_property)
 
 if False:
     # For type annotation
@@ -281,9 +281,27 @@ def get_class_members(subject: Any, objpath: List[str], attrgetter: Callable
             unmangled = unmangle(subject, name)
             if unmangled and unmangled not in members:
                 if name in obj_dict:
+                    # classmethod wrapping property evaluates to the property
+                    # value; keep the property object so it can be documented.
+                    prop = unwrap_classmethod_property(obj_dict.get(name))
+                    if prop is not None:
+                        value = prop
                     members[unmangled] = ObjectMember(unmangled, value, class_=subject)
                 else:
-                    members[unmangled] = ObjectMember(unmangled, value)
+                    prop_owner = None
+                    for cls in getmro(subject):
+                        raw = safe_getattr(cls, '__dict__', {}).get(name)
+                        if raw is None:
+                            continue
+                        prop = unwrap_classmethod_property(raw)
+                        if prop is not None:
+                            value = prop
+                            prop_owner = cls
+                        break
+                    if prop_owner is not None:
+                        members[unmangled] = ObjectMember(unmangled, value, class_=prop_owner)
+                    else:
+                        members[unmangled] = ObjectMember(unmangled, value)
         except AttributeError:
             continue
 

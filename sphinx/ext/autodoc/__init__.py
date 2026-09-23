@@ -2657,6 +2657,7 @@ class PropertyDocumenter(DocstringStripSignatureMixin, ClassLevelDocumenter):  #
 
     # before AttributeDocumenter
     priority = AttributeDocumenter.priority + 1
+    is_classmethod_property = False
 
     @classmethod
     def can_document_member(cls, member: Any, membername: str, isattr: bool, parent: Any
@@ -2665,6 +2666,26 @@ class PropertyDocumenter(DocstringStripSignatureMixin, ClassLevelDocumenter):  #
 
     def document_members(self, all_members: bool = False) -> None:
         pass
+
+    def import_object(self, raiseerror: bool = False) -> bool:
+        ret = super().import_object(raiseerror)
+        if not ret:
+            return ret
+
+        # ``classmethod`` + ``property``: getattr() returns the property value.
+        self.is_classmethod_property = False
+        if inspect.isclass(self.parent):
+            for cls in inspect.getmro(self.parent):
+                raw = safe_getattr(cls, '__dict__', {}).get(self.object_name)
+                if raw is None:
+                    continue
+                prop = inspect.unwrap_classmethod_property(raw)
+                if prop is not None:
+                    self.object = prop
+                    self.is_classmethod_property = True
+                break
+
+        return True
 
     def get_real_modname(self) -> str:
         real_modname = self.get_attr(self.parent or self.object, '__module__', None)
@@ -2675,6 +2696,8 @@ class PropertyDocumenter(DocstringStripSignatureMixin, ClassLevelDocumenter):  #
         sourcename = self.get_sourcename()
         if inspect.isabstractmethod(self.object):
             self.add_line('   :abstractmethod:', sourcename)
+        if self.is_classmethod_property:
+            self.add_line('   :classmethod:', sourcename)
 
         if safe_getattr(self.object, 'fget', None) and self.config.autodoc_typehints != 'none':
             try:

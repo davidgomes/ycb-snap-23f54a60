@@ -16,6 +16,9 @@ Features added
 Bugs fixed
 ----------
 
+* #8801: autodoc: methods decorated with both ``classmethod`` and ``property``
+  are now documented.
+
 Testing
 --------
 
