@@ -40,7 +40,7 @@ class Q(tree.Node):
         super().__init__(children=[*args, *sorted(kwargs.items())], connector=_connector, negated=_negated)
 
     def _combine(self, other, conn):
-        if not isinstance(other, Q):
+        if not (isinstance(other, Q) or getattr(other, 'conditional', False) is True):
             raise TypeError(other)
 
         # If the other Q() is empty, ignore it and just use `self`.
@@ -49,6 +49,10 @@ class Q(tree.Node):
             return type(self)(*args, **kwargs)
         # Or if this Q is empty, ignore it and just use `other`.
         elif not self:
+            # Reconstructing an expression from its constructor arguments
+            # would drop state set afterward, such as ~Exists() negation.
+            if not isinstance(other, Q):
+                return other.copy()
             _, args, kwargs = other.deconstruct()
             return type(other)(*args, **kwargs)
 
