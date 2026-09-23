@@ -52,6 +52,15 @@ Changelog
   :class:`linear_model.MultiTaskLasso` which were breaking when
   ``warm_start = True``. :issue:`12360` by :user:`Aakanksha Joshi <joaak>`.
 
+:mod:`sklearn.model_selection`
+..............................
+
+- |Fix| Fixed a bug in :class:`model_selection.StratifiedKFold` where
+  ``shuffle=True`` with an integer ``random_state`` shuffled the samples of
+  every class with the same permutation, so that different values of
+  ``random_state`` only changed the order of the folds and not their
+  content. :issue:`13124` by :user:`Hanmin Qin <qinhanmin2014>`.
+
 :mod:`sklearn.preprocessing`
 ............................
 
