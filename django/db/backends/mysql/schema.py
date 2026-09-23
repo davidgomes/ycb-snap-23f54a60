@@ -169,6 +169,15 @@ class DatabaseSchemaEditor(BaseDatabaseSchemaEditor):
         new_type = self._set_field_new_type_null_status(old_field, new_type)
         return super()._alter_column_type_sql(model, old_field, new_field, new_type)
 
+    def _alter_column_collation_sql(self, model, new_field, new_type, new_collation):
+        # MODIFY replaces the column definition, so nullability has to travel
+        # with the collation. Otherwise a NOT NULL foreign key becomes nullable
+        # and no longer matches the referenced primary key.
+        new_type = self._set_field_new_type_null_status(new_field, new_type)
+        return super()._alter_column_collation_sql(
+            model, new_field, new_type, new_collation
+        )
+
     def _rename_field_sql(self, table, old_field, new_field, new_type):
         new_type = self._set_field_new_type_null_status(old_field, new_type)
         return super()._rename_field_sql(table, old_field, new_field, new_type)
