@@ -1108,6 +1108,37 @@ class AutodetectorTests(TestCase):
         self.assertOperationTypes(changes, 'testapp', 0, ['RenameModel'])
         self.assertOperationAttributes(changes, 'testapp', 0, 0, old_name='Contract', new_name='Deal')
 
+    def test_rename_model_and_field(self):
+        """
+        Renaming a model and one of its fields in the same change is detected
+        as RenameModel plus RenameField.
+        """
+        before = [
+            ModelState('testapp', 'MyModel', [
+                ('id', models.AutoField(primary_key=True)),
+                ('name', models.CharField(max_length=200)),
+            ]),
+        ]
+        after = [
+            ModelState('testapp', 'MyModel2', [
+                ('id', models.AutoField(primary_key=True)),
+                ('renamed_name', models.CharField(max_length=200)),
+            ]),
+        ]
+        changes = self.get_changes(
+            before, after,
+            MigrationQuestioner({'ask_rename': True, 'ask_rename_model': True}),
+        )
+        self.assertNumberMigrations(changes, 'testapp', 1)
+        self.assertOperationTypes(changes, 'testapp', 0, ['RenameModel', 'RenameField'])
+        self.assertOperationAttributes(
+            changes, 'testapp', 0, 0, old_name='MyModel', new_name='MyModel2',
+        )
+        self.assertOperationAttributes(
+            changes, 'testapp', 0, 1, model_name='mymodel2', old_name='name',
+            new_name='renamed_name',
+        )
+
     def test_rename_model_with_renamed_rel_field(self):
         """
         Tests autodetection of renamed models while simultaneously renaming one
