@@ -1933,7 +1933,15 @@ def _ensure_numeric(data: T_Xarray) -> T_Xarray:
     from .dataset import Dataset
 
     def to_floatable(x: DataArray) -> DataArray:
-        if x.dtype.kind in "mM":
+        if x.dtype.kind == "M":
+            # datetimes are nanoseconds since the Unix epoch, matching
+            # polyfit / get_clean_interp_index. A timedelta coordinate on the
+            # same dimension is the x-value polyval used before Horner's
+            # method (offsets such as ``values - values[0]``).
+            if x.ndim == 1:
+                dim = x.dims[0]
+                if dim in x.coords and x.coords[dim].dtype.kind == "m":
+                    return x.copy(data=x.coords[dim].astype(float).data)
             return x.copy(
                 data=datetime_to_numeric(
                     x.data,
@@ -1941,6 +1949,9 @@ def _ensure_numeric(data: T_Xarray) -> T_Xarray:
                     datetime_unit="ns",
                 ),
             )
+        elif x.dtype.kind == "m":
+            # timedeltas are already numeric in their own units (ns, us, ...)
+            return x.astype(float)
         return x
 
     if isinstance(data, Dataset):
