@@ -62,11 +62,15 @@ def test_hermite_normal():
     assert hermite_normal_form(m) == hnf
 
     m = DM([[2, 7], [0, 0], [0, 0]], ZZ)
-    hnf = DM([[], [], []], ZZ)
+    hnf = DM([[1], [0], [0]], ZZ)
     assert hermite_normal_form(m) == hnf
 
     m = DM([[-2, 1], [0, 1]], ZZ)
     hnf = DM([[2, 1], [0, 1]], ZZ)
+    assert hermite_normal_form(m) == hnf
+
+    m = DM([[1, 12], [0, 8], [0, 5]], ZZ)
+    hnf = DM([[1, 0], [0, 8], [0, 5]], ZZ)
     assert hermite_normal_form(m) == hnf
 
     m = DomainMatrix([[QQ(1)]], (1, 1), QQ)
