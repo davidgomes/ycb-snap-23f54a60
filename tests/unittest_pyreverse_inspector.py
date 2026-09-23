@@ -20,6 +20,7 @@ import pytest
 from unittest_pyreverse_writer import get_project
 
 from pylint.pyreverse import inspector
+from pylint.pyreverse.diagrams import ClassDiagram
 
 
 @pytest.fixture
@@ -69,6 +70,26 @@ def test_instance_attrs_resolution(project):
     ]
     assert type_dict["relation"][0].name == "DoNothing"
     assert type_dict["_id"][0] is astroid.Uninferable
+
+
+def test_annotated_attrs_resolution():
+    module = astroid.parse(
+        """
+        class C:
+            b: int = 3
+
+            def __init__(self, a: str = None, c=0):
+                self.a = a
+                self.c = c
+        """
+    )
+    inspector.Linker(project=None).visit(module)
+    klass = module["C"]
+    assert [n.name for n in klass.instance_attrs_type["a"]] == ["Optional[str]"]
+    assert [n.name for n in klass.locals_type["b"]] == ["int"]
+    assert 0 in [getattr(n, "value", None) for n in klass.instance_attrs_type["c"]]
+    diagram = ClassDiagram("classes", "ALL")
+    assert diagram.get_attrs(klass) == ["a : Optional[str]", "b : int", "c : int"]
 
 
 def test_concat_interfaces():

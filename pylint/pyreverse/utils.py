@@ -19,6 +19,9 @@
 import os
 import re
 import sys
+from typing import Optional, Union
+
+import astroid
 
 RCFILE = ".pyreverserc"
 
@@ -213,3 +216,76 @@ class LocalsVisitor(ASTWalker):
         if methods[1] is not None:
             return methods[1](node)
         return None
+
+
+def _get_argument_annotation_and_default(
+    func: astroid.FunctionDef, argname: str
+) -> tuple:
+    """Return the annotation and the default value of the ``argname`` argument
+    of ``func``, each being None when missing"""
+    arguments = func.args
+    for args, annotations in (
+        (arguments.posonlyargs, arguments.posonlyargs_annotations),
+        (arguments.args, arguments.annotations),
+        (arguments.kwonlyargs, arguments.kwonlyargs_annotations),
+    ):
+        for arg, annotation in zip(args, annotations):
+            if arg.name == argname:
+                try:
+                    default = arguments.default_value(argname)
+                except astroid.NoDefault:
+                    default = None
+                return annotation, default
+    return None, None
+
+
+def get_annotation(
+    node: Union[astroid.AssignAttr, astroid.AssignName]
+) -> Optional[astroid.Name]:
+    """Return a Name node whose name is the type annotation label of ``node``,
+    or None if ``node`` is not annotated.
+
+    Annotations are taken either from an annotated assignment
+    (``a: str = None``) or, for an attribute assigned from a method argument
+    (``self.a = a``), from the annotation of that argument.
+    A ``None`` default value makes the label ``Optional``.
+    """
+    annotation = default = None
+    if isinstance(node.parent, astroid.AnnAssign):
+        annotation = node.parent.annotation
+        default = node.parent.value
+    elif isinstance(node, astroid.AssignAttr):
+        value = getattr(node.parent, "value", None)
+        func = node.frame()
+        if isinstance(value, astroid.Name) and isinstance(func, astroid.FunctionDef):
+            annotation, default = _get_argument_annotation_and_default(
+                func, value.name
+            )
+    if annotation is None:
+        return None
+
+    label = annotation.as_string()
+    if (
+        isinstance(default, astroid.Const)
+        and default.value is None
+        and not label.startswith("Optional")
+    ):
+        label = f"Optional[{label}]"
+    return astroid.Name(
+        name=label,
+        lineno=annotation.lineno,
+        col_offset=annotation.col_offset,
+        parent=annotation.parent,
+    )
+
+
+def infer_node(node: Union[astroid.AssignAttr, astroid.AssignName]) -> set:
+    """Return a set containing the type annotation of ``node`` if it has one,
+    otherwise the set of values inferred for ``node``"""
+    annotation = get_annotation(node)
+    if annotation is not None:
+        return {annotation}
+    try:
+        return set(node.infer())
+    except astroid.InferenceError:
+        return set()

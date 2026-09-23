@@ -22,12 +22,14 @@ unit test for visitors.diadefs and extensions.diadefslib modules
 import codecs
 import os
 from difflib import unified_diff
+from unittest.mock import patch
 
+import astroid
 import pytest
 
 from pylint.pyreverse.diadefslib import DefaultDiadefGenerator, DiadefsHandler
 from pylint.pyreverse.inspector import Linker, project_from_files
-from pylint.pyreverse.utils import get_visibility
+from pylint.pyreverse.utils import get_annotation, get_visibility, infer_node
 from pylint.pyreverse.writer import DotWriter
 
 _DEFAULTS = {
@@ -132,3 +134,80 @@ def test_get_visibility(names, expected):
     for name in names:
         got = get_visibility(name)
         assert got == expected, f"got {got} instead of {expected} for value {name}"
+
+
+@pytest.mark.parametrize(
+    "assign, label",
+    [
+        ("a: str = None", "Optional[str]"),
+        ("a: str = 'mystr'", "str"),
+        ("a: Optional[str] = 'str'", "Optional[str]"),
+        ("a: Optional[str] = None", "Optional[str]"),
+        ("a: List[int] = []", "List[int]"),
+    ],
+)
+def test_get_annotation_annassign(assign, label):
+    node = astroid.extract_node(assign)
+    assert isinstance(node, astroid.AnnAssign)
+    got = get_annotation(node.target).name
+    assert got == label, f"got {got} instead of {label} for value {node}"
+
+
+@pytest.mark.parametrize(
+    "init_method, label",
+    [
+        ("def __init__(self, x: str):                   self.x = x", "str"),
+        ("def __init__(self, x: str = 'str'):           self.x = x", "str"),
+        ("def __init__(self, x: str = None):            self.x = x", "Optional[str]"),
+        ("def __init__(self, x: Optional[str]):         self.x = x", "Optional[str]"),
+        ("def __init__(self, x: Optional[str] = None):  self.x = x", "Optional[str]"),
+        ("def __init__(self, x: Optional[str] = 'str'): self.x = x", "Optional[str]"),
+        ("def __init__(self, y, *, x: int = None):      self.x = x", "Optional[int]"),
+        ("def set_x(self, y: int, x: bool):             self.x = x", "bool"),
+    ],
+)
+def test_get_annotation_assignattr(init_method, label):
+    node = astroid.extract_node(
+        f"""
+        class A:
+            {init_method}
+        """
+    )
+    for assign_attrs in node.instance_attrs.values():
+        for assign_attr in assign_attrs:
+            assert isinstance(assign_attr, astroid.AssignAttr)
+            got = get_annotation(assign_attr).name
+            assert got == label, f"got {got} instead of {label} for value {node}"
+
+
+@pytest.mark.parametrize(
+    "code",
+    [
+        "class A:\n    a = 1",
+        "class A:\n    def __init__(self, x):\n        self.x = x",
+        "class A:\n    def __init__(self, x: int):\n        self.x = 2",
+    ],
+)
+def test_get_annotation_none(code):
+    node = astroid.extract_node(code)
+    assign_nodes = [n for nodes in node.instance_attrs.values() for n in nodes]
+    assign_nodes += [n for nodes in node.locals.values() for n in nodes]
+    for assign_node in assign_nodes:
+        assert get_annotation(assign_node) is None
+
+
+def test_infer_node():
+    node = astroid.extract_node("a: str = 'mystr'")
+    assert {n.name for n in infer_node(node.target)} == {"str"}
+
+    node = astroid.extract_node("a = 'mystr'")
+    (inferred,) = infer_node(node.targets[0])
+    assert isinstance(inferred, astroid.Const)
+    assert inferred.value == "mystr"
+
+
+@patch("astroid.node_classes.NodeNG.infer", side_effect=astroid.InferenceError)
+def test_infer_node_inference_error(mock_infer):
+    node = astroid.extract_node("a = 'mystr'")
+    assert infer_node(node.targets[0]) == set()
+    assert mock_infer.called
