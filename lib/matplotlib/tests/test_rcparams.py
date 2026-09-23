@@ -508,6 +508,13 @@ def test_rcparams_reset_after_fail():
         assert mpl.rcParams['text.usetex'] is False
 
 
+def test_no_backend_reset_rccontext():
+    assert mpl.rcParams['backend'] != 'module://aardvark'
+    with mpl.rc_context():
+        mpl.rcParams['backend'] = 'module://aardvark'
+    assert mpl.rcParams['backend'] == 'module://aardvark'
+
+
 @pytest.mark.skipif(sys.platform != "linux", reason="Linux only")
 def test_backend_fallback_headless(tmpdir):
     env = {**os.environ,
