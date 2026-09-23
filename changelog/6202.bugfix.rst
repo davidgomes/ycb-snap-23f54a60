@@ -1,0 +1,1 @@
+Fix item location in reports mangling ``".["`` into ``"["`` for parametrized test ids containing that sequence, e.g. ``test_boo[..[]`` was displayed as ``test_boo[.[]``.

@@ -738,6 +738,20 @@ class Test_genitems:
         ids = [x.getmodpath() for x in items]
         assert ids == ["MyTestSuite.x_test", "TestCase.test_y"]
 
+    def test_getmodpath_keeps_dots_in_param_ids(self, testdir):
+        p = testdir.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.parametrize("a", ["..["])
+            def test_boo(a):
+                pass
+        """
+        )
+        items, reprec = testdir.inline_genitems(p)
+        assert [x.getmodpath() for x in items] == ["test_boo[..[]"]
+        assert items[0].reportinfo()[2] == "test_boo[..[]"
+
 
 def test_matchnodes_two_collections_same_file(testdir):
     testdir.makeconftest(
