@@ -60,7 +60,7 @@ class ModelChoiceFieldTests(TestCase):
         self.assertEqual(f.clean(self.c1), self.c1)
         # An instance of incorrect model.
         book = Book.objects.create()
-        msg = "['Select a valid choice. %s is not one of the available choices.']" % book.id
+        msg = "['Select a valid choice. %s is not one of the available choices.']" % book
         with self.assertRaisesMessage(ValidationError, msg):
             f.clean(book)
 
