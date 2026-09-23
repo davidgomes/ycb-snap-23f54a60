@@ -295,3 +295,48 @@ def test_setup_teardown_function_level_with_optional_argument(
         "teardown_module",
     ]
     assert trace_setups_teardowns == expected
+
+
+def test_xunit_fixtures_are_private_issue8394(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        """
+        def setup_module():
+            pass
+
+        def teardown_module():
+            pass
+
+        def setup_function(func):
+            pass
+
+        def teardown_function(func):
+            pass
+
+        def test_world():
+            pass
+
+        class Test(object):
+            def setup_class(cls):
+                pass
+
+            def teardown_class(cls):
+                pass
+
+            def setup_method(self, meth):
+                pass
+
+            def teardown_method(self, meth):
+                pass
+
+            def test_method(self):
+                pass
+        """
+    )
+    match = "*no docstring available*"
+    result = pytester.runpytest("--fixtures")
+    assert result.ret == 0
+    result.stdout.no_fnmatch_line(match)
+
+    result = pytester.runpytest("--fixtures", "-v")
+    assert result.ret == 0
+    result.stdout.fnmatch_lines([match, match, match, match])
