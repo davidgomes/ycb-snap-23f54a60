@@ -160,6 +160,19 @@ class NonAggregateAnnotationTestCase(TestCase):
         self.assertEqual(len(books), Book.objects.count())
         self.assertTrue(all(not book.selected for book in books))
 
+    def test_values_aggregate_over_constant_expression_wrapper(self):
+        books = Book.objects.annotate(
+            constant=ExpressionWrapper(Value(3), output_field=IntegerField()),
+        ).values('constant', 'publisher').annotate(
+            total_pages=Sum('pages'),
+        ).order_by('publisher')
+        self.assertSequenceEqual(books, [
+            {'constant': 3, 'publisher': self.p1.pk, 'total_pages': 747},
+            {'constant': 3, 'publisher': self.p2.pk, 'total_pages': 528},
+            {'constant': 3, 'publisher': self.p3.pk, 'total_pages': 1482},
+            {'constant': 3, 'publisher': self.p4.pk, 'total_pages': 946},
+        ])
+
     def test_annotate_with_aggregation(self):
         books = Book.objects.annotate(
             is_book=Value(1, output_field=IntegerField()),
