@@ -172,3 +172,38 @@ class MultiValueFieldTest(SimpleTestCase):
         })
         form.is_valid()
         self.assertEqual(form.cleaned_data['field1'], 'some text,JP,2007-04-25 06:24:00')
+
+    def test_required_subfield_when_field_optional(self):
+        """
+        require_all_fields=False still validates required subfields when every
+        submitted subvalue is empty and the MultiValueField itself is optional.
+        """
+        class MF(MultiValueField):
+            def __init__(self):
+                fields = [
+                    CharField(required=False),
+                    CharField(required=True),
+                ]
+                super().__init__(
+                    fields=fields,
+                    widget=MultiWidget(widgets=[f.widget for f in fields]),
+                    require_all_fields=False,
+                    required=False,
+                )
+
+            def compress(self, value):
+                return value
+
+        class OptionalMultiForm(Form):
+            mf = MF()
+
+        empty = OptionalMultiForm({'mf_0': '', 'mf_1': ''})
+        self.assertFalse(empty.is_valid())
+        self.assertIn('mf', empty.errors)
+
+        partial = OptionalMultiForm({'mf_0': 'xxx', 'mf_1': ''})
+        self.assertFalse(partial.is_valid())
+
+        filled = OptionalMultiForm({'mf_0': '', 'mf_1': 'yyy'})
+        self.assertTrue(filled.is_valid())
+        self.assertEqual(filled.cleaned_data['mf'], ['', 'yyy'])
