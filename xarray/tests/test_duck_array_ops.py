@@ -595,6 +595,50 @@ def test_min_count(dim_num, dtype, dask, func, aggdim):
     assert_dask_array(actual, dask)
 
 
+@pytest.mark.parametrize("dtype", [float, int, np.float32, np.bool_])
+@pytest.mark.parametrize("dask", [False, True])
+@pytest.mark.parametrize("func", ["sum", "prod"])
+def test_min_count_nd(dtype, dask, func):
+    if dask and not has_dask:
+        pytest.skip("requires dask")
+
+    min_count = 3
+    dim_num = 3
+    da = construct_dataarray(dim_num, dtype, contains_nan=True, dask=dask)
+    actual = getattr(da, func)(dim=["x", "y", "z"], skipna=True, min_count=min_count)
+    # Supplying all dims is equivalent to supplying `...` or `None`
+    expected = getattr(da, func)(dim=..., skipna=True, min_count=min_count)
+
+    assert_allclose(actual, expected)
+    assert_dask_array(actual, dask)
+
+
+def test_min_count_multiple_dims_partial():
+    # Reducing a subset of dimensions must count valid values across every
+    # selected axis, not just the first one.
+    data = np.array(
+        [[[1.0, np.nan], [3.0, 4.0]], [[np.nan, 6.0], [7.0, 8.0]]],
+    )
+    da = DataArray(data, dims=["x", "y", "z"])
+
+    actual = da.sum(["x", "y"], min_count=3)
+    expected = DataArray([11.0, 18.0], dims=["z"])
+    assert_allclose(actual, expected)
+
+    actual = da.sum(["x", "y"], min_count=4)
+    expected = DataArray([np.nan, np.nan], dims=["z"])
+    assert_allclose(actual, expected)
+
+    actual = da.prod(["x", "y"], min_count=3)
+    expected = DataArray([21.0, 192.0], dims=["z"])
+    assert_allclose(actual, expected)
+
+    # All-dimension reduction, including the reported example.
+    flat = DataArray([[1.0, 2, 3], [4, 5, 6]])
+    assert_allclose(flat.sum(["dim_0", "dim_1"], min_count=1), DataArray(21.0))
+    assert_allclose(flat.sum(["dim_0", "dim_1"], min_count=7), DataArray(np.nan))
+
+
 @pytest.mark.parametrize("func", ["sum", "prod"])
 def test_min_count_dataset(func):
     da = construct_dataarray(2, dtype=float, contains_nan=True, dask=False)
@@ -606,14 +650,15 @@ def test_min_count_dataset(func):
 
 @pytest.mark.parametrize("dtype", [float, int, np.float32, np.bool_])
 @pytest.mark.parametrize("dask", [False, True])
+@pytest.mark.parametrize("skipna", [False, True])
 @pytest.mark.parametrize("func", ["sum", "prod"])
-def test_multiple_dims(dtype, dask, func):
+def test_multiple_dims(dtype, dask, skipna, func):
     if dask and not has_dask:
         pytest.skip("requires dask")
     da = construct_dataarray(3, dtype, contains_nan=True, dask=dask)
 
-    actual = getattr(da, func)(("x", "y"))
-    expected = getattr(getattr(da, func)("x"), func)("y")
+    actual = getattr(da, func)(("x", "y"), skipna=skipna)
+    expected = getattr(getattr(da, func)("x", skipna=skipna), func)("y", skipna=skipna)
     assert_allclose(actual, expected)
 
 

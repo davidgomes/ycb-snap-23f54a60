@@ -22,23 +22,33 @@ def _replace_nan(a, val):
     return where_method(val, mask, a), mask
 
 
+def _is_nat_dtype(dtype):
+    """Return True if dtype uses NaT as its missing value.
+
+    ``dtype in dtypes.NAT_TYPES`` is not reliable: NaT compares equal to
+    unrelated dtypes on some NumPy versions, which skips nulling numeric
+    reductions.
+    """
+    if dtype is None:
+        return False
+    return np.issubdtype(dtype, np.datetime64) or np.issubdtype(dtype, np.timedelta64)
+
+
 def _maybe_null_out(result, axis, mask, min_count=1):
     """
     xarray version of pandas.core.nanops._maybe_null_out
     """
-    if hasattr(axis, "__len__"):  # if tuple or list
-        raise ValueError(
-            "min_count is not available for reduction with more than one dimensions."
-        )
 
     if axis is not None and getattr(result, "ndim", False):
-        null_mask = (mask.shape[axis] - mask.sum(axis) - min_count) < 0
+        # `axis` may be a single int or a sequence. The number of elements
+        # reduced is the product of the selected axis lengths.
+        null_mask = (np.take(mask.shape, axis).prod() - mask.sum(axis) - min_count) < 0
         if null_mask.any():
             dtype, fill_value = dtypes.maybe_promote(result.dtype)
             result = result.astype(dtype)
             result[null_mask] = fill_value
 
-    elif getattr(result, "dtype", None) not in dtypes.NAT_TYPES:
+    elif not _is_nat_dtype(getattr(result, "dtype", None)):
         null_mask = mask.size - mask.sum()
         if null_mask < min_count:
             result = np.nan
