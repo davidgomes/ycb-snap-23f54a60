@@ -1,3 +1,5 @@
+import inspect
+
 from django.db import models
 from django.test import TestCase
 
@@ -640,6 +642,18 @@ class CustomManagerTests(TestCase):
             [],
             lambda c: c.first_name,
             ordered=False,
+        )
+
+    def test_manager_method_signature(self):
+        self.assertEqual(
+            str(inspect.signature(Person.objects.bulk_create)),
+            "(objs, batch_size=None, ignore_conflicts=False, "
+            "update_conflicts=False, update_fields=None, unique_fields=None)",
+        )
+        self.assertEqual(Person.objects.bulk_create.__name__, "bulk_create")
+        self.assertEqual(
+            Person.objects.bulk_create.__doc__,
+            models.QuerySet.bulk_create.__doc__,
         )
 
     def test_deconstruct_default(self):
