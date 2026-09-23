@@ -217,6 +217,14 @@ def test_unpickle_canvas():
     assert fig2.canvas is not None
 
 
+def test_unpickle_with_device_pixel_ratio():
+    fig = mfigure.Figure(dpi=42)
+    fig.canvas._set_device_pixel_ratio(7)
+    assert fig.dpi == 42*7
+    fig2 = pickle.loads(pickle.dumps(fig))
+    assert fig2.dpi == 42
+
+
 def test_mpl_toolkits():
     ax = parasite_axes.host_axes([0, 0, 1, 1])
     assert type(pickle.loads(pickle.dumps(ax))) == parasite_axes.HostAxes
