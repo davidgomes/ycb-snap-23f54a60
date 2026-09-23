@@ -31,6 +31,15 @@ def format(number, decimal_sep, decimal_pos=None, grouping=0, thousand_sep='',
         # scientific notation to avoid high memory usage in {:f}'.format().
         _, digits, exponent = number.as_tuple()
         if abs(exponent) + len(digits) > 200:
+            # Values smaller than the least significant digit of decimal_pos
+            # cannot be shown with that precision. Format them as zero rather
+            # than scientific notation (which {:f} already does under the
+            # 200-digit cutoff).
+            if decimal_pos is not None and abs(number) < Decimal('1e-%s' % decimal_pos):
+                sign = '-' if number.is_signed() else ''
+                if decimal_pos:
+                    return sign + '0' + decimal_sep + ('0' * decimal_pos)
+                return sign + '0'
             number = '{:e}'.format(number)
             coefficient, exponent = number.split('e')
             # Format the coefficient.
