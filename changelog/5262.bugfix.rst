@@ -1,0 +1,1 @@
+The ``mode`` attribute of captured output streams no longer includes ``b``, since they accept text rather than bytes.

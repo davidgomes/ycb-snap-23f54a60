@@ -936,6 +936,17 @@ def test_dupfile(tmpfile):
     assert fname_closed == repr(flist[0].buffer)
 
 
+@needsosdup
+def test_dupfile_mode_excludes_binary(tmpfile):
+    """EncodedFile must not advertise a binary mode (issue with youtube-dl)."""
+    f = capture.safe_text_dupfile(tmpfile, "wb+")
+    assert "b" not in f.mode
+    f.write("hello")
+    f.flush()
+    tmpfile.seek(0)
+    assert tmpfile.read() == b"hello"
+
+
 def test_dupfile_on_bytesio():
     bio = io.BytesIO()
     f = capture.safe_text_dupfile(bio, "wb")
