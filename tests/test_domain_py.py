@@ -373,6 +373,21 @@ def test_pyfunction_signature_full_py38(app):
                                       [desc_parameter, desc_sig_operator, "/"])])
 
 
+@pytest.mark.skipif(sys.version_info < (3, 8), reason='python 3.8+ is required.')
+def test_pyfunction_signature_positional_only_defaults(app):
+    text = ".. py:function:: foo(a, b=0, /, c=1)"
+    doctree = restructuredtext.parse(app, text)
+    assert_node(doctree[1][0][1],
+                [desc_parameterlist, ([desc_parameter, desc_sig_name, "a"],
+                                      [desc_parameter, ([desc_sig_name, "b"],
+                                                        [desc_sig_operator, "="],
+                                                        [nodes.inline, "0"])],
+                                      [desc_parameter, desc_sig_operator, "/"],
+                                      [desc_parameter, ([desc_sig_name, "c"],
+                                                        [desc_sig_operator, "="],
+                                                        [nodes.inline, "1"])])])
+
+
 def test_optional_pyfunction_signature(app):
     text = ".. py:function:: compile(source [, filename [, symbol]]) -> ast object"
     doctree = restructuredtext.parse(app, text)
