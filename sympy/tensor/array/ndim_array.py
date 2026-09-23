@@ -66,6 +66,8 @@ class NDimArray(object):
     def _parse_index(self, index):
 
         if isinstance(index, (SYMPY_INTS, Integer)):
+            if self._rank == 0:
+                raise ValueError("Only a tuple index is accepted for a rank-0 array")
             if index >= self._loop_size:
                 raise ValueError("index out of range")
             return index

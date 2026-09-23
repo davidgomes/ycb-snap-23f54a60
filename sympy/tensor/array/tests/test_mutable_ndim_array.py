@@ -48,6 +48,15 @@ def test_ndim_array_initiation():
     assert n_dim_array.shape == array_shape
     assert n_dim_array.rank() == 4
 
+    for array_type in (MutableDenseNDimArray, MutableSparseNDimArray):
+        rank_zero_array = array_type(3)
+        assert len(rank_zero_array) == 1
+        assert list(rank_zero_array) == [3]
+        assert rank_zero_array.shape == ()
+        assert rank_zero_array.rank() == 0
+        assert rank_zero_array[()] == 3
+        raises(ValueError, lambda: rank_zero_array[0])
+
     one_dim_array = MutableDenseNDimArray([2, 3, 1])
     assert len(one_dim_array) == 3
     assert one_dim_array.shape == (3,)
