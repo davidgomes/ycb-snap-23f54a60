@@ -948,6 +948,8 @@ def test_hexbin_empty():
     # From #23922: creating hexbin with log scaling from empty
     # dataset raises ValueError
     ax.hexbin([], [], bins='log')
+    # Empty bins must not be passed to reducers that reject empty input.
+    ax.hexbin([], [], C=[], reduce_C_function=np.max)
 
 
 def test_hexbin_pickable():
@@ -997,6 +999,81 @@ def test_hexbin_log_clim():
     fig, ax = plt.subplots()
     h = ax.hexbin(x, y, bins='log', vmin=2, vmax=100)
     assert h.get_clim() == (2, 100)
+
+
+@check_figures_equal(extensions=['png'])
+def test_hexbin_mincnt_behavior_upon_C_parameter(fig_test, fig_ref):
+    # see: gh:12926
+    datapoints = [
+        # list of (x, y)
+        (0, 0),
+        (0, 0),
+        (6, 0),
+        (0, 6),
+    ]
+    X, Y = zip(*datapoints)
+    extent = [-10., 10, -10., 10]
+    gridsize = (7, 7)
+
+    ax_test = fig_test.subplots()
+    ax_ref = fig_ref.subplots()
+
+    # without C parameter
+    ax_ref.hexbin(
+        X, Y,
+        extent=extent,
+        gridsize=gridsize,
+        mincnt=1,
+    )
+    ax_ref.set_facecolor("green")  # for contrast of background
+
+    # with C parameter
+    ax_test.hexbin(
+        X, Y,
+        C=[1] * len(X),
+        reduce_C_function=lambda v: sum(v),
+        mincnt=1,
+        extent=extent,
+        gridsize=gridsize,
+    )
+    ax_test.set_facecolor("green")
+
+
+def test_hexbin_mincnt_with_C_matches_counts():
+    # gh-12926: mincnt is inclusive for the same cells whether or not C is set.
+    x = [0.0, 0.0, 6.0, 0.0]
+    y = [0.0, 0.0, 0.0, 6.0]
+    extent = [-10.0, 10.0, -10.0, 10.0]
+    gridsize = (7, 7)
+
+    fig, ax = plt.subplots()
+    without_c = ax.hexbin(x, y, mincnt=1, extent=extent, gridsize=gridsize)
+    fig, ax = plt.subplots()
+    with_c = ax.hexbin(
+        x, y, C=np.ones(len(x)), reduce_C_function=np.sum,
+        mincnt=1, extent=extent, gridsize=gridsize,
+    )
+    # Two coincident points plus two singleton cells.
+    assert len(without_c.get_offsets()) == 3
+    assert len(with_c.get_offsets()) == len(without_c.get_offsets())
+    assert_allclose(np.sort(with_c.get_array()), np.sort(without_c.get_array()))
+
+    # Omitting mincnt still skips empty bins, so reducers are not called on [].
+    lengths = []
+
+    def reduce(vals):
+        lengths.append(len(vals))
+        if len(vals) == 0:
+            raise AssertionError("empty bin passed to reduce_C_function")
+        return np.sum(vals)
+
+    fig, ax = plt.subplots()
+    default = ax.hexbin(
+        x, y, C=np.ones(len(x)), reduce_C_function=reduce,
+        extent=extent, gridsize=gridsize,
+    )
+    assert lengths and min(lengths) >= 1
+    assert len(default.get_offsets()) == 3
 
 
 def test_inverted_limits():
