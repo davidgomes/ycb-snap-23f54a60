@@ -1,7 +1,7 @@
 from django.apps import apps
 from django.db import models
 from django.test import SimpleTestCase, override_settings
-from django.test.utils import isolate_lru_cache
+from django.test.utils import isolate_apps, isolate_lru_cache
 
 
 class FieldDeconstructionTests(SimpleTestCase):
@@ -259,6 +259,20 @@ class FieldDeconstructionTests(SimpleTestCase):
         self.assertEqual(path, "django.db.models.ForeignKey")
         self.assertEqual(args, [])
         self.assertEqual(kwargs, {"to": "auth.permission", "unique": True, "on_delete": models.CASCADE})
+
+    @isolate_apps('field_deconstruction')
+    def test_foreign_key_mixed_case_app_label(self):
+        field = models.ForeignKey("DJ_RegLogin.Category", models.CASCADE)
+        name, path, args, kwargs = field.deconstruct()
+        self.assertEqual(kwargs, {"to": "DJ_RegLogin.category", "on_delete": models.CASCADE})
+
+        class Category(models.Model):
+            class Meta:
+                app_label = "DJ_RegLogin"
+
+        field = models.ForeignKey(Category, models.CASCADE)
+        name, path, args, kwargs = field.deconstruct()
+        self.assertEqual(kwargs, {"to": "DJ_RegLogin.category", "on_delete": models.CASCADE})
 
     @override_settings(AUTH_USER_MODEL="auth.Permission")
     def test_foreign_key_swapped(self):
