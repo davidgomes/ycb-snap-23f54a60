@@ -381,6 +381,26 @@ def test_export_text():
     """).lstrip()
     assert export_text(clf, max_depth=0) == expected_report
 
+    X_single = [[-2], [-1], [-1], [1], [1], [2]]
+    clf = DecisionTreeClassifier(max_depth=2, random_state=0)
+    clf.fit(X_single, y)
+
+    expected_report = dedent("""
+    |--- first <= 0.00
+    |   |--- class: -1
+    |--- first >  0.00
+    |   |--- class: 1
+    """).lstrip()
+    assert export_text(clf, feature_names=['first']) == expected_report
+
+    expected_report = dedent("""
+    |--- feature_0 <= 0.00
+    |   |--- class: -1
+    |--- feature_0 >  0.00
+    |   |--- class: 1
+    """).lstrip()
+    assert export_text(clf) == expected_report
+
     X_mo = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
     y_mo = [[-1, -1], [-1, -1], [-1, -1], [1, 1], [1, 1], [1, 1]]
 
