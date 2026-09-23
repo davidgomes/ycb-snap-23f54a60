@@ -8382,3 +8382,16 @@ def test_scatter_color_repr_error():
         c = 'red\n'
         mpl.axes.Axes._parse_scatter_color_args(
             c, None, kwargs={}, xsize=2, get_next_color_func=get_next_color)
+
+
+def test_cla_clears_children_axes_and_fig():
+    fig, ax = plt.subplots()
+    lines = ax.plot([], [], [], [])
+    img = ax.imshow([[1]])
+    for art in lines + [img]:
+        assert art.axes is ax
+        assert art.figure is fig
+    ax.clear()
+    for art in lines + [img]:
+        assert art.axes is None
+        assert art.figure is None

@@ -1440,3 +1440,13 @@ def test_gridspec_no_mutate_input():
     plt.subplots(1, 2, width_ratios=[1, 2], gridspec_kw=gs)
     assert gs == gs_orig
     plt.subplot_mosaic('AB', width_ratios=[1, 2], gridspec_kw=gs)
+
+
+def test_clf_clears_children_figure():
+    fig, ax = plt.subplots()
+    line, = ax.plot([1, 2])
+    text = fig.text(0.5, 0.5, "text")
+    fig.clf()
+    assert line.axes is None
+    assert line.figure is None
+    assert text.figure is None
