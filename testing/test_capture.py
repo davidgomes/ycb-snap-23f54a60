@@ -564,6 +564,14 @@ class TestCaptureFixture:
             ]
         )
 
+    @pytest.mark.parametrize("nl", ("\n", "\r\n", "\r"))
+    def test_capfd_preserves_newlines(self, capfd, nl):
+        print("test", end=nl)
+        print("test", end=nl, file=sys.stderr)
+        out, err = capfd.readouterr()
+        assert out == "test" + nl
+        assert err == "test" + nl
+
     def test_partial_setup_failure(self, testdir):
         p = testdir.makepyfile(
             """\
