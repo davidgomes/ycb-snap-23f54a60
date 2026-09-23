@@ -6942,6 +6942,21 @@ def test_sharing_does_not_link_positions():
     assert (ax1.get_position().get_points() == init_pos.get_points()).all()
 
 
+@check_figures_equal(extensions=["png"])
+def test_shared_axes_clear(fig_test, fig_ref):
+    x = np.arange(0.0, 2*np.pi, 0.01)
+    y = np.sin(x)
+
+    axs = fig_ref.subplots(2, 2, sharex=True, sharey=True)
+    for ax in axs.flat:
+        ax.plot(x, y)
+
+    axs = fig_test.subplots(2, 2, sharex=True, sharey=True)
+    for ax in axs.flat:
+        ax.clear()
+        ax.plot(x, y)
+
+
 @check_figures_equal(extensions=["pdf"])
 def test_2dcolor_plot(fig_test, fig_ref):
     color = np.array([0.1, 0.2, 0.3])
