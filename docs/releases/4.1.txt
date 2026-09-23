@@ -210,7 +210,8 @@ Signals
 Templates
 ~~~~~~~~~
 
-* ...
+* The :tfilter:`json_script` template filter now accepts an optional HTML
+  ``id`` argument.
 
 Tests
 ~~~~~

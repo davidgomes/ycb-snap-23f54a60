@@ -172,6 +172,10 @@ class TestUtilsHtml(SimpleTestCase):
         for arg, expected in tests:
             with self.subTest(arg=arg):
                 self.assertEqual(json_script(arg, 'test_id'), expected)
+        self.assertEqual(
+            json_script({'hello': 'world'}),
+            '<script type="application/json">{"hello": "world"}</script>',
+        )
 
     def test_smart_urlquote(self):
         items = (
