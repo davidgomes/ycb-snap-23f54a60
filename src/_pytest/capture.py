@@ -388,6 +388,9 @@ class FDCaptureBinary:
                 TemporaryFile(buffering=0),  # type: ignore[arg-type]
                 encoding="utf-8",
                 errors="replace",
+                # Preserve \r and \r\n; the default newline=None translates
+                # them to \n when the capture is read back (see #7517).
+                newline="",
                 write_through=True,
             )
             if targetfd in patchsysdict:
