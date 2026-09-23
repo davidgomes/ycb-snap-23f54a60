@@ -1596,6 +1596,8 @@ class MiscTests(SimpleTestCase):
             ('de', 'German'),
             ('de-at', 'Austrian German'),
             ('pl', 'Polish'),
+            ('en-latn-us', 'Latin English'),
+            ('en-Latn-US', 'BCP 47 case format'),
         ],
     )
     def test_get_language_from_path_real(self):
@@ -1609,6 +1611,8 @@ class MiscTests(SimpleTestCase):
         self.assertEqual(g('/de-at/'), 'de-at')
         self.assertEqual(g('/de-ch/'), 'de')
         self.assertIsNone(g('/de-simple-page/'))
+        self.assertEqual(g('/en-latn-us/'), 'en-latn-us')
+        self.assertEqual(g('/en-Latn-US/'), 'en-Latn-US')
 
     def test_get_language_from_path_null(self):
         g = trans_null.get_language_from_path
