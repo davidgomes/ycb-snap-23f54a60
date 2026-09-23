@@ -159,6 +159,9 @@ class Blueprint(Scaffold):
         automatic detection can fail, so the path can be specified
         manually instead.
 
+    .. versionchanged:: 2.3.0
+        The ``name`` parameter must be a non-empty string.
+
     .. versionchanged:: 1.1.0
         Blueprints have a ``cli`` group to register nested CLI commands.
         The ``cli_group`` parameter controls the name of the group under
@@ -189,6 +192,9 @@ class Blueprint(Scaffold):
             template_folder=template_folder,
             root_path=root_path,
         )
+
+        if not name:
+            raise ValueError("'name' may not be empty.")
 
         if "." in name:
             raise ValueError("'name' may not contain a dot '.' character.")

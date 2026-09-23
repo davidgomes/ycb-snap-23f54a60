@@ -33,6 +33,7 @@ Unreleased
 -   Use modern packaging metadata with ``pyproject.toml`` instead of ``setup.cfg``.
     :pr:`4947`
 -   Ensure subdomains are applied with nested blueprints. :issue:`4834`
+-   Blueprint names must be non-empty. :issue:`4944`
 -   ``config.from_file`` can use ``text=False`` to indicate that the parser wants a
     binary file instead. :issue:`4989`
 
