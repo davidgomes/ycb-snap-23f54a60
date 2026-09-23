@@ -501,6 +501,10 @@ def _TR56(rv, f, g, h, max, pow):
         if not (rv.is_Pow and rv.base.func == f):
             return rv
 
+        # Comparing a complex exponent raises TypeError; such powers are
+        # outside the even-power rewrite this transform performs.
+        if rv.exp.is_extended_real is False:
+            return rv
         if (rv.exp < 0) == True:
             return rv
         if (rv.exp > max) == True:
