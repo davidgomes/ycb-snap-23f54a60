@@ -3,6 +3,7 @@ import unittest
 from django.contrib.admindocs.utils import (
     docutils_is_available, parse_docstring, parse_rst, trim_docstring,
 )
+from django.test.utils import captured_stderr
 
 from .tests import AdminDocsSimpleTestCase
 
@@ -43,6 +44,25 @@ class TestUtils(AdminDocsSimpleTestCase):
             '(DESCRIPTION)\n\nsome_metadata: some data'
         )
         self.assertEqual(trim_docstring_output, trimmed_docstring)
+
+    def test_trim_docstring_first_line_not_empty(self):
+        docstring = """firstline
+
+        second line
+            indented third line
+        """
+        self.assertEqual(
+            trim_docstring(docstring),
+            'firstline\n\nsecond line\n    indented third line',
+        )
+        self.assertEqual(trim_docstring('single line'), 'single line')
+
+    def test_parse_rst_with_docstring_no_leading_line_feed(self):
+        title, body, _ = parse_docstring('firstline\n\n    second line')
+        with captured_stderr() as stderr:
+            self.assertEqual(parse_rst(title, ''), '<p>firstline</p>\n')
+            self.assertEqual(parse_rst(body, ''), '<p>second line</p>\n')
+        self.assertEqual(stderr.getvalue(), '')
 
     def test_parse_docstring(self):
         title, description, metadata = parse_docstring(self.docstring)
