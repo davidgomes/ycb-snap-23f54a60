@@ -1456,7 +1456,8 @@ class _AnnotationBase:
                  xycoords='data',
                  annotation_clip=None):
 
-        self.xy = xy
+        x, y = xy  # Make copy when xy is an array (and check the shape).
+        self.xy = x, y
         self.xycoords = xycoords
         self.set_annotation_clip(annotation_clip)
 
