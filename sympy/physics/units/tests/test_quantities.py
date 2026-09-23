@@ -562,6 +562,38 @@ def test_issue_24062():
     assert SI._collect_factor_and_dimension(exp_expr) == (1 + E, Dimension(1))
 
 
+def test_issue_24211():
+    from sympy.physics.units import velocity, acceleration
+    V1 = Quantity('V1')
+    SI.set_quantity_dimension(V1, velocity)
+    SI.set_quantity_scale_factor(V1, 1 * meter / second)
+    A1 = Quantity('A1')
+    SI.set_quantity_dimension(A1, acceleration)
+    SI.set_quantity_scale_factor(A1, 1 * meter / second**2)
+    T1 = Quantity('T1')
+    SI.set_quantity_dimension(T1, time)
+    SI.set_quantity_scale_factor(T1, 1 * second)
+
+    expr = A1*T1 + V1
+    factor, dim = SI._collect_factor_and_dimension(expr)
+    assert factor == 2
+    assert SI.get_dimension_system().equivalent_dims(dim, velocity)
+
+    # The reported case uses a non-unit scale on each quantity.
+    v1 = Quantity('v1')
+    SI.set_quantity_dimension(v1, velocity)
+    SI.set_quantity_scale_factor(v1, 2 * meter / second)
+    a1 = Quantity('a1')
+    SI.set_quantity_dimension(a1, acceleration)
+    SI.set_quantity_scale_factor(a1, -Rational(49, 5) * meter / second**2)
+    t1 = Quantity('t1')
+    SI.set_quantity_dimension(t1, time)
+    SI.set_quantity_scale_factor(t1, 5 * second)
+    factor, dim = SI._collect_factor_and_dimension(a1*t1 + v1)
+    assert factor == -47
+    assert SI.get_dimension_system().equivalent_dims(dim, velocity)
+
+
 def test_prefixed_property():
     assert not meter.is_prefixed
     assert not joule.is_prefixed
