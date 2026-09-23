@@ -16,7 +16,7 @@ from pathlib import Path
 
 from django.conf import settings
 from django.core.mail.utils import DNS_NAME
-from django.utils.encoding import force_str
+from django.utils.encoding import force_str, punycode
 
 # Don't BASE64-encode UTF-8 messages so that we avoid unwanted attention from
 # some spam filters.
@@ -102,10 +102,7 @@ def sanitize_address(addr, encoding):
         localpart.encode('ascii')
     except UnicodeEncodeError:
         localpart = Header(localpart, encoding).encode()
-    try:
-        domain.encode('ascii')
-    except UnicodeEncodeError:
-        domain = domain.encode('idna').decode('ascii')
+    domain = punycode(domain)
 
     parsed_address = Address(nm, username=localpart, domain=domain)
     return str(parsed_address)
@@ -256,8 +253,10 @@ class EmailMessage:
             # will get picked up by formatdate().
             msg['Date'] = formatdate(localtime=settings.EMAIL_USE_LOCALTIME)
         if 'message-id' not in header_names:
-            # Use cached DNS_NAME for performance
-            msg['Message-ID'] = make_msgid(domain=DNS_NAME)
+            # Use cached DNS_NAME for performance. Internationalized domain
+            # names must be Punycode so non-Unicode message encodings can
+            # still encode the Message-ID header.
+            msg['Message-ID'] = make_msgid(domain=punycode(str(DNS_NAME)))
         for name, value in self.extra_headers.items():
             if name.lower() != 'from':  # From is already handled
                 msg[name] = value
