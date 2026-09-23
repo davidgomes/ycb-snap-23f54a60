@@ -1,4 +1,5 @@
 import pytest
+from _pytest._code.code import ExceptionChainRepr
 from _pytest.pathlib import Path
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
@@ -241,6 +242,209 @@ class TestReportSerialization:
             RuntimeError, match="INTERNALERROR: Unknown entry type returned: Unknown"
         ):
             TestReport._from_json(data)
+
+    @pytest.mark.parametrize("report_class", [TestReport, CollectReport])
+    @pytest.mark.parametrize(
+        "use_from, description",
+        [
+            (
+                True,
+                "The above exception was the direct cause of the following exception:",
+            ),
+            (
+                False,
+                "During handling of the above exception, another exception occurred:",
+            ),
+        ],
+    )
+    def test_chained_exceptions(
+        self, testdir, tw_mock, report_class, use_from, description
+    ):
+        """Check serialization/deserialization of report objects containing chained exceptions (#5786)"""
+        from_clause = " from e" if use_from else ""
+        testdir.makepyfile(
+            """
+            def foo():
+                raise ValueError('value error')
+            def test_a():
+                try:
+                    foo()
+                except ValueError as e:
+                    raise RuntimeError('runtime error'){from_clause}
+            if {error_during_import}:
+                test_a()
+        """.format(
+                from_clause=from_clause,
+                error_during_import=report_class is CollectReport,
+            )
+        )
+
+        reprec = testdir.inline_run()
+        if report_class is TestReport:
+            reports = reprec.getreports("pytest_runtest_logreport")
+            # we have 3 reports: setup/call/teardown
+            assert len(reports) == 3
+            # get the call report
+            report = reports[1]
+        else:
+            assert report_class is CollectReport
+            # two collection reports: session and test file
+            reports = reprec.getreports("pytest_collectreport")
+            assert len(reports) == 2
+            report = reports[1]
+
+        def check_longrepr(longrepr):
+            """Check the attributes of the given longrepr object according to the test file.
+
+            We can get away with testing both CollectReport and TestReport with this function because
+            the longrepr objects are very similar.
+            """
+            assert isinstance(longrepr, ExceptionChainRepr)
+            assert longrepr.sections == [("title", "contents", "=")]
+            assert len(longrepr.chain) == 2
+            entry1, entry2 = longrepr.chain
+            tb1, fileloc1, desc1 = entry1
+            tb2, fileloc2, desc2 = entry2
+
+            assert "ValueError('value error')" in str(tb1)
+            assert "RuntimeError('runtime error')" in str(tb2)
+
+            assert desc1 == description
+            assert desc2 is None
+
+        assert report.failed
+        assert len(report.sections) == 0
+        report.longrepr.addsection("title", "contents", "=")
+        check_longrepr(report.longrepr)
+
+        data = report._to_json()
+        loaded_report = report_class._from_json(data)
+        check_longrepr(loaded_report.longrepr)
+        assert loaded_report.longreprtext == report.longreprtext
+
+        # make sure we don't blow up on ``toterminal`` call; we don't test the actual output because it is very
+        # brittle and hard to maintain, but we can assume it is correct because ``toterminal`` is already tested
+        # elsewhere and we do check the contents of the longrepr object after loading it.
+        loaded_report.longrepr.toterminal(tw_mock)
+
+    def test_chained_exception_depth(self, testdir):
+        """A chain longer than two exceptions survives report serialization (#5786)."""
+        testdir.makepyfile(
+            """
+            def test_chained_exception_with_from():
+                try:
+                    try:
+                        raise ValueError(11)
+                    except Exception as e1:
+                        raise ValueError(12) from e1
+                except Exception as e2:
+                    raise ValueError(13) from e2
+
+            def test_chained_exception_without_from():
+                try:
+                    try:
+                        raise ValueError(21)
+                    except Exception:
+                        raise ValueError(22)
+                except Exception:
+                    raise ValueError(23)
+        """
+        )
+        reprec = testdir.inline_run()
+        reports = [
+            rep
+            for rep in reprec.getreports("pytest_runtest_logreport")
+            if rep.when == "call"
+        ]
+        assert len(reports) == 2
+        expected = [
+            (
+                "The above exception was the direct cause of the following exception:",
+                ["ValueError: 11", "ValueError: 12", "ValueError: 13"],
+            ),
+            (
+                "During handling of the above exception, another exception occurred:",
+                ["ValueError: 21", "ValueError: 22", "ValueError: 23"],
+            ),
+        ]
+        for report, (description, messages) in zip(reports, expected):
+            assert isinstance(report.longrepr, ExceptionChainRepr)
+            assert len(report.longrepr.chain) == 3
+            assert [entry[2] for entry in report.longrepr.chain[:2]] == [
+                description,
+                description,
+            ]
+            assert report.longrepr.chain[2][2] is None
+
+            loaded = TestReport._from_json(report._to_json())
+            assert isinstance(loaded.longrepr, ExceptionChainRepr)
+            assert len(loaded.longrepr.chain) == 3
+            assert loaded.longreprtext == report.longreprtext
+            for message in messages:
+                assert message in loaded.longreprtext
+
+    def test_chained_exceptions_no_reprcrash(self, tw_mock):
+        """Chain entries without a crash location still round-trip.
+
+        Some chained exceptions (for example multiprocessing remote tracebacks)
+        have no ``ReprFileLocation``.
+        """
+        from _pytest._code.code import ReprEntryNative
+        from _pytest._code.code import ReprFileLocation
+        from _pytest._code.code import ReprTraceback
+
+        cause_tb = ReprTraceback(
+            [ReprEntryNative(["RemoteTraceback: runtime error\n"])], None, "native"
+        )
+        outer_tb = ReprTraceback(
+            [ReprEntryNative(["ValueError: value error\n"])], None, "native"
+        )
+        outer_crash = ReprFileLocation("test_basic.py", 10, "ValueError: value error")
+        description = (
+            "During handling of the above exception, another exception occurred:"
+        )
+        longrepr = ExceptionChainRepr(
+            [(cause_tb, None, description), (outer_tb, outer_crash, None)]
+        )
+        report = TestReport(
+            "test_basic.py::test_a",
+            ("test_basic.py", 10, "test_a"),
+            {},
+            "failed",
+            longrepr,
+            "call",
+        )
+
+        loaded = TestReport._from_json(report._to_json())
+        assert isinstance(loaded.longrepr, ExceptionChainRepr)
+        assert len(loaded.longrepr.chain) == 2
+        assert loaded.longrepr.chain[0][1] is None
+        assert loaded.longrepr.chain[1][1].message == "ValueError: value error"
+        assert loaded.longrepr.chain[0][2] == description
+        assert loaded.longreprtext == report.longreprtext
+        loaded.longrepr.toterminal(tw_mock)
+
+    def test_longrepr_without_chain_key(self, testdir):
+        """Reports serialized before chain support still deserialize."""
+        from _pytest._code.code import ReprExceptionInfo
+
+        testdir.makepyfile(
+            """
+            def test_a():
+                assert False
+        """
+        )
+        reprec = testdir.inline_run()
+        report = reprec.getreports("pytest_runtest_logreport")[1]
+        data = report._to_json()
+        del data["longrepr"]["chain"]
+        loaded = TestReport._from_json(data)
+        assert isinstance(loaded.longrepr, ReprExceptionInfo)
+        assert loaded.longrepr.reprcrash.message == report.longrepr.reprcrash.message
+        assert (
+            loaded.longrepr.reprtraceback.reprentries[-1].lines
+            == report.longrepr.reprtraceback.reprentries[-1].lines
+        )
 
 
 class TestHooks:
