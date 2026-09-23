@@ -1568,8 +1568,9 @@ default: %(va)s
         wspace, hspace : float, default: None
             The amount of width/height reserved for space between subfigures,
             expressed as a fraction of the average subfigure width/height.
-            If not given, the values will be inferred from a figure or
-            rcParams when necessary.
+            If not given, the values will be inferred from rcParams if using
+            constrained layout (see `~.ConstrainedLayoutEngine`), or zero if
+            not using a layout engine.
 
         width_ratios : array-like of length *ncols*, optional
             Defines the relative widths of the columns. Each column gets a
@@ -2274,12 +2275,26 @@ class SubFigure(FigureBase):
             return
         # need to figure out *where* this subplotspec is.
         gs = self._subplotspec.get_gridspec()
+        nrows, ncols = gs.get_geometry()
         wr = np.asarray(gs.get_width_ratios())
         hr = np.asarray(gs.get_height_ratios())
-        dx = wr[self._subplotspec.colspan].sum() / wr.sum()
-        dy = hr[self._subplotspec.rowspan].sum() / hr.sum()
-        x0 = wr[:self._subplotspec.colspan.start].sum() / wr.sum()
-        y0 = 1 - hr[:self._subplotspec.rowspan.stop].sum() / hr.sum()
+        wspace = getattr(gs, 'wspace', None) or 0
+        hspace = getattr(gs, 'hspace', None) or 0
+        # Fraction of the parent covered by cells (the rest is spacing), and
+        # the spacing between adjacent cells, as in GridSpec.get_grid_positions.
+        w_scale = ncols / (ncols + wspace * (ncols - 1))
+        h_scale = nrows / (nrows + hspace * (nrows - 1))
+        sep_w = wspace * w_scale / ncols
+        sep_h = hspace * h_scale / nrows
+        colspan = self._subplotspec.colspan
+        rowspan = self._subplotspec.rowspan
+        dx = (wr[colspan].sum() / wr.sum() * w_scale
+              + sep_w * (len(colspan) - 1))
+        dy = (hr[rowspan].sum() / hr.sum() * h_scale
+              + sep_h * (len(rowspan) - 1))
+        x0 = wr[:colspan.start].sum() / wr.sum() * w_scale + sep_w * colspan.start
+        y0 = 1 - (hr[:rowspan.stop].sum() / hr.sum() * h_scale
+                  + sep_h * (rowspan.stop - 1))
         if self.bbox_relative is None:
             self.bbox_relative = Bbox.from_bounds(x0, y0, dx, dy)
         else:
