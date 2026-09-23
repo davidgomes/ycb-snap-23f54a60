@@ -336,6 +336,10 @@ Management Commands
   enabling support in other cases are improved. See :ref:`syntax-coloring` for
   more details.
 
+* The :djadmin:`runserver` management command now supports autoreloading when
+  running with ``python -m`` for packages other than ``django``, e.g.
+  ``python -m my_package runserver``.
+
 Migrations
 ~~~~~~~~~~
 
