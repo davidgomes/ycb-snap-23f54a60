@@ -261,6 +261,14 @@ def test_kahane_simplify1():
     r = kahane_simplify(t)
     assert r.equals(-2*G(sigma)*G(rho)*G(nu))
 
+    # Leading uncontracted matrices must keep their original order.
+    t = G(mu)*G(-mu)*G(rho)*G(sigma)
+    r = kahane_simplify(t)
+    assert r.equals(4*G(rho)*G(sigma))
+    t = G(rho)*G(sigma)*G(mu)*G(-mu)
+    r = kahane_simplify(t)
+    assert r.equals(4*G(rho)*G(sigma))
+
 
 def test_gamma_matrix_class():
     i, j, k = tensor_indices('i,j,k', LorentzIndex)
