@@ -153,8 +153,12 @@ class RegexPattern(CheckURLMixin):
             # If there are any named groups, use those as kwargs, ignoring
             # non-named groups. Otherwise, pass all non-named arguments as
             # positional arguments.
+            # If there are any named groups, use those as kwargs, ignoring
+            # non-named groups. Otherwise, pass all non-named arguments as
+            # positional arguments.
             kwargs = match.groupdict()
             args = () if kwargs else match.groups()
+            kwargs = {k: v for k, v in kwargs.items() if v is not None}
             return path[match.end():], args, kwargs
         return None
 
